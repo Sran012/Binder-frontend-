@@ -5,6 +5,7 @@ import HomeContent from '../components/HomeContent';
 import TasksContent from '../components/TasksContent';
 import DepartmentContent from '../components/DepartmentContent';
 import ProfileContent from '../components/ProfileContent';
+import IMSContent from '../components/IMSContent';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -22,6 +23,7 @@ const Dashboard = () => {
       { id: 'home', label: 'Home' },
       { id: 'tasks', label: 'Tasks' },
       { id: 'department', label: 'Department' },
+      { id: 'ims', label: 'IMS' },
       { id: 'community', label: 'Community' },
       { id: 'profile', label: 'Profile' },
     ];
@@ -35,6 +37,8 @@ const Dashboard = () => {
         return <TasksContent />;
       case 'department':
         return <DepartmentContent />;
+      case 'ims':
+        return <IMSContent />;
       case 'profile':
         return <ProfileContent user={user} />;
       case 'community':
@@ -91,7 +95,7 @@ const Dashboard = () => {
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="user-details">
-                <p className="user-name">{user?.name || user?.email}</p>
+                <p className="user-name">{user?.name || user.email}</p>
                 <p className="user-role">
                   {user?.role === 'master-admin' && 'Master Admin'}
                   {user?.role === 'manager' && 'Manager'}
