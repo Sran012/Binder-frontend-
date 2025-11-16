@@ -80,11 +80,10 @@ const HomeContent = ({ user }) => {
             {user?.role === 'tenant' && 'View your dashboard metrics and recent activities.'}
           </p>
         </div>
-        
       </div>
 
       {/* Stats Grid */}
-      <div style={styles.statsGrid}>
+      {/* <div style={styles.statsGrid}>
         <StatCard
           icon={FaUsers}
           title="Total Vendors"
@@ -117,12 +116,12 @@ const HomeContent = ({ user }) => {
           trend={{ direction: 'up', value: 15 }}
           color="#4facfe"
         />
-      </div>
+      </div> */}
 
       {/* Main Content Grid */}
-      <div style={styles.mainGrid}>
+      {/* <div style={styles.mainGrid}> */}
         {/* Department Performance */}
-        <div style={styles.card}>
+        {/* <div style={styles.card}>
           <div style={styles.cardHeader}>
             <h2 style={styles.cardTitle}>Department Performance</h2>
             <select style={styles.filterSelect}>
@@ -171,10 +170,10 @@ const HomeContent = ({ user }) => {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Recent Activities */}
-        <div style={styles.card}>
+        {/* <div style={styles.card}>
           <div style={styles.cardHeader}>
             <h2 style={styles.cardTitle}>Recent Activities</h2>
             <button style={styles.viewAllBtn}>View All</button>
@@ -207,10 +206,10 @@ const HomeContent = ({ user }) => {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Quick Stats Row */}
-      <div style={styles.quickStatsRow}>
+      {/* <div style={styles.quickStatsRow}>
         <div style={styles.quickStatCard}>
           <div style={styles.quickStatIcon}>
             <FaTasks style={{ color: '#667eea' }} />
@@ -247,7 +246,7 @@ const HomeContent = ({ user }) => {
             <div style={styles.quickStatLabel}>Total Orders</div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
