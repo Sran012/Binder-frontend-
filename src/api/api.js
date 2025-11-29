@@ -1,209 +1,168 @@
 // src/api/api.js
-// Mock API with hardcoded credentials for prototype
+// API service - now uses real backend authentication
+import * as authService from './authService';
 
-// Mock user database
-const mockUsers = {
-  'master-admin': {
-    email: 'admin@binder.com',
-    password: 'admin123',
-    role: 'master-admin',
-    name: 'John Admin',
-    id: '1',
-  },
-  'manager': {
-    email: 'manager@binder.com',
-    password: 'manager123',
-    role: 'manager',
-    name: 'Sarah Manager',
-    id: '2',
-  },
-  'tenant': {
-    email: 'tenant@binder.com',
-    password: 'tenant123',
-    role: 'tenant',
-    name: 'Mike Tenant',
-    id: '3',
-  },
-};
-
-// Simulate API delay
-const simulateDelay = (ms = 1000) => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-};
-
-// Generate mock token
-const generateToken = (email) => {
-  return `mock_token_${email}_${Date.now()}`;
-};
-
-// API Methods
+// API Methods - using real backend auth service
 export const api = {
-  // Generic login
+  // Generic login - uses backend API
   login: async (credentials) => {
-    await simulateDelay(1000);
-    
     const { email, password } = credentials;
-    
-    // Find user by email
-    const user = Object.values(mockUsers).find(u => u.email === email);
-    
-    if (!user) {
+    try {
+      const response = await authService.login(email, password);
+      
+      if (response.status === 'success') {
+        return {
+          token: response.data.tokens.access,
+          user: response.data.user,
+          message: response.message || 'Login successful',
+        };
+      } else {
+        throw {
+          message: response.message || 'Login failed',
+          status: response.status_code || 400,
+        };
+      }
+    } catch (error) {
+      // Re-throw with proper error structure
       throw {
-        message: 'User not found. Please check your email.',
-        status: 404,
+        message: error.message || error.data?.message || 'Login failed',
+        status: error.status || error.data?.status_code || 500,
+        data: error.data,
       };
     }
-    
-    if (user.password !== password) {
-      throw {
-        message: 'Incorrect password. Please try again.',
-        status: 401,
-      };
-    }
-    
-    const token = generateToken(email);
-    const { password: _, ...userWithoutPassword } = user;
-    
-    return {
-      token,
-      user: userWithoutPassword,
-      message: 'Login successful',
-    };
   },
 
-  // Master Admin login
+  // Master Admin login - uses backend API
   loginMasterAdmin: async (credentials) => {
-    await simulateDelay(1000);
-    
     const { email, password } = credentials;
-    const user = mockUsers['master-admin'];
-    
-    if (email !== user.email) {
+    try {
+      const response = await authService.login(email, password);
+      
+      if (response.status === 'success') {
+        // Check if user has master admin role
+        const user = response.data.user;
+        if (user.role !== 'master-admin' && user.role !== 'master_admin') {
+          throw {
+            message: 'Invalid master admin credentials.',
+            status: 403,
+          };
+        }
+        
+        return {
+          token: response.data.tokens.access,
+          user: user,
+          message: 'Master admin login successful',
+        };
+      } else {
+        throw {
+          message: response.message || 'Login failed',
+          status: response.status_code || 400,
+        };
+      }
+    } catch (error) {
+      // Re-throw with proper error structure
       throw {
-        message: 'Invalid master admin credentials.',
-        status: 401,
+        message: error.message || error.data?.message || 'Login failed',
+        status: error.status || error.data?.status_code || 500,
+        data: error.data,
       };
     }
-    
-    if (password !== user.password) {
-      throw {
-        message: 'Incorrect password for master admin.',
-        status: 401,
-      };
-    }
-    
-    const token = generateToken(email);
-    const { password: _, ...userWithoutPassword } = user;
-    
-    return {
-      token,
-      user: userWithoutPassword,
-      message: 'Master admin login successful',
-    };
   },
 
-  // Manager login
+  // Manager login - uses backend API
   loginManager: async (credentials) => {
-    await simulateDelay(1000);
-    
     const { email, password } = credentials;
-    const user = mockUsers['manager'];
-    
-    if (email !== user.email) {
+    try {
+      const response = await authService.login(email, password);
+      
+      if (response.status === 'success') {
+        // Check if user has manager role
+        const user = response.data.user;
+        if (user.role !== 'manager') {
+          throw {
+            message: 'Invalid manager credentials.',
+            status: 403,
+          };
+        }
+        
+        return {
+          token: response.data.tokens.access,
+          user: user,
+          message: 'Manager login successful',
+        };
+      } else {
+        throw {
+          message: response.message || 'Login failed',
+          status: response.status_code || 400,
+        };
+      }
+    } catch (error) {
+      // Re-throw with proper error structure
       throw {
-        message: 'Invalid manager credentials.',
-        status: 401,
+        message: error.message || error.data?.message || 'Login failed',
+        status: error.status || error.data?.status_code || 500,
+        data: error.data,
       };
     }
-    
-    if (password !== user.password) {
-      throw {
-        message: 'Incorrect password for manager.',
-        status: 401,
-      };
-    }
-    
-    const token = generateToken(email);
-    const { password: _, ...userWithoutPassword } = user;
-    
-    return {
-      token,
-      user: userWithoutPassword,
-      message: 'Manager login successful',
-    };
   },
 
-  // Tenant login
+  // Tenant login - uses backend API
   loginTenant: async (credentials) => {
-    await simulateDelay(1000);
-    
     const { email, password } = credentials;
-    const user = mockUsers['tenant'];
-    
-    if (email !== user.email) {
+    try {
+      const response = await authService.login(email, password);
+      
+      if (response.status === 'success') {
+        // Check if user has tenant role
+        const user = response.data.user;
+        if (user.role !== 'tenant') {
+          throw {
+            message: 'Invalid tenant credentials.',
+            status: 403,
+          };
+        }
+        
+        return {
+          token: response.data.tokens.access,
+          user: user,
+          message: 'Tenant login successful',
+        };
+      } else {
+        throw {
+          message: response.message || 'Login failed',
+          status: response.status_code || 400,
+        };
+      }
+    } catch (error) {
+      // Re-throw with proper error structure
       throw {
-        message: 'Invalid tenant credentials.',
-        status: 401,
+        message: error.message || error.data?.message || 'Login failed',
+        status: error.status || error.data?.status_code || 500,
+        data: error.data,
       };
     }
-    
-    if (password !== user.password) {
-      throw {
-        message: 'Incorrect password for tenant.',
-        status: 401,
-      };
-    }
-    
-    const token = generateToken(email);
-    const { password: _, ...userWithoutPassword } = user;
-    
-    return {
-      token,
-      user: userWithoutPassword,
-      message: 'Tenant login successful',
-    };
   },
 
-  // Logout
+  // Logout - uses backend API
   logout: async () => {
-    await simulateDelay(500);
+    await authService.logout();
     return { message: 'Logout successful' };
   },
 
-  // Get current user
+  // Get current user - uses backend API
   getCurrentUser: async () => {
-    await simulateDelay(500);
-    
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
+    try {
+      const user = await authService.getCurrentUser();
+      return {
+        user: user,
+      };
+    } catch (error) {
       throw {
-        message: 'No user found',
+        message: error.message || 'No user found',
         status: 401,
       };
     }
-    
-    return {
-      user: JSON.parse(userStr),
-    };
   },
-};
-
-// Export mock users for reference (optional)
-export const getMockCredentials = () => {
-  return {
-    'master-admin': {
-      email: 'admin@binder.com',
-      password: 'admin123',
-    },
-    'manager': {
-      email: 'manager@binder.com',
-      password: 'manager123',
-    },
-    'tenant': {
-      email: 'tenant@binder.com',
-      password: 'tenant123',
-    },
-  };
 };
 
 export default api;

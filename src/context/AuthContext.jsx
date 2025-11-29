@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../api/api';
+import * as authService from '../api/authService';
 
 const AuthContext = createContext(null);
 
@@ -20,21 +21,21 @@ export const AuthProvider = ({ children }) => {
   // Check if user is already logged in on mount
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      const savedUser = localStorage.getItem('user');
+      const token = authService.getAccessToken();
+      const savedUser = authService.getUser();
 
       if (token && savedUser) {
         try {
-          setUser(JSON.parse(savedUser));
+          setUser(savedUser);
           setIsAuthenticated(true);
           
-          // Optionally verify token with backend
+          // Verify token with backend
           const userData = await api.getCurrentUser();
           setUser(userData.user);
+          setIsAuthenticated(true);
         } catch (error) {
           // Token invalid, clear storage
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user');
+          authService.clearTokens();
           setUser(null);
           setIsAuthenticated(false);
         }
@@ -65,10 +66,8 @@ export const AuthProvider = ({ children }) => {
           response = await api.login(credentials);
       }
 
-      // Store token and user data
+      // Store token and user data (handled by authService.login)
       if (response.token) {
-        localStorage.setItem('authToken', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
         setUser(response.user);
         setIsAuthenticated(true);
         return { success: true, user: response.user };
@@ -92,8 +91,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Logout error:', error);
     } finally {
       // Clear storage and state regardless of API call success
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
+      authService.clearTokens();
       setUser(null);
       setIsAuthenticated(false);
     }
@@ -102,7 +100,7 @@ export const AuthProvider = ({ children }) => {
   // Update user data
   const updateUser = (userData) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    authService.setUser(userData);
   };
 
   const value = {
