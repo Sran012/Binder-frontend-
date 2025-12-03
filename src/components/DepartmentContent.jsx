@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import GenerateBuyerCode from './GenerateBuyerCode';
 import GenerateVendorCode from './GenerateVendorCode';
+import GeneratePOCode from './GeneratePOCode';
 import VendorMasterSheet from './VendorMasterSheet';
 
 const DepartmentContent = () => {
@@ -10,6 +11,7 @@ const DepartmentContent = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [showGenerateBuyerCode, setShowGenerateBuyerCode] = useState(false);
   const [showGenerateVendorCode, setShowGenerateVendorCode] = useState(false);
+  const [showGeneratePOCode, setShowGeneratePOCode] = useState(false);
   const [showVendorMasterSheet, setShowVendorMasterSheet] = useState(false);
   
   const subMenuRef = useRef(null);
@@ -250,7 +252,6 @@ const DepartmentContent = () => {
       'Machine Manufacturing',
       'Management'
     ],
-
     // OPERATIONS buttons
     'production': [
       'CHD/002A/1/JUTE PLACEMAT',
@@ -264,7 +265,6 @@ const DepartmentContent = () => {
     'sampling': [
       
     ],
-
     // QUALITY buttons
     'goods-receipt-note': [
       'Generate GRN'
@@ -286,12 +286,10 @@ const DepartmentContent = () => {
       'PROD-PACKING INSPECTION REPORT',
       'PROD-STITCHING INSPECTION REPORT'
     ],
-
     // DESIGNING buttons
     'product-category': [
       'Product Category'
     ],
-
     // SHIPPING buttons
     'shipped-goods': [
       'Shipped Goods'
@@ -299,7 +297,6 @@ const DepartmentContent = () => {
     'shipping-master': [
       'Shipping Master'
     ],
-
     // ACCOUNTS buttons
     'accounts-tally': [
       'CREDITORS LIST',
@@ -311,7 +308,6 @@ const DepartmentContent = () => {
     'cashbook': [
       'CASHBOOK'
     ],
-
     // HR buttons
     'leave-application': [
       'LEAVE APPLICATION-FORM',
@@ -378,6 +374,7 @@ const DepartmentContent = () => {
     setHoveredDeptItem(null);
     setShowGenerateBuyerCode(false);
     setShowGenerateVendorCode(false);
+    setShowGeneratePOCode(false);
     setShowVendorMasterSheet(false);
   };
 
@@ -514,9 +511,12 @@ const DepartmentContent = () => {
         <p className="fullscreen-description">Create and manage purchase orders</p>
       </div>
       <div className="fullscreen-buttons">
-        <button className="fullscreen-action-button primary">
+        <button 
+          className="fullscreen-action-button primary"
+          onClick={() => setShowGeneratePOCode(true)}
+        >
           <div className="button-content">
-            <span className="button-title">GENERATE PO</span>
+            <span className="button-title">GENERATE PO CODE</span>
             <span className="button-subtitle">Create new purchase orders</span>
           </div>
         </button>
@@ -602,6 +602,14 @@ const DepartmentContent = () => {
       );
     }
 
+    if (showGeneratePOCode) {
+      return (
+        <GeneratePOCode 
+          onBack={() => setShowGeneratePOCode(false)} 
+        />
+      );
+    }
+
     if (showVendorMasterSheet) {
       return (
         <VendorMasterSheet 
@@ -656,7 +664,7 @@ const DepartmentContent = () => {
   };
 
   // If a submenu item is selected, show fullscreen content
-  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showVendorMasterSheet) {
+  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showVendorMasterSheet) {
     return renderDepartmentMainContent();
   }
 
@@ -692,28 +700,46 @@ const DepartmentContent = () => {
       </div>
 
       {/* Submenu - appears as a separate menu panel on hover or when sticky */}
-      {Object.keys(subMenuItems).map(deptId => 
-        shouldShowSubMenu(deptId) && (
+      {Object.keys(subMenuItems).map(deptId => {
+        const isTwoColumn = subMenuItems[deptId].length > 6;
+        
+        return shouldShowSubMenu(deptId) && (
           <div 
             key={deptId}
-            className={`department-submenu-panel ${stickySubMenu === deptId ? 'sticky' : 'hover'}`} 
+            className={`department-submenu-panel ${stickySubMenu === deptId ? 'sticky' : 'hover'}`}
             ref={subMenuRef}
             onMouseEnter={() => setHoveredDeptItem(deptId)}
             onMouseLeave={handleDeptItemLeave}
+            style={isTwoColumn ? {
+              minWidth: '500px',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            } : {}}
           >
             <h3 className="dept-menu-title">
               {getDepartmentName(deptId)} Options
               {stickySubMenu === deptId && <span className="sticky-indicator">📌</span>}
             </h3>
-            <div className="dept-menu-list">
+            <div 
+              className="dept-menu-list"
+              style={isTwoColumn ? {
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '8px',
+                columnGap: '16px'
+              } : {}}
+            >
               {subMenuItems[deptId].map((subItem) => (
                 <div
                   key={subItem.id}
                   className="dept-menu-item-wrapper"
+                  style={isTwoColumn ? { width: '100%' } : {}}
                 >
                   <div 
                     className="dept-menu-item submenu-item"
                     onClick={() => handleSubItemClick(subItem.id)}
+                    style={isTwoColumn ? { width: '100%' } : {}}
                   >
                     <span className="dept-menu-label">{subItem.label}</span>
                   </div>
@@ -721,8 +747,8 @@ const DepartmentContent = () => {
               ))}
             </div>
           </div>
-        )
-      )}
+        );
+      })}
     </div>
   );
 };

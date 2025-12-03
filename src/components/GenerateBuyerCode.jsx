@@ -55,26 +55,70 @@ const GenerateBuyerCode = ({ onBack }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const generateBuyerCode = () => {
+  const generateBuyerCode = (buyerName, retailer) => {
     try {
-      // Get existing codes from localStorage or start from 101
+      // Get existing codes from localStorage
       const existingCodes = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
-      let nextNumber = 101;
       
-      if (existingCodes.length > 0) {
-        // Find the highest existing number
-        const numbers = existingCodes.map(item => {
-          const numStr = item.code?.replace('A', '') || '100';
-          return parseInt(numStr) || 100;
+      // Normalize buyer name and retailer for comparison (case-insensitive and trimmed)
+      const normalizedBuyerName = buyerName.trim().toLowerCase();
+      const normalizedRetailer = retailer.trim().toLowerCase();
+      
+      // Find all codes for this buyer-retailer combination
+      const matchingCodes = existingCodes.filter(item => {
+        const itemBuyerName = (item.buyerName || '').trim().toLowerCase();
+        const itemRetailer = (item.retailer || '').trim().toLowerCase();
+        return itemBuyerName === normalizedBuyerName && itemRetailer === normalizedRetailer;
+      });
+      
+      if (matchingCodes.length > 0) {
+        // Same buyer-retailer combination exists
+        // Get the base number from the first matching code
+        const firstCode = matchingCodes[0].code;
+        const baseNumber = parseInt(firstCode.replace(/[A-Z]/g, ''));
+        
+        // Find the highest letter suffix for this base number
+        const letterSuffixes = matchingCodes
+          .filter(item => {
+            const itemNumber = parseInt(item.code.replace(/[A-Z]/g, ''));
+            return itemNumber === baseNumber;
+          })
+          .map(item => {
+            const match = item.code.match(/[A-Z]+$/);
+            return match ? match[0] : 'A';
+          });
+        
+        // Find the highest letter (A, B, C, etc.)
+        let highestLetter = 'A';
+        letterSuffixes.forEach(letter => {
+          if (letter > highestLetter) {
+            highestLetter = letter;
+          }
         });
-        const maxNumber = Math.max(...numbers);
-        nextNumber = maxNumber + 1;
+        
+        // Increment the letter
+        const nextLetter = String.fromCharCode(highestLetter.charCodeAt(0) + 1);
+        
+        return `${baseNumber}${nextLetter}`;
+      } else {
+        // New buyer-retailer combination
+        // Find the highest base number across all codes
+        let maxBaseNumber = 100; // Start from 100, so first code will be 101
+        
+        existingCodes.forEach(item => {
+          const itemNumber = parseInt(item.code.replace(/[A-Z]/g, ''));
+          if (itemNumber > maxBaseNumber) {
+            maxBaseNumber = itemNumber;
+          }
+        });
+        
+        // Increment for new buyer-retailer combination
+        const newBaseNumber = maxBaseNumber + 1;
+        return `${newBaseNumber}A`;
       }
-      
-      return `${nextNumber}A`;
     } catch (error) {
       console.error('Error generating buyer code:', error);
-      // Fallback to a simple increment
+      // Fallback to a simple code
       return `${Date.now().toString().slice(-3)}A`;
     }
   };
@@ -98,8 +142,8 @@ const GenerateBuyerCode = ({ onBack }) => {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Generate new code
-      const newCode = generateBuyerCode();
+      // Generate new code based on buyer name and retailer
+      const newCode = generateBuyerCode(formData.buyerName, formData.retailer);
       console.log('Generated code:', newCode);
       
       // Save to localStorage
@@ -309,7 +353,7 @@ const GenerateBuyerCode = ({ onBack }) => {
               </>
             ) : (
               <>
-                 Generate Buyer Code
+                🎯 Generate Buyer Code
               </>
             )}
           </button>
