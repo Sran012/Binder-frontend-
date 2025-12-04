@@ -123,54 +123,131 @@ const GenerateBuyerCode = ({ onBack }) => {
     }
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+    
+  //   console.log('Form submitted with data:', formData);
+    
+  //   // Validate form
+  //   if (!validateForm()) {
+  //     console.log('Form validation failed:', errors);
+  //     return;
+  //   }
+    
+  //   try {
+  //     setIsGenerating(true);
+  //     console.log('Starting code generation...');
+      
+  //     // Simulate API call delay
+  //     await new Promise(resolve => setTimeout(resolve, 1500));
+      
+  //     // Generate new code based on buyer name and retailer
+  //     const newCode = generateBuyerCode(formData.buyerName, formData.retailer);
+  //     console.log('Generated code:', newCode);
+      
+  //     // Save to localStorage
+  //     const existingCodes = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
+  //     const newBuyerData = {
+  //       code: newCode,
+  //       buyerName: formData.buyerName.trim(),
+  //       buyerAddress: formData.buyerAddress.trim(),
+  //       contactPerson: formData.contactPerson.trim(),
+  //       retailer: formData.retailer.trim(),
+  //       createdAt: new Date().toISOString()
+  //     };
+      
+  //     existingCodes.push(newBuyerData);
+  //     localStorage.setItem('buyerCodes', JSON.stringify(existingCodes));
+  //     console.log('Saved to localStorage:', newBuyerData);
+      
+  //     // Set the generated code to show success screen
+  //     setGeneratedCode(newCode);
+  //     setIsGenerating(false);
+      
+  //   } catch (error) {
+  //     console.error('Error in form submission:', error);
+  //     setIsGenerating(false);
+  //     alert('An error occurred while generating the buyer code. Please try again.');
+  //   }
+  // };
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  e.preventDefault();
+  e.stopPropagation();
+  
+  console.log('Form submitted with data:', formData);
+  
+  // Validate form
+  if (!validateForm()) {
+    console.log('Form validation failed:', errors);
+    return;
+  }
+  
+  try {
+    setIsGenerating(true);
+    console.log('Starting code generation...');
     
-    console.log('Form submitted with data:', formData);
+    // Check for exact duplicate entry
+    const existingCodes = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
     
-    // Validate form
-    if (!validateForm()) {
-      console.log('Form validation failed:', errors);
+    const normalizedFormData = {
+      buyerName: formData.buyerName.trim().toLowerCase(),
+      buyerAddress: formData.buyerAddress.trim().toLowerCase(),
+      contactPerson: formData.contactPerson.trim().toLowerCase(),
+      retailer: formData.retailer.trim().toLowerCase()
+    };
+    
+    // Check if exact same entry exists (all fields match)
+    const exactDuplicate = existingCodes.find(item => {
+      return (
+        (item.buyerName || '').trim().toLowerCase() === normalizedFormData.buyerName &&
+        (item.buyerAddress || '').trim().toLowerCase() === normalizedFormData.buyerAddress &&
+        (item.contactPerson || '').trim().toLowerCase() === normalizedFormData.contactPerson &&
+        (item.retailer || '').trim().toLowerCase() === normalizedFormData.retailer
+      );
+    });
+    
+    if (exactDuplicate) {
+      setIsGenerating(false);
+      setErrors({
+        buyerName: 'This exact buyer entry already exists',
+        retailer: `Existing code: ${exactDuplicate.code}`
+      });
+      alert(`This buyer already exists with code: ${exactDuplicate.code}\n\nIf you need a different code for the same buyer-retailer combination, please modify at least one field (e.g., address or contact person).`);
       return;
     }
     
-    try {
-      setIsGenerating(true);
-      console.log('Starting code generation...');
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Generate new code based on buyer name and retailer
-      const newCode = generateBuyerCode(formData.buyerName, formData.retailer);
-      console.log('Generated code:', newCode);
-      
-      // Save to localStorage
-      const existingCodes = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
-      const newBuyerData = {
-        code: newCode,
-        buyerName: formData.buyerName.trim(),
-        buyerAddress: formData.buyerAddress.trim(),
-        contactPerson: formData.contactPerson.trim(),
-        retailer: formData.retailer.trim(),
-        createdAt: new Date().toISOString()
-      };
-      
-      existingCodes.push(newBuyerData);
-      localStorage.setItem('buyerCodes', JSON.stringify(existingCodes));
-      console.log('Saved to localStorage:', newBuyerData);
-      
-      // Set the generated code to show success screen
-      setGeneratedCode(newCode);
-      setIsGenerating(false);
-      
-    } catch (error) {
-      console.error('Error in form submission:', error);
-      setIsGenerating(false);
-      alert('An error occurred while generating the buyer code. Please try again.');
-    }
-  };
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Generate new code based on buyer name and retailer
+    const newCode = generateBuyerCode(formData.buyerName, formData.retailer);
+    console.log('Generated code:', newCode);
+    
+    // Save to localStorage
+    const newBuyerData = {
+      code: newCode,
+      buyerName: formData.buyerName.trim(),
+      buyerAddress: formData.buyerAddress.trim(),
+      contactPerson: formData.contactPerson.trim(),
+      retailer: formData.retailer.trim(),
+      createdAt: new Date().toISOString()
+    };
+    
+    existingCodes.push(newBuyerData);
+    localStorage.setItem('buyerCodes', JSON.stringify(existingCodes));
+    console.log('Saved to localStorage:', newBuyerData);
+    
+    // Set the generated code to show success screen
+    setGeneratedCode(newCode);
+    setIsGenerating(false);
+    
+  } catch (error) {
+    console.error('Error in form submission:', error);
+    setIsGenerating(false);
+    alert('An error occurred while generating the buyer code. Please try again.');
+  }
+};
 
   const copyToClipboard = async () => {
     try {
