@@ -195,6 +195,12 @@ const GenerateFactoryCode = ({ onBack }) => {
 
   // Step labels for progress bar
   const stepLabels = [
+    'Product Spec',
+    'Cut & Sew Spec',
+    'Raw Material',
+    'Trims & Accessories',
+    'Artwork & Labeling',
+    'Packaging'
   ];
 
   // Update consumption materials when overage or poQty changes from Step 0
@@ -316,9 +322,7 @@ const GenerateFactoryCode = ({ onBack }) => {
     
     // Validate products and their components
     formData.products.forEach((product, productIndex) => {
-      if (!product.name?.trim()) {
-        newErrors[`product_${productIndex}_name`] = 'Product name is required';
-      }
+      // Product name validation removed
       
       // Validate components for each product
       product.components.forEach((component, componentIndex) => {
