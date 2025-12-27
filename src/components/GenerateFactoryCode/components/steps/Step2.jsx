@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { getFiberTypes, getYarnTypes, getSpinningMethod, getYarnDetails } from '../../utils/yarnHelpers';
 import TEXTILE_FIBER_DATA from '../../data/textileFiberData';
-import { getFabricNames, getFabricDetails } from '../../data/fabricData';
+import { getFabricNames, getFabricDetails, getFabricFiberTypes } from '../../data/fabricData';
 import { 
   FIBER_CATEGORIES, 
   ORIGINS, 
@@ -682,23 +682,23 @@ const Step2 = ({
               </div>
               
               <div className="bg-white rounded-lg border border-gray-200" style={{ padding: '20px' }}>
-                {/* Fabric Name */}
+                {/* Fiber Type and Fabric Name */}
                 <div className="flex flex-wrap items-start gap-6" style={{ marginBottom: '20px' }}>
+                  {/* Fiber Type */}
                   <div className="flex flex-col" style={{ flex: '1 1 300px', minWidth: '280px' }}>
                     <label className="text-sm font-semibold text-gray-700 mb-2">
-                      FABRIC NAME <span className="text-red-600">*</span>
+                      FIBER TYPE <span className="text-red-600">*</span>
                     </label>
                     <select
-                      value={material.fabricName || ''}
+                      value={material.fabricFiberType || ''}
                       onChange={(e) => {
-                        handleRawMaterialChange(materialIndex, 'fabricName', e.target.value);
-                        // Auto-populate fabric details when fabric is selected
-                        if (material.fiberType && e.target.value) {
-                          const fabricDetails = getFabricDetails(material.fiberType, e.target.value);
-                          if (fabricDetails) {
-                            handleRawMaterialChange(materialIndex, 'constructionType', fabricDetails.constructionType || '');
-                            handleRawMaterialChange(materialIndex, 'weaveKnitType', fabricDetails.weaveKnitType || '');
-                          }
+                        const selectedFiberType = e.target.value;
+                        handleRawMaterialChange(materialIndex, 'fabricFiberType', selectedFiberType);
+                        // Clear fabric name when fiber type changes
+                        if (selectedFiberType !== material.fabricFiberType) {
+                          handleRawMaterialChange(materialIndex, 'fabricName', '');
+                          handleRawMaterialChange(materialIndex, 'constructionType', '');
+                          handleRawMaterialChange(materialIndex, 'weaveKnitType', '');
                         }
                       }}
                       className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
@@ -710,8 +710,49 @@ const Step2 = ({
                         e.target.style.boxShadow = '';
                       }}
                     >
-                      <option value="">Select Fabric Name</option>
-                      {material.fiberType && getFabricNames(material.fiberType).map(fabric => (
+                      <option value="">Select Fiber Type</option>
+                      {getFabricFiberTypes().map(fiberType => (
+                        <option key={fiberType} value={fiberType}>{fiberType}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Fabric Name */}
+                  <div className="flex flex-col" style={{ flex: '1 1 300px', minWidth: '280px' }}>
+                    <label className="text-sm font-semibold text-gray-700 mb-2">
+                      FABRIC NAME <span className="text-red-600">*</span>
+                    </label>
+                    <select
+                      value={material.fabricName || ''}
+                      onChange={(e) => {
+                        handleRawMaterialChange(materialIndex, 'fabricName', e.target.value);
+                        // Auto-populate fabric details when fabric is selected
+                        if (material.fabricFiberType && e.target.value) {
+                          const fabricDetails = getFabricDetails(material.fabricFiberType, e.target.value);
+                          if (fabricDetails) {
+                            handleRawMaterialChange(materialIndex, 'constructionType', fabricDetails.constructionType || '');
+                            handleRawMaterialChange(materialIndex, 'weaveKnitType', fabricDetails.weaveKnitType || '');
+                          }
+                        }
+                      }}
+                      disabled={!material.fabricFiberType}
+                      className={`border-2 rounded-lg text-sm transition-all ${
+                        !material.fabricFiberType 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                      }`}
+                      style={{ padding: '10px 14px', height: '44px' }}
+                      onFocus={(e) => {
+                        if (material.fabricFiberType) {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                        }
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.boxShadow = '';
+                      }}
+                    >
+                      <option value="">{material.fabricFiberType ? 'Select Fabric Name' : 'Select Fiber Type First'}</option>
+                      {material.fabricFiberType && getFabricNames(material.fabricFiberType).map(fabric => (
                         <option key={fabric} value={fabric}>{fabric}</option>
                       ))}
                     </select>

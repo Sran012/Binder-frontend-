@@ -27,6 +27,7 @@ export const initializeRawMaterials = (formData) => {
         // Advanced Filter Fields
         showAdvancedFilter: false,
         // Fabric Specifications Fields
+        fabricFiberType: '',
         fabricName: '',
         fabricComposition: '',
         gsm: '',

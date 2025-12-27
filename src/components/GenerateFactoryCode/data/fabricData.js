@@ -511,6 +511,10 @@ const FABRIC_DATA = {
 };
 
 // Helper functions
+export const getFabricFiberTypes = () => {
+  return Object.keys(FABRIC_DATA);
+};
+
 export const getFabricNames = (fiberType) => {
   if (!fiberType || !FABRIC_DATA[fiberType]) return [];
   return Object.keys(FABRIC_DATA[fiberType]);
