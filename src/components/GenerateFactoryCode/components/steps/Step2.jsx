@@ -1,7 +1,31 @@
 import { useEffect, useRef } from 'react';
-import { getFiberTypes, getYarnTypes, getSpinningMethod, getYarnDetails } from '../../utils/yarnHelpers';
+import { 
+  getFiberTypes, 
+  getYarnTypes, 
+  getSpinningMethod, 
+  getYarnDetails,
+  getYarnCompositionOptions,
+  getYarnCountRangeOptions,
+  getYarnDoublingOptions,
+  getYarnPlyOptions,
+  getYarnSpinningMethodOptions,
+  getYarnWindingOptions
+} from '../../utils/yarnHelpers';
 import TEXTILE_FIBER_DATA from '../../data/textileFiberData';
-import { getFabricNames, getFabricDetails, getFabricFiberTypes } from '../../data/fabricData';
+import { 
+  getTextileFabricFiberTypes, 
+  getTextileFabricNames, 
+  getTextileFabricDetails,
+  getAllCompositions,
+  getAllConstructionTypes,
+  getAllWeaveKnitTypes,
+  getAllApprovalOptions,
+  getFabricCompositionOptions,
+  getFabricConstructionTypeOptions,
+  getFabricWeaveKnitTypeOptions,
+  getFabricApprovalOptions
+} from '../../data/textileFabricHelpers';
+import SearchableDropdown from '../SearchableDropdown';
 import { 
   FIBER_CATEGORIES, 
   ORIGINS, 
@@ -293,10 +317,9 @@ const Step2 = ({
                     <label className="text-sm font-semibold text-gray-700 mb-2">
                       FIBER TYPE
                     </label>
-                    <select
+                    <SearchableDropdown
                       value={material.fiberType || ''}
-                      onChange={(e) => {
-                        const selectedFiberType = e.target.value;
+                      onChange={(selectedFiberType) => {
                         handleRawMaterialChange(materialIndex, 'fiberType', selectedFiberType);
                         // Reset yarn type when fiber type changes
                         if (selectedFiberType !== material.fiberType) {
@@ -305,20 +328,15 @@ const Step2 = ({
                           handleRawMaterialChange(materialIndex, 'spinningType', '');
                         }
                       }}
-                      className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                      style={{ padding: '10px 14px', width: '200px', height: '44px' }}
+                      options={getFiberTypes()}
+                      placeholder="Select or type Fiber Type"
                       onFocus={(e) => {
                         e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                       }}
                       onBlur={(e) => {
                         e.target.style.boxShadow = '';
                       }}
-                    >
-                      <option value="">Select Fiber Type</option>
-                      {getFiberTypes().map(fiberType => (
-                        <option key={fiberType} value={fiberType}>{fiberType}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   
                   {/* Yarn Type Dropdown */}
@@ -326,27 +344,24 @@ const Step2 = ({
                     <label className="text-sm font-semibold text-gray-700 mb-2">
                       YARN TYPE
                     </label>
-                    <select
+                    <SearchableDropdown
                       value={material.yarnType || ''}
-                      onChange={(e) => {
-                        const selectedYarnType = e.target.value;
+                      onChange={(selectedYarnType) => {
                         handleRawMaterialChange(materialIndex, 'yarnType', selectedYarnType);
-                        // Auto-populate only spinning method and type when yarn type is selected
-                        if (selectedYarnType && material.fiberType) {
-                          const details = getYarnDetails(material.fiberType, selectedYarnType);
-                          if (details && details.spinningMethod) {
-                            handleRawMaterialChange(materialIndex, 'spinningMethod', details.spinningMethod);
-                            handleRawMaterialChange(materialIndex, 'spinningType', details.spinningMethod);
-                          }
+                        // Clear dependent fields when yarn type changes
+                        if (selectedYarnType !== material.yarnType) {
+                          handleRawMaterialChange(materialIndex, 'yarnComposition', '');
+                          handleRawMaterialChange(materialIndex, 'yarnCountRange', '');
+                          handleRawMaterialChange(materialIndex, 'yarnDoublingOptions', '');
+                          handleRawMaterialChange(materialIndex, 'yarnPlyOptions', '');
+                          handleRawMaterialChange(materialIndex, 'spinningMethod', '');
+                          handleRawMaterialChange(materialIndex, 'spinningType', '');
+                          handleRawMaterialChange(materialIndex, 'windingOptions', '');
                         }
                       }}
+                      options={material.fiberType ? getYarnTypes(material.fiberType) : []}
+                      placeholder={material.fiberType ? 'Select or type Yarn Type' : 'Select Fiber Type First'}
                       disabled={!material.fiberType}
-                      className={`border-2 rounded-lg text-sm transition-all ${
-                        !material.fiberType 
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                          : 'bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                      }`}
-                      style={{ padding: '10px 14px', width: '200px', height: '44px' }}
                       onFocus={(e) => {
                         if (material.fiberType) {
                           e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
@@ -355,12 +370,7 @@ const Step2 = ({
                       onBlur={(e) => {
                         e.target.style.boxShadow = '';
                       }}
-                    >
-                      <option value="">{material.fiberType ? 'Select Yarn Type' : 'Select Fiber Type First'}</option>
-                      {getYarnTypes(material.fiberType).map(yarnType => (
-                        <option key={yarnType} value={yarnType}>{yarnType}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
                 
@@ -379,13 +389,20 @@ const Step2 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2">
                             COMPOSITION <span className="text-red-600">*</span>
                           </label>
-                          <input
-                            type="text"
+                          <SearchableDropdown
                             value={material.yarnComposition || ''}
-                            onChange={(e) => handleRawMaterialChange(materialIndex, 'yarnComposition', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
-                            placeholder="e.g., 100% Cotton"
+                            onChange={(value) => handleRawMaterialChange(materialIndex, 'yarnComposition', value)}
+                            options={material.fiberType && material.yarnType 
+                              ? getYarnCompositionOptions(material.fiberType, material.yarnType)
+                              : []}
+                            placeholder={material.fiberType && material.yarnType ? "Select or type Composition" : "Select Yarn Type First"}
+                            disabled={!material.fiberType || !material.yarnType}
+                            onFocus={(e) => {
+                              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
                           />
                         </div>
                         
@@ -393,13 +410,20 @@ const Step2 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2">
                             COUNT RANGE <span className="text-red-600">*</span>
                           </label>
-                          <input
-                            type="text"
+                          <SearchableDropdown
                             value={material.yarnCountRange || ''}
-                            onChange={(e) => handleRawMaterialChange(materialIndex, 'yarnCountRange', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
-                            placeholder="e.g., 6-40"
+                            onChange={(value) => handleRawMaterialChange(materialIndex, 'yarnCountRange', value)}
+                            options={material.fiberType && material.yarnType 
+                              ? getYarnCountRangeOptions(material.fiberType, material.yarnType)
+                              : []}
+                            placeholder={material.fiberType && material.yarnType ? "Select or type Count Range" : "Select Yarn Type First"}
+                            disabled={!material.fiberType || !material.yarnType}
+                            onFocus={(e) => {
+                              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
                           />
                         </div>
                         
@@ -407,13 +431,20 @@ const Step2 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2">
                             DOUBLING OPTIONS <span className="text-red-600">*</span>
                           </label>
-                          <input
-                            type="text"
+                          <SearchableDropdown
                             value={material.yarnDoublingOptions || ''}
-                            onChange={(e) => handleRawMaterialChange(materialIndex, 'yarnDoublingOptions', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
-                            placeholder="e.g., Single, 2-ply"
+                            onChange={(value) => handleRawMaterialChange(materialIndex, 'yarnDoublingOptions', value)}
+                            options={material.fiberType && material.yarnType 
+                              ? getYarnDoublingOptions(material.fiberType, material.yarnType)
+                              : []}
+                            placeholder={material.fiberType && material.yarnType ? "Select or type Doubling Options" : "Select Yarn Type First"}
+                            disabled={!material.fiberType || !material.yarnType}
+                            onFocus={(e) => {
+                              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
                           />
                         </div>
                         
@@ -421,13 +452,20 @@ const Step2 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2">
                             PLY OPTIONS <span className="text-red-600">*</span>
                           </label>
-                          <input
-                            type="text"
+                          <SearchableDropdown
                             value={material.yarnPlyOptions || ''}
-                            onChange={(e) => handleRawMaterialChange(materialIndex, 'yarnPlyOptions', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
-                            placeholder="e.g., 1, 2, 3, 4"
+                            onChange={(value) => handleRawMaterialChange(materialIndex, 'yarnPlyOptions', value)}
+                            options={material.fiberType && material.yarnType 
+                              ? getYarnPlyOptions(material.fiberType, material.yarnType)
+                              : []}
+                            placeholder={material.fiberType && material.yarnType ? "Select or type Ply Options" : "Select Yarn Type First"}
+                            disabled={!material.fiberType || !material.yarnType}
+                            onFocus={(e) => {
+                              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
                           />
                         </div>
                         
@@ -448,12 +486,20 @@ const Step2 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2">
                             WINDING OPTIONS
                           </label>
-                          <input
-                            type="text"
-                            value={details.windingOptions || ''}
-                            readOnly
-                            className="border-2 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
-                            style={{ padding: '10px 14px', height: '44px', borderColor: '#e5e7eb' }}
+                          <SearchableDropdown
+                            value={material.windingOptions || details.windingOptions || ''}
+                            onChange={(value) => handleRawMaterialChange(materialIndex, 'windingOptions', value)}
+                            options={material.fiberType && material.yarnType 
+                              ? getYarnWindingOptions(material.fiberType, material.yarnType)
+                              : []}
+                            placeholder={material.fiberType && material.yarnType ? "Select or type Winding Options" : "Select Yarn Type First"}
+                            disabled={!material.fiberType || !material.yarnType}
+                            onFocus={(e) => {
+                              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
                           />
                         </div>
                         
@@ -475,23 +521,18 @@ const Step2 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2">
                             APPROVAL
                           </label>
-                          <select
+                          <SearchableDropdown
                             value={material.approval || ''}
-                            onChange={(e) => handleRawMaterialChange(materialIndex, 'approval', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
+                            onChange={(value) => handleRawMaterialChange(materialIndex, 'approval', value)}
+                            options={['BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']}
+                            placeholder="Select or type Approval"
                             onFocus={(e) => {
                               e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                             }}
                             onBlur={(e) => {
                               e.target.style.boxShadow = '';
                             }}
-                          >
-                            <option value="">Select Approval</option>
-                            {['BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE'].map(option => (
-                              <option key={option} value={option}>{option}</option>
-                            ))}
-                          </select>
+                          />
                         </div>
                         
                         <div className="flex flex-col" style={{ flex: '1 1 300px', minWidth: '280px' }}>
@@ -545,18 +586,28 @@ const Step2 = ({
                           {/* <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE FILTERED~UI</h4> */}
                           
                           <div className="grid grid-cols-2 gap-6">
-                            {/* Spinning Type - Read-only, auto-populated */}
+                            {/* Spinning Type - Searchable dropdown */}
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">
                                 SPINNING TYPE
                               </label>
-                              <input
-                                type="text"
-                                value={material.spinningType || ''}
-                                readOnly
-                                className="border-2 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
-                                style={{ padding: '10px 14px', height: '44px', borderColor: '#e5e7eb' }}
-                                placeholder="Auto-populated"
+                              <SearchableDropdown
+                                value={material.spinningType || material.spinningMethod || ''}
+                                onChange={(value) => {
+                                  handleRawMaterialChange(materialIndex, 'spinningType', value);
+                                  handleRawMaterialChange(materialIndex, 'spinningMethod', value);
+                                }}
+                                options={material.fiberType && material.yarnType 
+                                  ? getYarnSpinningMethodOptions(material.fiberType, material.yarnType)
+                                  : []}
+                                placeholder={material.fiberType && material.yarnType ? "Select or type Spinning Type" : "Select Yarn Type First"}
+                                disabled={!material.fiberType || !material.yarnType}
+                                onFocus={(e) => {
+                                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.boxShadow = '';
+                                }}
                               />
                             </div>
                             
@@ -581,52 +632,42 @@ const Step2 = ({
                               />
                             </div>
                             
-                            {/* Fiber Category - Dropdown with all options */}
+                            {/* Fiber Category - Searchable dropdown */}
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">
                                 FIBER CATEGORY
                               </label>
-                              <select
+                              <SearchableDropdown
                                 value={material.fiberCategory || ''}
-                                onChange={(e) => handleRawMaterialChange(materialIndex, 'fiberCategory', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                onChange={(value) => handleRawMaterialChange(materialIndex, 'fiberCategory', value)}
+                                options={FIBER_CATEGORIES}
+                                placeholder="Select or type Fiber Category"
                                 onFocus={(e) => {
                                   e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                                 }}
                                 onBlur={(e) => {
                                   e.target.style.boxShadow = '';
                                 }}
-                              >
-                                <option value="">Select Fiber Category</option>
-                                {FIBER_CATEGORIES.map(category => (
-                                  <option key={category} value={category}>{category}</option>
-                                ))}
-                              </select>
+                              />
                             </div>
                             
-                            {/* Origin - Dropdown with all options */}
+                            {/* Origin - Searchable dropdown */}
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">
                                 ORIGIN
                               </label>
-                              <select
+                              <SearchableDropdown
                                 value={material.origin || ''}
-                                onChange={(e) => handleRawMaterialChange(materialIndex, 'origin', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                onChange={(value) => handleRawMaterialChange(materialIndex, 'origin', value)}
+                                options={ORIGINS}
+                                placeholder="Select or type Origin"
                                 onFocus={(e) => {
                                   e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                                 }}
                                 onBlur={(e) => {
                                   e.target.style.boxShadow = '';
                                 }}
-                              >
-                                <option value="">Select Origin</option>
-                                {ORIGINS.map(origin => (
-                                  <option key={origin} value={origin}>{origin}</option>
-                                ))}
-                              </select>
+                              />
                             </div>
                             
                             {/* Certifications (Upload Button) */}
@@ -689,32 +730,24 @@ const Step2 = ({
                     <label className="text-sm font-semibold text-gray-700 mb-2">
                       FIBER TYPE <span className="text-red-600">*</span>
                     </label>
-                    <select
+                    <SearchableDropdown
                       value={material.fabricFiberType || ''}
-                      onChange={(e) => {
-                        const selectedFiberType = e.target.value;
+                      onChange={(selectedFiberType) => {
                         handleRawMaterialChange(materialIndex, 'fabricFiberType', selectedFiberType);
                         // Clear fabric name when fiber type changes
                         if (selectedFiberType !== material.fabricFiberType) {
                           handleRawMaterialChange(materialIndex, 'fabricName', '');
-                          handleRawMaterialChange(materialIndex, 'constructionType', '');
-                          handleRawMaterialChange(materialIndex, 'weaveKnitType', '');
                         }
                       }}
-                      className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                      style={{ padding: '10px 14px', height: '44px' }}
+                      options={getTextileFabricFiberTypes()}
+                      placeholder="Select or type Fiber Type"
                       onFocus={(e) => {
                         e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                       }}
                       onBlur={(e) => {
                         e.target.style.boxShadow = '';
                       }}
-                    >
-                      <option value="">Select Fiber Type</option>
-                      {getFabricFiberTypes().map(fiberType => (
-                        <option key={fiberType} value={fiberType}>{fiberType}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   
                   {/* Fabric Name */}
@@ -722,26 +755,21 @@ const Step2 = ({
                     <label className="text-sm font-semibold text-gray-700 mb-2">
                       FABRIC NAME <span className="text-red-600">*</span>
                     </label>
-                    <select
+                    <SearchableDropdown
                       value={material.fabricName || ''}
-                      onChange={(e) => {
-                        handleRawMaterialChange(materialIndex, 'fabricName', e.target.value);
-                        // Auto-populate fabric details when fabric is selected
-                        if (material.fabricFiberType && e.target.value) {
-                          const fabricDetails = getFabricDetails(material.fabricFiberType, e.target.value);
-                          if (fabricDetails) {
-                            handleRawMaterialChange(materialIndex, 'constructionType', fabricDetails.constructionType || '');
-                            handleRawMaterialChange(materialIndex, 'weaveKnitType', fabricDetails.weaveKnitType || '');
-                          }
+                      onChange={(selectedFabricName) => {
+                        handleRawMaterialChange(materialIndex, 'fabricName', selectedFabricName);
+                        // Clear dependent fields when fabric name changes
+                        if (selectedFabricName !== material.fabricName) {
+                          handleRawMaterialChange(materialIndex, 'fabricComposition', '');
+                          handleRawMaterialChange(materialIndex, 'constructionType', '');
+                          handleRawMaterialChange(materialIndex, 'weaveKnitType', '');
+                          handleRawMaterialChange(materialIndex, 'fabricApproval', '');
                         }
                       }}
+                      options={material.fabricFiberType ? getTextileFabricNames(material.fabricFiberType) : []}
+                      placeholder={material.fabricFiberType ? 'Select or type Fabric Name' : 'Select Fiber Type First'}
                       disabled={!material.fabricFiberType}
-                      className={`border-2 rounded-lg text-sm transition-all ${
-                        !material.fabricFiberType 
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                          : 'bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                      }`}
-                      style={{ padding: '10px 14px', height: '44px' }}
                       onFocus={(e) => {
                         if (material.fabricFiberType) {
                           e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
@@ -750,12 +778,7 @@ const Step2 = ({
                       onBlur={(e) => {
                         e.target.style.boxShadow = '';
                       }}
-                    >
-                      <option value="">{material.fabricFiberType ? 'Select Fabric Name' : 'Select Fiber Type First'}</option>
-                      {material.fabricFiberType && getFabricNames(material.fabricFiberType).map(fabric => (
-                        <option key={fabric} value={fabric}>{fabric}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   
                   {/* Composition */}
@@ -763,13 +786,20 @@ const Step2 = ({
                     <label className="text-sm font-semibold text-gray-700 mb-2">
                       COMPOSITION <span className="text-red-600">*</span>
                     </label>
-                    <input
-                      type="text"
+                    <SearchableDropdown
                       value={material.fabricComposition || ''}
-                      onChange={(e) => handleRawMaterialChange(materialIndex, 'fabricComposition', e.target.value)}
-                      className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                      style={{ padding: '10px 14px', height: '44px' }}
-                      placeholder="e.g., 100% Cotton"
+                      onChange={(value) => handleRawMaterialChange(materialIndex, 'fabricComposition', value)}
+                      options={material.fabricFiberType && material.fabricName 
+                        ? getFabricCompositionOptions(material.fabricFiberType, material.fabricName)
+                        : []}
+                      placeholder={material.fabricFiberType && material.fabricName ? "Select or type Composition" : "Select Fabric First"}
+                      disabled={!material.fabricFiberType || !material.fabricName}
+                      onFocus={(e) => {
+                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.boxShadow = '';
+                      }}
                     />
                   </div>
                   
@@ -808,26 +838,21 @@ const Step2 = ({
                     <label className="text-sm font-semibold text-gray-700 mb-2">
                       APPROVAL
                     </label>
-                    <select
+                    <SearchableDropdown
                       value={material.fabricApproval || ''}
-                      onChange={(e) => handleRawMaterialChange(materialIndex, 'fabricApproval', e.target.value)}
-                      className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                      style={{ padding: '10px 14px', height: '44px' }}
+                      onChange={(value) => handleRawMaterialChange(materialIndex, 'fabricApproval', value)}
+                      options={material.fabricFiberType && material.fabricName 
+                        ? getFabricApprovalOptions(material.fabricFiberType, material.fabricName)
+                        : []}
+                      placeholder={material.fabricFiberType && material.fabricName ? "Select or type Approval" : "Select Fabric First"}
+                      disabled={!material.fabricFiberType || !material.fabricName}
                       onFocus={(e) => {
                         e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                       }}
                       onBlur={(e) => {
                         e.target.style.boxShadow = '';
                       }}
-                    >
-                      <option value="">Select Approval</option>
-                      <option value="BUYER'S">BUYER'S</option>
-                      <option value="PROTO">PROTO</option>
-                      <option value="FIT">FIT</option>
-                      <option value="SIZE SET">SIZE SET</option>
-                      <option value="PP">PP</option>
-                      <option value="TOP SAMPLE">TOP SAMPLE</option>
-                    </select>
+                    />
                   </div>
                   
                   {/* Remarks */}
@@ -882,33 +907,47 @@ const Step2 = ({
                     {/* <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE FILTERED~UI</h4> */}
                     
                     <div className="grid grid-cols-2 gap-6">
-                      {/* Construction Type - Read-only, auto-populated */}
+                      {/* Construction Type - Searchable dropdown */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">
                           CONSTRUCTION TYPE
                         </label>
-                        <input
-                          type="text"
+                        <SearchableDropdown
                           value={material.constructionType || ''}
-                          readOnly
-                          className="border-2 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
-                          style={{ padding: '10px 14px', height: '44px', borderColor: '#e5e7eb' }}
-                          placeholder="Auto-populated"
+                          onChange={(value) => handleRawMaterialChange(materialIndex, 'constructionType', value)}
+                          options={material.fabricFiberType && material.fabricName 
+                            ? getFabricConstructionTypeOptions(material.fabricFiberType, material.fabricName)
+                            : []}
+                          placeholder={material.fabricFiberType && material.fabricName ? "Select or type Construction Type" : "Select Fabric First"}
+                          disabled={!material.fabricFiberType || !material.fabricName}
+                          onFocus={(e) => {
+                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.boxShadow = '';
+                          }}
                         />
                       </div>
                       
-                      {/* Weave/Knit Type - Read-only, auto-populated */}
+                      {/* Weave/Knit Type - Searchable dropdown */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">
                           WEAVE/KNIT TYPE
                         </label>
-                        <input
-                          type="text"
+                        <SearchableDropdown
                           value={material.weaveKnitType || ''}
-                          readOnly
-                          className="border-2 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
-                          style={{ padding: '10px 14px', height: '44px', borderColor: '#e5e7eb' }}
-                          placeholder="Auto-populated"
+                          onChange={(value) => handleRawMaterialChange(materialIndex, 'weaveKnitType', value)}
+                          options={material.fabricFiberType && material.fabricName 
+                            ? getFabricWeaveKnitTypeOptions(material.fabricFiberType, material.fabricName)
+                            : []}
+                          placeholder={material.fabricFiberType && material.fabricName ? "Select or type Weave/Knit Type" : "Select Fabric First"}
+                          disabled={!material.fabricFiberType || !material.fabricName}
+                          onFocus={(e) => {
+                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.boxShadow = '';
+                          }}
                         />
                       </div>
                       
@@ -917,26 +956,18 @@ const Step2 = ({
                         <label className="text-sm font-semibold text-gray-700 mb-2">
                           MACHINE TYPE
                         </label>
-                        <select
+                        <SearchableDropdown
                           value={material.fabricMachineType || ''}
-                          onChange={(e) => handleRawMaterialChange(materialIndex, 'fabricMachineType', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
+                          onChange={(value) => handleRawMaterialChange(materialIndex, 'fabricMachineType', value)}
+                          options={['Powerloom', 'Handloom', 'Circular Knitting', 'Flatbed Knitting', 'Warp Knitting', 'Others']}
+                          placeholder="Select or type Machine Type"
                           onFocus={(e) => {
                             e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                           }}
                           onBlur={(e) => {
                             e.target.style.boxShadow = '';
                           }}
-                        >
-                          <option value="">Select Machine Type</option>
-                          <option value="Powerloom">Powerloom</option>
-                          <option value="Handloom">Handloom</option>
-                          <option value="Circular Knitting">Circular Knitting</option>
-                          <option value="Flatbed Knitting">Flatbed Knitting</option>
-                          <option value="Warp Knitting">Warp Knitting</option>
-                          <option value="Others">Others</option>
-                        </select>
+                        />
                       </div>
                       
                       {/* Testing Requirements */}
@@ -960,52 +991,42 @@ const Step2 = ({
                         />
                       </div>
                       
-                      {/* Fiber Category - Dropdown with all options */}
+                      {/* Fiber Category - Searchable dropdown */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">
                           FIBER CATEGORY
                         </label>
-                        <select
+                        <SearchableDropdown
                           value={material.fabricFiberCategory || ''}
-                          onChange={(e) => handleRawMaterialChange(materialIndex, 'fabricFiberCategory', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
+                          onChange={(value) => handleRawMaterialChange(materialIndex, 'fabricFiberCategory', value)}
+                          options={FIBER_CATEGORIES}
+                          placeholder="Select or type Fiber Category"
                           onFocus={(e) => {
                             e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                           }}
                           onBlur={(e) => {
                             e.target.style.boxShadow = '';
                           }}
-                        >
-                          <option value="">Select Fiber Category</option>
-                          {FIBER_CATEGORIES.map(category => (
-                            <option key={category} value={category}>{category}</option>
-                          ))}
-                        </select>
+                        />
                       </div>
                       
-                      {/* Origin - Dropdown with all options */}
+                      {/* Origin - Searchable dropdown */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">
                           ORIGIN
                         </label>
-                        <select
+                        <SearchableDropdown
                           value={material.fabricOrigin || ''}
-                          onChange={(e) => handleRawMaterialChange(materialIndex, 'fabricOrigin', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
+                          onChange={(value) => handleRawMaterialChange(materialIndex, 'fabricOrigin', value)}
+                          options={ORIGINS}
+                          placeholder="Select or type Origin"
                           onFocus={(e) => {
                             e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                           }}
                           onBlur={(e) => {
                             e.target.style.boxShadow = '';
                           }}
-                        >
-                          <option value="">Select Origin</option>
-                          {ORIGINS.map(origin => (
-                            <option key={origin} value={origin}>{origin}</option>
-                          ))}
-                        </select>
+                        />
                       </div>
                       
                       {/* Certifications (Upload Button) */}
