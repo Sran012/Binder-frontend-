@@ -269,15 +269,44 @@ const Step1 = ({
                       required
                     >
                       <option value="">Select</option>
-                      <option value="R METERS">R METERS</option>
                       <option value="CM">CM</option>
-                      <option value="Inches">Inches</option>
-                      <option value="Meter">Meter</option>
                       <option value="KGS">KGS</option>
                     </select>
                     {errors[`product_${productIndex}_component_${componentIndex}_unit`] && (
                       <span className="text-red-600 text-xs mt-1 font-medium">
                         {errors[`product_${productIndex}_component_${componentIndex}_unit`]}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col">
+                    <label className="text-sm font-semibold text-gray-700 mb-2">
+                      GSM <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={component.gsm || ''}
+                      onChange={(e) => handleComponentChange(productIndex, componentIndex, 'gsm', e.target.value)}
+                      className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                        errors[`product_${productIndex}_component_${componentIndex}_gsm`]
+                          ? 'border-red-600'
+                          : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                      }`}
+                      style={{ padding: '10px 14px', width: '120px', height: '44px' }}
+                      onFocus={(e) => {
+                        if (!errors[`product_${productIndex}_component_${componentIndex}_gsm`]) {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                        }
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.boxShadow = '';
+                      }}
+                      placeholder="e.g., 200"
+                      required
+                    />
+                    {errors[`product_${productIndex}_component_${componentIndex}_gsm`] && (
+                      <span className="text-red-600 text-xs mt-1 font-medium">
+                        {errors[`product_${productIndex}_component_${componentIndex}_gsm`]}
                       </span>
                     )}
                   </div>
@@ -314,39 +343,6 @@ const Step1 = ({
                     )}
                   </div>
 
-                  {component.unit === 'R METERS' && (
-                    <div className="flex flex-col">
-                      <label className="text-sm font-semibold text-gray-700 mb-2">
-                        GSM <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={component.gsm}
-                        onChange={(e) => handleComponentChange(productIndex, componentIndex, 'gsm', e.target.value)}
-                        className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                          errors[`product_${productIndex}_component_${componentIndex}_gsm`]
-                            ? 'border-red-600'
-                            : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                        }`}
-                        style={{ padding: '10px 14px', width: '120px', height: '44px' }}
-                        onFocus={(e) => {
-                          if (!errors[`product_${productIndex}_component_${componentIndex}_gsm`]) {
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                        }}
-                        placeholder="e.g., 200"
-                        required
-                      />
-                      {errors[`product_${productIndex}_component_${componentIndex}_gsm`] && (
-                        <span className="text-red-600 text-xs mt-1 font-medium">
-                          {errors[`product_${productIndex}_component_${componentIndex}_gsm`]}
-                        </span>
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 {/* Cutting Size */}
@@ -355,69 +351,105 @@ const Step1 = ({
                     CUTTING SIZE
                   </h4>
                   <div className="flex flex-wrap items-start gap-4">
-                    <div className="flex flex-col">
-                      <label className="text-sm font-semibold text-gray-700 mb-2">
-                        LENGTH <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={component.cuttingSize.length}
-                        onChange={(e) => handleComponentCuttingSizeChange(productIndex, componentIndex, 'length', e.target.value)}
-                        className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                          errors[`product_${productIndex}_component_${componentIndex}_cuttingLength`]
-                            ? 'border-red-600'
-                            : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                        }`}
-                        style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                        onFocus={(e) => {
-                          if (!errors[`product_${productIndex}_component_${componentIndex}_cuttingLength`]) {
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                        }}
-                        placeholder="e.g., 24"
-                        required
-                      />
-                      {errors[`product_${productIndex}_component_${componentIndex}_cuttingLength`] && (
-                        <span className="text-red-600 text-xs mt-1 font-medium">
-                          {errors[`product_${productIndex}_component_${componentIndex}_cuttingLength`]}
-                        </span>
-                      )}
-                    </div>
+                    {component.unit === 'KGS' ? (
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">
+                          CONSUMPTION <span className="text-red-600">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          value={component.cuttingSize.consumption || ''}
+                          onChange={(e) => handleComponentCuttingSizeChange(productIndex, componentIndex, 'consumption', e.target.value)}
+                          className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                            errors[`product_${productIndex}_component_${componentIndex}_cuttingConsumption`]
+                              ? 'border-red-600'
+                              : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                          }`}
+                          style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                          onFocus={(e) => {
+                            if (!errors[`product_${productIndex}_component_${componentIndex}_cuttingConsumption`]) {
+                              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                            }
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.boxShadow = '';
+                          }}
+                          placeholder="e.g., 2.5"
+                          required
+                        />
+                        {errors[`product_${productIndex}_component_${componentIndex}_cuttingConsumption`] && (
+                          <span className="text-red-600 text-xs mt-1 font-medium">
+                            {errors[`product_${productIndex}_component_${componentIndex}_cuttingConsumption`]}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-col">
+                          <label className="text-sm font-semibold text-gray-700 mb-2">
+                            LENGTH <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={component.cuttingSize.length}
+                            onChange={(e) => handleComponentCuttingSizeChange(productIndex, componentIndex, 'length', e.target.value)}
+                            className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                              errors[`product_${productIndex}_component_${componentIndex}_cuttingLength`]
+                                ? 'border-red-600'
+                                : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                            }`}
+                            style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                            onFocus={(e) => {
+                              if (!errors[`product_${productIndex}_component_${componentIndex}_cuttingLength`]) {
+                                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                              }
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
+                            placeholder="e.g., 24"
+                            required
+                          />
+                          {errors[`product_${productIndex}_component_${componentIndex}_cuttingLength`] && (
+                            <span className="text-red-600 text-xs mt-1 font-medium">
+                              {errors[`product_${productIndex}_component_${componentIndex}_cuttingLength`]}
+                            </span>
+                          )}
+                        </div>
 
-                    <div className="flex flex-col">
-                      <label className="text-sm font-semibold text-gray-700 mb-2">
-                        WIDTH <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={component.cuttingSize.width}
-                        onChange={(e) => handleComponentCuttingSizeChange(productIndex, componentIndex, 'width', e.target.value)}
-                        className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                          errors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`]
-                            ? 'border-red-600'
-                            : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                        }`}
-                        style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                        onFocus={(e) => {
-                          if (!errors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`]) {
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                        }}
-                        placeholder="e.g., 18"
-                        required
-                      />
-                      {errors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`] && (
-                        <span className="text-red-600 text-xs mt-1 font-medium">
-                          {errors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`]}
-                        </span>
-                      )}
-                    </div>
+                        <div className="flex flex-col">
+                          <label className="text-sm font-semibold text-gray-700 mb-2">
+                            WIDTH <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={component.cuttingSize.width}
+                            onChange={(e) => handleComponentCuttingSizeChange(productIndex, componentIndex, 'width', e.target.value)}
+                            className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                              errors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`]
+                                ? 'border-red-600'
+                                : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                            }`}
+                            style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                            onFocus={(e) => {
+                              if (!errors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`]) {
+                                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                              }
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
+                            placeholder="e.g., 18"
+                            required
+                          />
+                          {errors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`] && (
+                            <span className="text-red-600 text-xs mt-1 font-medium">
+                              {errors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`]}
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -427,69 +459,105 @@ const Step1 = ({
                     SEW SIZE
                   </h4>
                   <div className="flex flex-wrap items-start gap-4">
-                    <div className="flex flex-col">
-                      <label className="text-sm font-semibold text-gray-700 mb-2">
-                        LENGTH <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={component.sewSize.length}
-                        onChange={(e) => handleComponentSewSizeChange(productIndex, componentIndex, 'length', e.target.value)}
-                        className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                          errors[`product_${productIndex}_component_${componentIndex}_sewLength`]
-                            ? 'border-red-600'
-                            : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                        }`}
-                        style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                        onFocus={(e) => {
-                          if (!errors[`product_${productIndex}_component_${componentIndex}_sewLength`]) {
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                        }}
-                        placeholder="e.g., 22"
-                        required
-                      />
-                      {errors[`product_${productIndex}_component_${componentIndex}_sewLength`] && (
-                        <span className="text-red-600 text-xs mt-1 font-medium">
-                          {errors[`product_${productIndex}_component_${componentIndex}_sewLength`]}
-                        </span>
-                      )}
-                    </div>
+                    {component.unit === 'KGS' ? (
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">
+                          CONSUMPTION <span className="text-red-600">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          value={component.sewSize.consumption || ''}
+                          onChange={(e) => handleComponentSewSizeChange(productIndex, componentIndex, 'consumption', e.target.value)}
+                          className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                            errors[`product_${productIndex}_component_${componentIndex}_sewConsumption`]
+                              ? 'border-red-600'
+                              : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                          }`}
+                          style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                          onFocus={(e) => {
+                            if (!errors[`product_${productIndex}_component_${componentIndex}_sewConsumption`]) {
+                              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                            }
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.boxShadow = '';
+                          }}
+                          placeholder="e.g., 2.3"
+                          required
+                        />
+                        {errors[`product_${productIndex}_component_${componentIndex}_sewConsumption`] && (
+                          <span className="text-red-600 text-xs mt-1 font-medium">
+                            {errors[`product_${productIndex}_component_${componentIndex}_sewConsumption`]}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-col">
+                          <label className="text-sm font-semibold text-gray-700 mb-2">
+                            LENGTH <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={component.sewSize.length}
+                            onChange={(e) => handleComponentSewSizeChange(productIndex, componentIndex, 'length', e.target.value)}
+                            className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                              errors[`product_${productIndex}_component_${componentIndex}_sewLength`]
+                                ? 'border-red-600'
+                                : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                            }`}
+                            style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                            onFocus={(e) => {
+                              if (!errors[`product_${productIndex}_component_${componentIndex}_sewLength`]) {
+                                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                              }
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
+                            placeholder="e.g., 22"
+                            required
+                          />
+                          {errors[`product_${productIndex}_component_${componentIndex}_sewLength`] && (
+                            <span className="text-red-600 text-xs mt-1 font-medium">
+                              {errors[`product_${productIndex}_component_${componentIndex}_sewLength`]}
+                            </span>
+                          )}
+                        </div>
 
-                    <div className="flex flex-col">
-                      <label className="text-sm font-semibold text-gray-700 mb-2">
-                        WIDTH <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={component.sewSize.width}
-                        onChange={(e) => handleComponentSewSizeChange(productIndex, componentIndex, 'width', e.target.value)}
-                        className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                          errors[`product_${productIndex}_component_${componentIndex}_sewWidth`]
-                            ? 'border-red-600'
-                            : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                        }`}
-                        style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                        onFocus={(e) => {
-                          if (!errors[`product_${productIndex}_component_${componentIndex}_sewWidth`]) {
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                        }}
-                        placeholder="e.g., 16"
-                        required
-                      />
-                      {errors[`product_${productIndex}_component_${componentIndex}_sewWidth`] && (
-                        <span className="text-red-600 text-xs mt-1 font-medium">
-                          {errors[`product_${productIndex}_component_${componentIndex}_sewWidth`]}
-                        </span>
-                      )}
-                    </div>
+                        <div className="flex flex-col">
+                          <label className="text-sm font-semibold text-gray-700 mb-2">
+                            WIDTH <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={component.sewSize.width}
+                            onChange={(e) => handleComponentSewSizeChange(productIndex, componentIndex, 'width', e.target.value)}
+                            className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                              errors[`product_${productIndex}_component_${componentIndex}_sewWidth`]
+                                ? 'border-red-600'
+                                : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                            }`}
+                            style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                            onFocus={(e) => {
+                              if (!errors[`product_${productIndex}_component_${componentIndex}_sewWidth`]) {
+                                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                              }
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.boxShadow = '';
+                            }}
+                            placeholder="e.g., 16"
+                            required
+                          />
+                          {errors[`product_${productIndex}_component_${componentIndex}_sewWidth`] && (
+                            <span className="text-red-600 text-xs mt-1 font-medium">
+                              {errors[`product_${productIndex}_component_${componentIndex}_sewWidth`]}
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

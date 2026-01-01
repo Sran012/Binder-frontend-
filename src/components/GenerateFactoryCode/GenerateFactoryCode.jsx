@@ -744,25 +744,41 @@ const GenerateFactoryCode = ({ onBack }) => {
         if (!component.unit?.trim()) {
           newErrors[`product_${productIndex}_component_${componentIndex}_unit`] = 'Unit is required';
         }
-        if (component.unit === 'R METERS' && !component.gsm && component.gsm !== 0) {
-          newErrors[`product_${productIndex}_component_${componentIndex}_gsm`] = 'GSM is required when unit is R METERS';
+        if (!component.gsm && component.gsm !== 0) {
+          newErrors[`product_${productIndex}_component_${componentIndex}_gsm`] = 'GSM is required';
         }
         if (!component.wastage && component.wastage !== 0) {
           newErrors[`product_${productIndex}_component_${componentIndex}_wastage`] = 'Wastage is required';
         }
         // Validate cutting size for each component
-        if (!component.cuttingSize.length && component.cuttingSize.length !== 0) {
-          newErrors[`product_${productIndex}_component_${componentIndex}_cuttingLength`] = 'Cutting Length is required';
-        }
-        if (!component.cuttingSize.width && component.cuttingSize.width !== 0) {
-          newErrors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`] = 'Cutting Width is required';
+        if (component.unit === 'KGS') {
+          // For KGS, validate consumption field
+          if (!component.cuttingSize.consumption && component.cuttingSize.consumption !== 0) {
+            newErrors[`product_${productIndex}_component_${componentIndex}_cuttingConsumption`] = 'Cutting Consumption is required';
+          }
+        } else {
+          // For CM, validate length and width
+          if (!component.cuttingSize.length && component.cuttingSize.length !== 0) {
+            newErrors[`product_${productIndex}_component_${componentIndex}_cuttingLength`] = 'Cutting Length is required';
+          }
+          if (!component.cuttingSize.width && component.cuttingSize.width !== 0) {
+            newErrors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`] = 'Cutting Width is required';
+          }
         }
         // Validate sew size for each component
-        if (!component.sewSize.length && component.sewSize.length !== 0) {
-          newErrors[`product_${productIndex}_component_${componentIndex}_sewLength`] = 'Length is required';
-        }
-        if (!component.sewSize.width && component.sewSize.width !== 0) {
-          newErrors[`product_${productIndex}_component_${componentIndex}_sewWidth`] = 'Width is required';
+        if (component.unit === 'KGS') {
+          // For KGS, validate consumption field
+          if (!component.sewSize.consumption && component.sewSize.consumption !== 0) {
+            newErrors[`product_${productIndex}_component_${componentIndex}_sewConsumption`] = 'Sew Consumption is required';
+          }
+        } else {
+          // For CM, validate length and width
+          if (!component.sewSize.length && component.sewSize.length !== 0) {
+            newErrors[`product_${productIndex}_component_${componentIndex}_sewLength`] = 'Length is required';
+          }
+          if (!component.sewSize.width && component.sewSize.width !== 0) {
+            newErrors[`product_${productIndex}_component_${componentIndex}_sewWidth`] = 'Width is required';
+          }
         }
       });
     });
@@ -797,11 +813,25 @@ const GenerateFactoryCode = ({ onBack }) => {
       const updatedProducts = [...stepData.products];
       updatedProducts[productIndex] = {
         ...updatedProducts[productIndex],
-        components: updatedProducts[productIndex].components.map((comp, idx) => 
-          idx === componentIndex 
-            ? { ...comp, [field]: value, ...(field === 'unit' && value !== 'R METERS' ? { gsm: '' } : {}) }
-            : comp
-        )
+        components: updatedProducts[productIndex].components.map((comp, idx) => {
+          if (idx === componentIndex) {
+            const updatedComp = { ...comp, [field]: value };
+            // When unit changes, clear size fields appropriately
+            if (field === 'unit') {
+              if (value === 'KGS') {
+                // Clear length/width, set consumption to empty
+                updatedComp.cuttingSize = { consumption: '' };
+                updatedComp.sewSize = { consumption: '' };
+              } else if (value === 'CM') {
+                // Clear consumption, set length/width to empty
+                updatedComp.cuttingSize = { length: '', width: '' };
+                updatedComp.sewSize = { length: '', width: '' };
+              }
+            }
+            return updatedComp;
+          }
+          return comp;
+        })
       };
       return { ...stepData, products: updatedProducts };
     });
@@ -815,11 +845,18 @@ const GenerateFactoryCode = ({ onBack }) => {
         return newErrors;
       });
     }
-    // Clear GSM error when unit changes
+    // Clear size-related errors when unit changes
     if (field === 'unit') {
       setErrors(prev => {
         const newErrors = { ...prev };
+        // Clear all size-related errors
         delete newErrors[`product_${productIndex}_component_${componentIndex}_gsm`];
+        delete newErrors[`product_${productIndex}_component_${componentIndex}_cuttingLength`];
+        delete newErrors[`product_${productIndex}_component_${componentIndex}_cuttingWidth`];
+        delete newErrors[`product_${productIndex}_component_${componentIndex}_cuttingConsumption`];
+        delete newErrors[`product_${productIndex}_component_${componentIndex}_sewLength`];
+        delete newErrors[`product_${productIndex}_component_${componentIndex}_sewWidth`];
+        delete newErrors[`product_${productIndex}_component_${componentIndex}_sewConsumption`];
         return newErrors;
       });
     }
@@ -846,7 +883,9 @@ const GenerateFactoryCode = ({ onBack }) => {
     });
     
     // Clear error
-    const errorKey = `product_${productIndex}_component_${componentIndex}_cutting${field.charAt(0).toUpperCase() + field.slice(1)}`;
+    const errorKey = field === 'consumption' 
+      ? `product_${productIndex}_component_${componentIndex}_cuttingConsumption`
+      : `product_${productIndex}_component_${componentIndex}_cutting${field.charAt(0).toUpperCase() + field.slice(1)}`;
     if (errors[errorKey]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -877,7 +916,9 @@ const GenerateFactoryCode = ({ onBack }) => {
     });
     
     // Clear error
-    const errorKey = `product_${productIndex}_component_${componentIndex}_sew${field.charAt(0).toUpperCase() + field.slice(1)}`;
+    const errorKey = field === 'consumption'
+      ? `product_${productIndex}_component_${componentIndex}_sewConsumption`
+      : `product_${productIndex}_component_${componentIndex}_sew${field.charAt(0).toUpperCase() + field.slice(1)}`;
     if (errors[errorKey]) {
       setErrors(prev => {
         const newErrors = { ...prev };
