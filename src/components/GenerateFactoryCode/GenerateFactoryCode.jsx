@@ -13,6 +13,7 @@ import Step5 from './components/steps/Step5';
 const GenerateFactoryCode = ({ onBack }) => {
   const scrollContainerRef = useRef(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [selectedSku, setSelectedSku] = useState(0);
   const [formData, setFormData] = useState({
     // Step 0 - Multiple SKUs
     buyerCode: '',
@@ -24,6 +25,158 @@ const GenerateFactoryCode = ({ onBack }) => {
       deliveryDueDate: '',
       image: null,
       imagePreview: null,
+      stepData: {
+        products: [{
+          name: '',
+          components: [{
+            srNo: 1,
+            productComforter: '',
+            unit: '',
+            gsm: '',
+            wastage: '',
+            cuttingSize: { length: '', width: '' },
+            sewSize: { cns: '', length: '', width: '', netCns: '' },
+          }],
+        }],
+        rawMaterials: [],
+        consumptionMaterials: [],
+        artworkMaterials: [{
+          srNo: 1,
+          materialDescription: '',
+          netConsumption: '',
+          unit: '',
+          placement: '',
+          workOrder: '',
+          wastage: '',
+          forField: '',
+          packagingWorkOrder: '',
+          width: '',
+          size: '',
+          gsm: '',
+          artworkCategory: '',
+          specificType: '',
+          material: '',
+          sizeArtworkId: '',
+          foldType: '',
+          colours: '',
+          finishing: '',
+          testingRequirement: '',
+          lengthQuantity: '',
+          surplus: '',
+          approval: '',
+          remarks: '',
+          careSymbols: '',
+          countryOfOrigin: '',
+          manufacturerId: '',
+          language: '',
+          permanence: '',
+          sizeShape: '',
+          attachment: '',
+          content: '',
+          symbol: '',
+          certificationId: '',
+          formFactor: '',
+          chipFrequency: '',
+          coding: '',
+          adhesive: '',
+          security: '',
+          contentMandates: '',
+          fillingMaterials: '',
+          newUsedStatus: '',
+          registrationLicenses: '',
+          lawLabelType: '',
+          lawLabelMaterial: '',
+          hangTagType: '',
+          hangTagMaterial: '',
+          priceTicketType: '',
+          priceTicketMaterial: '',
+          heatTransferType: '',
+          heatTransferMaterialBase: '',
+          upcType: '',
+          upcMaterial: '',
+          sizeLabelType: '',
+          sizeLabelMaterial: '',
+          antiCounterfeitType: '',
+          antiCounterfeitMaterial: '',
+          qcLabelType: '',
+          qcLabelMaterial: '',
+          bellyBandType: '',
+          bellyBandMaterial: '',
+          closureFinish: '',
+          sealShape: '',
+          fastening: '',
+          preStringing: '',
+          application: '',
+          barcodeType: '',
+          applicationSpec: '',
+          finishHandFeel: '',
+          quality: '',
+          sizeCode: '',
+          securityFeature: '',
+          verification: '',
+          removal: '',
+          traceability: '',
+          closure: '',
+          durability: '',
+          inkType: '',
+          printQuality: '',
+          sizeFold: '',
+          referenceImage: null
+        }],
+        packaging: {
+          type: 'STANDARD',
+          casepackQty: '',
+          qtyToBePacked: 'AS_PER_PO',
+          customQty: '',
+          productSelection: '',
+          isAssortedPack: false,
+          assortedSkuLink: '',
+          artworkAndPackaging: '',
+          materials: [{
+            srNo: 1,
+            product: '',
+            components: '',
+            materialDescription: '',
+            netConsumptionPerPc: '',
+            unit: '',
+            casepack: '',
+            placement: '',
+            size: {
+              width: '',
+              length: '',
+              height: '',
+              unit: '',
+            },
+            workOrders: [
+              { workOrder: '', wastage: '', for: '' },
+              { workOrder: '', wastage: '', for: '' },
+            ],
+            totalNetConsumption: '',
+            totalWastage: '',
+            calculatedUnit: '',
+            overage: '',
+            grossConsumption: '',
+            packagingMaterialType: '',
+            noOfPlys: '',
+            jointType: '',
+            burstingStrength: '',
+            surplus: '',
+            surplusForSection: '',
+            approvalAgainst: '',
+            remarks: '',
+            guage: '',
+            printingRef: null,
+            gummingQuality: '',
+            punchHoles: '',
+            flapSize: '',
+            guageGsm: '',
+            rollWidth: '',
+            rollWidthUnit: '',
+            tapeWidth: '',
+            tapeWidthUnit: ''
+          }],
+        },
+      }
     }],
     // Step 1 - Multiple products, each with multiple components/materials with cut & sew specs
     products: [{
@@ -299,6 +452,160 @@ const GenerateFactoryCode = ({ onBack }) => {
     }
   };
 
+  // Helper to get initial step data for a new SKU
+  const getInitialStepData = () => ({
+    products: [{
+      name: '',
+      components: [{
+        srNo: 1,
+        productComforter: '',
+        unit: '',
+        gsm: '',
+        wastage: '',
+        cuttingSize: { length: '', width: '' },
+        sewSize: { cns: '', length: '', width: '', netCns: '' },
+      }],
+    }],
+    rawMaterials: [],
+    consumptionMaterials: [],
+    artworkMaterials: [{
+      srNo: 1,
+      materialDescription: '',
+      netConsumption: '',
+      unit: '',
+      placement: '',
+      workOrder: '',
+      wastage: '',
+      forField: '',
+      packagingWorkOrder: '',
+      width: '',
+      size: '',
+      gsm: '',
+      artworkCategory: '',
+      specificType: '',
+      material: '',
+      sizeArtworkId: '',
+      foldType: '',
+      colours: '',
+      finishing: '',
+      testingRequirement: '',
+      lengthQuantity: '',
+      surplus: '',
+      approval: '',
+      remarks: '',
+      careSymbols: '',
+      countryOfOrigin: '',
+      manufacturerId: '',
+      language: '',
+      permanence: '',
+      sizeShape: '',
+      attachment: '',
+      content: '',
+      symbol: '',
+      certificationId: '',
+      formFactor: '',
+      chipFrequency: '',
+      coding: '',
+      adhesive: '',
+      security: '',
+      contentMandates: '',
+      fillingMaterials: '',
+      newUsedStatus: '',
+      registrationLicenses: '',
+      lawLabelType: '',
+      lawLabelMaterial: '',
+      hangTagType: '',
+      hangTagMaterial: '',
+      priceTicketType: '',
+      priceTicketMaterial: '',
+      heatTransferType: '',
+      heatTransferMaterialBase: '',
+      upcType: '',
+      upcMaterial: '',
+      sizeLabelType: '',
+      sizeLabelMaterial: '',
+      antiCounterfeitType: '',
+      antiCounterfeitMaterial: '',
+      qcLabelType: '',
+      qcLabelMaterial: '',
+      bellyBandType: '',
+      bellyBandMaterial: '',
+      closureFinish: '',
+      sealShape: '',
+      fastening: '',
+      preStringing: '',
+      application: '',
+      barcodeType: '',
+      applicationSpec: '',
+      finishHandFeel: '',
+      quality: '',
+      sizeCode: '',
+      securityFeature: '',
+      verification: '',
+      removal: '',
+      traceability: '',
+      closure: '',
+      durability: '',
+      inkType: '',
+      printQuality: '',
+      sizeFold: '',
+      referenceImage: null
+    }],
+    packaging: {
+      type: 'STANDARD',
+      casepackQty: '',
+      qtyToBePacked: 'AS_PER_PO',
+      customQty: '',
+      productSelection: '',
+      isAssortedPack: false,
+      assortedSkuLink: '',
+      artworkAndPackaging: '',
+      materials: [{
+        srNo: 1,
+        product: '',
+        components: '',
+        materialDescription: '',
+        netConsumptionPerPc: '',
+        unit: '',
+        casepack: '',
+        placement: '',
+        size: {
+          width: '',
+          length: '',
+          height: '',
+          unit: '',
+        },
+        workOrders: [
+          { workOrder: '', wastage: '', for: '' },
+          { workOrder: '', wastage: '', for: '' },
+        ],
+        totalNetConsumption: '',
+        totalWastage: '',
+        calculatedUnit: '',
+        overage: '',
+        grossConsumption: '',
+        packagingMaterialType: '',
+        noOfPlys: '',
+        jointType: '',
+        burstingStrength: '',
+        surplus: '',
+        surplusForSection: '',
+        approvalAgainst: '',
+        remarks: '',
+        guage: '',
+        printingRef: null,
+        gummingQuality: '',
+        punchHoles: '',
+        flapSize: '',
+        guageGsm: '',
+        rollWidth: '',
+        rollWidthUnit: '',
+        tapeWidth: '',
+        tapeWidthUnit: ''
+      }],
+    },
+  });
+
   const addSku = () => {
     setFormData(prev => ({
       ...prev,
@@ -310,6 +617,7 @@ const GenerateFactoryCode = ({ onBack }) => {
         deliveryDueDate: '',
         image: null,
         imagePreview: null,
+        stepData: getInitialStepData(),
       }]
     }));
   };
@@ -321,6 +629,44 @@ const GenerateFactoryCode = ({ onBack }) => {
         skus: prev.skus.filter((_, index) => index !== skuIndex)
       }));
     }
+  };
+
+  // Helper functions to get/set selected SKU's step data
+  const getSelectedSkuStepData = () => {
+    if (!formData.skus || !formData.skus[selectedSku]) {
+      return null;
+    }
+    // Initialize stepData if it doesn't exist (for backward compatibility)
+    if (!formData.skus[selectedSku].stepData) {
+      const updatedSkus = [...formData.skus];
+      updatedSkus[selectedSku] = {
+        ...updatedSkus[selectedSku],
+        stepData: getInitialStepData()
+      };
+      setFormData(prev => ({ ...prev, skus: updatedSkus }));
+      return getInitialStepData();
+    }
+    return formData.skus[selectedSku].stepData;
+  };
+
+  const updateSelectedSkuStepData = (updater) => {
+    setFormData(prev => {
+      const updatedSkus = [...prev.skus];
+      if (!updatedSkus[selectedSku]) return prev;
+      
+      // Ensure stepData exists
+      if (!updatedSkus[selectedSku].stepData) {
+        updatedSkus[selectedSku].stepData = getInitialStepData();
+      }
+      
+      // Update stepData
+      updatedSkus[selectedSku] = {
+        ...updatedSkus[selectedSku],
+        stepData: updater(updatedSkus[selectedSku].stepData || getInitialStepData())
+      };
+      
+      return { ...prev, skus: updatedSkus };
+    });
   };
 
   // Helpers to decide if a row has any user input (for optional navigation)
@@ -378,8 +724,16 @@ const GenerateFactoryCode = ({ onBack }) => {
   const validateStep1 = () => {
     const newErrors = {};
     
+    // Get selected SKU's step data
+    const stepData = getSelectedSkuStepData();
+    if (!stepData || !stepData.products) {
+      newErrors['products'] = 'Products data is required';
+      setErrors(newErrors);
+      return false;
+    }
+    
     // Validate products and their components
-    formData.products.forEach((product, productIndex) => {
+    stepData.products.forEach((product, productIndex) => {
       // Product name validation removed
       
       // Validate components for each product
@@ -418,13 +772,13 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const handleProductNameChange = (productIndex, value) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedProducts = [...stepData.products];
       updatedProducts[productIndex] = {
         ...updatedProducts[productIndex],
         name: value
       };
-      return { ...prev, products: updatedProducts };
+      return { ...stepData, products: updatedProducts };
     });
     
     // Clear error
@@ -439,8 +793,8 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const handleComponentChange = (productIndex, componentIndex, field, value) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedProducts = [...stepData.products];
       updatedProducts[productIndex] = {
         ...updatedProducts[productIndex],
         components: updatedProducts[productIndex].components.map((comp, idx) => 
@@ -449,7 +803,7 @@ const GenerateFactoryCode = ({ onBack }) => {
             : comp
         )
       };
-      return { ...prev, products: updatedProducts };
+      return { ...stepData, products: updatedProducts };
     });
     
     // Clear error
@@ -472,8 +826,8 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const handleComponentCuttingSizeChange = (productIndex, componentIndex, field, value) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedProducts = [...stepData.products];
       updatedProducts[productIndex] = {
         ...updatedProducts[productIndex],
         components: updatedProducts[productIndex].components.map((comp, idx) => 
@@ -488,7 +842,7 @@ const GenerateFactoryCode = ({ onBack }) => {
             : comp
         )
       };
-      return { ...prev, products: updatedProducts };
+      return { ...stepData, products: updatedProducts };
     });
     
     // Clear error
@@ -503,8 +857,8 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const handleComponentSewSizeChange = (productIndex, componentIndex, field, value) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedProducts = [...stepData.products];
       updatedProducts[productIndex] = {
         ...updatedProducts[productIndex],
         components: updatedProducts[productIndex].components.map((comp, idx) => 
@@ -519,7 +873,7 @@ const GenerateFactoryCode = ({ onBack }) => {
             : comp
         )
       };
-      return { ...prev, products: updatedProducts };
+      return { ...stepData, products: updatedProducts };
     });
     
     // Clear error
@@ -534,9 +888,9 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const addProduct = () => {
-    setFormData(prev => ({
-      ...prev,
-      products: [...prev.products, {
+    updateSelectedSkuStepData((stepData) => ({
+      ...stepData,
+      products: [...stepData.products, {
         name: '',
         components: [{
           srNo: 1,
@@ -551,17 +905,21 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const removeProduct = (productIndex) => {
-    if (formData.products.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        products: prev.products.filter((_, i) => i !== productIndex)
+    const stepData = getSelectedSkuStepData();
+    if (stepData && stepData.products.length > 1) {
+      updateSelectedSkuStepData((stepData) => ({
+        ...stepData,
+        products: stepData.products.filter((_, i) => i !== productIndex)
       }));
     }
   };
 
   const addComponent = (productIndex) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
+    const stepData = getSelectedSkuStepData();
+    if (!stepData) return;
+    
+    updateSelectedSkuStepData((stepData) => {
+      const updatedProducts = [...stepData.products];
       const currentComponents = updatedProducts[productIndex].components;
       updatedProducts[productIndex] = {
         ...updatedProducts[productIndex],
@@ -575,13 +933,13 @@ const GenerateFactoryCode = ({ onBack }) => {
           sewSize: { cns: '', length: '', width: '', netCns: '' },
         }]
       };
-      return { ...prev, products: updatedProducts };
+      return { ...stepData, products: updatedProducts };
     });
   };
 
   const handleRawMaterialChange = (materialIndex, field, value) => {
-    setFormData(prev => {
-      const updatedRawMaterials = [...prev.rawMaterials];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedRawMaterials = [...(stepData.rawMaterials || [])];
       const material = updatedRawMaterials[materialIndex];
       
       // Reset child dropdowns when parent changes
@@ -615,7 +973,7 @@ const GenerateFactoryCode = ({ onBack }) => {
         };
       }
       
-      return { ...prev, rawMaterials: updatedRawMaterials };
+      return { ...stepData, rawMaterials: updatedRawMaterials };
     });
     
     // Clear error
@@ -630,8 +988,8 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const handleWorkOrderChange = (materialIndex, workOrderIndex, field, value) => {
-    setFormData(prev => {
-      const updatedRawMaterials = [...prev.rawMaterials];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedRawMaterials = [...(stepData.rawMaterials || [])];
       updatedRawMaterials[materialIndex] = {
         ...updatedRawMaterials[materialIndex],
         workOrders: updatedRawMaterials[materialIndex].workOrders.map((wo, idx) => {
@@ -776,7 +1134,7 @@ const GenerateFactoryCode = ({ onBack }) => {
           return wo;
         })
       };
-      return { ...prev, rawMaterials: updatedRawMaterials };
+      return { ...stepData, rawMaterials: updatedRawMaterials };
     });
     
     // Clear error
@@ -791,8 +1149,8 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const addWorkOrder = (materialIndex) => {
-    setFormData(prev => {
-      const updatedRawMaterials = [...prev.rawMaterials];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedRawMaterials = [...(stepData.rawMaterials || [])];
       updatedRawMaterials[materialIndex] = {
         ...updatedRawMaterials[materialIndex],
         workOrders: [...updatedRawMaterials[materialIndex].workOrders, {
@@ -843,14 +1201,15 @@ const GenerateFactoryCode = ({ onBack }) => {
           ratio: '',
         }]
       };
-      return { ...prev, rawMaterials: updatedRawMaterials };
+      return { ...stepData, rawMaterials: updatedRawMaterials };
     });
   };
 
   const validateStep3 = () => {
     const newErrors = {};
 
-    const materials = formData.consumptionMaterials || [];
+    const stepData = getSelectedSkuStepData();
+    const materials = (stepData && stepData.consumptionMaterials) || [];
     let hasFilledMaterial = false;
 
     materials.forEach((material, materialIndex) => {
@@ -882,11 +1241,11 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const handleConsumptionMaterialChange = (materialIndex, field, value) => {
-    setFormData(prev => {
-      if (!prev.consumptionMaterials || !prev.consumptionMaterials[materialIndex]) {
-        return prev;
+    updateSelectedSkuStepData((stepData) => {
+      if (!stepData.consumptionMaterials || !stepData.consumptionMaterials[materialIndex]) {
+        return stepData;
       }
-      const updatedMaterials = [...prev.consumptionMaterials];
+      const updatedMaterials = [...stepData.consumptionMaterials];
       const currentMaterial = updatedMaterials[materialIndex];
       
       // If trimAccessory changes, clear all category-specific fields
@@ -952,15 +1311,17 @@ const GenerateFactoryCode = ({ onBack }) => {
       if (field === 'wastage' || field === 'netConsumption') {
         const wastage = parseFloat(updatedMaterials[materialIndex].wastage?.replace('%', '') || updatedMaterials[materialIndex].wastage || '0') || 0;
         updatedMaterials[materialIndex].totalWastage = `${wastage}%`;
+        const overagePercentage = formData.skus[selectedSku]?.overagePercentage || '0';
+        const poQty = formData.skus[selectedSku]?.poQty || '0';
         updatedMaterials[materialIndex].grossConsumption = calculateGrossConsumption(
           updatedMaterials[materialIndex].netConsumption || '0',
           wastage,
-          prev.overagePercentage || '0',
-          prev.poQty || '0'
+          overagePercentage,
+          poQty
         );
       }
       
-      return { ...prev, consumptionMaterials: updatedMaterials };
+      return { ...stepData, consumptionMaterials: updatedMaterials };
     });
     
     // Clear error
@@ -975,11 +1336,11 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const addConsumptionMaterial = () => {
-    setFormData(prev => {
-      const newSrNo = prev.consumptionMaterials.length + 1;
+    updateSelectedSkuStepData((stepData) => {
+      const newSrNo = (stepData.consumptionMaterials || []).length + 1;
       return {
-        ...prev,
-        consumptionMaterials: [...prev.consumptionMaterials, {
+        ...stepData,
+        consumptionMaterials: [...(stepData.consumptionMaterials || []), {
           srNo: newSrNo,
           components: '',
           trimAccessory: '',
@@ -1242,10 +1603,11 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const removeConsumptionMaterial = (materialIndex) => {
-    if (formData.consumptionMaterials.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        consumptionMaterials: prev.consumptionMaterials.filter((_, i) => i !== materialIndex).map((material, i) => ({
+    const stepData = getSelectedSkuStepData();
+    if (stepData && stepData.consumptionMaterials && stepData.consumptionMaterials.length > 1) {
+      updateSelectedSkuStepData((stepData) => ({
+        ...stepData,
+        consumptionMaterials: stepData.consumptionMaterials.filter((_, i) => i !== materialIndex).map((material, i) => ({
           ...material,
           srNo: i + 1
         }))
@@ -1255,7 +1617,8 @@ const GenerateFactoryCode = ({ onBack }) => {
 
   const validateStep5 = () => {
     const newErrors = {};
-    const { packaging } = formData;
+    const stepData = getSelectedSkuStepData();
+    const packaging = (stepData && stepData.packaging) || {};
     
     if (!packaging.casepackQty?.trim()) {
       newErrors['packaging_casepackQty'] = 'Casepack Qty is required';
@@ -1321,13 +1684,14 @@ const GenerateFactoryCode = ({ onBack }) => {
   const validateStep4 = () => {
     const newErrors = {};
     
-    if (!formData.artworkMaterials || formData.artworkMaterials.length === 0) {
+    const stepData = getSelectedSkuStepData();
+    if (!stepData || !stepData.artworkMaterials || stepData.artworkMaterials.length === 0) {
       newErrors['artworkMaterials'] = 'At least one artwork material is required';
       setErrors(newErrors);
       return false;
     }
     
-    formData.artworkMaterials.forEach((material, materialIndex) => {
+    stepData.artworkMaterials.forEach((material, materialIndex) => {
       if (!material) return;
       if (!material.materialDescription?.trim()) {
         newErrors[`artworkMaterial_${materialIndex}_materialDescription`] = 'Material Description is required';
@@ -1361,11 +1725,11 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const handleArtworkMaterialChange = (materialIndex, field, value) => {
-    setFormData(prev => {
-      if (!prev.artworkMaterials || !prev.artworkMaterials[materialIndex]) {
-        return prev;
+    updateSelectedSkuStepData((stepData) => {
+      if (!stepData.artworkMaterials || !stepData.artworkMaterials[materialIndex]) {
+        return stepData;
       }
-      const updatedMaterials = [...prev.artworkMaterials];
+      const updatedMaterials = [...stepData.artworkMaterials];
       updatedMaterials[materialIndex] = {
         ...updatedMaterials[materialIndex],
         [field]: value
@@ -1407,7 +1771,7 @@ const GenerateFactoryCode = ({ onBack }) => {
         updatedMaterials[materialIndex].width = '';
         updatedMaterials[materialIndex].size = '';
       }
-      return { ...prev, artworkMaterials: updatedMaterials };
+      return { ...stepData, artworkMaterials: updatedMaterials };
     });
     
     // Clear error
@@ -1531,10 +1895,11 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const removeArtworkMaterial = (materialIndex) => {
-    if (formData.artworkMaterials && formData.artworkMaterials.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        artworkMaterials: prev.artworkMaterials.filter((_, i) => i !== materialIndex).map((material, i) => ({
+    const stepData = getSelectedSkuStepData();
+    if (stepData && stepData.artworkMaterials && stepData.artworkMaterials.length > 1) {
+      updateSelectedSkuStepData((stepData) => ({
+        ...stepData,
+        artworkMaterials: stepData.artworkMaterials.filter((_, i) => i !== materialIndex).map((material, i) => ({
           ...material,
           srNo: i + 1
         }))
@@ -1544,10 +1909,10 @@ const GenerateFactoryCode = ({ onBack }) => {
 
   // Packaging Configuration Change Handler
   const handlePackagingChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
+    updateSelectedSkuStepData((stepData) => ({
+      ...stepData,
       packaging: {
-        ...prev.packaging,
+        ...stepData.packaging,
         [field]: value,
         // Reset custom qty related fields when type changes
         ...(field === 'qtyToBePacked' && value !== 'CUSTOM_QTY' ? { customQty: '', isAssortedPack: false } : {}),
@@ -1566,8 +1931,8 @@ const GenerateFactoryCode = ({ onBack }) => {
 
   // Packaging Material Change Handler
   const handlePackagingMaterialChange = (materialIndex, field, value) => {
-    setFormData(prev => {
-      const updatedMaterials = [...prev.packaging.materials];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedMaterials = [...stepData.packaging.materials];
       
       // Clear material-specific fields when description changes
       if (field === 'materialDescription') {
@@ -1596,7 +1961,7 @@ const GenerateFactoryCode = ({ onBack }) => {
       if (['netConsumptionPerPc', 'overage'].includes(field) || field.startsWith('workOrder')) {
         const netConsumption = parseFloat(material.netConsumptionPerPc) || 0;
         const overage = parseFloat(material.overage) || 0;
-        const poQty = parseFloat(prev.poQty) || 0;
+        const poQty = parseFloat(formData.skus[selectedSku]?.poQty || '0') || 0;
         
         // Calculate total wastage from work orders
         let totalWastagePercent = 0;
@@ -1614,9 +1979,9 @@ const GenerateFactoryCode = ({ onBack }) => {
       }
       
       return {
-        ...prev,
+        ...stepData,
         packaging: {
-          ...prev.packaging,
+          ...stepData.packaging,
           materials: updatedMaterials
         }
       };
@@ -1634,8 +1999,8 @@ const GenerateFactoryCode = ({ onBack }) => {
 
   // Packaging Material Size Change Handler
   const handlePackagingMaterialSizeChange = (materialIndex, field, value) => {
-    setFormData(prev => {
-      const updatedMaterials = [...prev.packaging.materials];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedMaterials = [...stepData.packaging.materials];
       updatedMaterials[materialIndex] = {
         ...updatedMaterials[materialIndex],
         size: {
@@ -1644,9 +2009,9 @@ const GenerateFactoryCode = ({ onBack }) => {
         }
       };
       return {
-        ...prev,
+        ...stepData,
         packaging: {
-          ...prev.packaging,
+          ...stepData.packaging,
           materials: updatedMaterials
         }
       };
@@ -1684,7 +2049,7 @@ const GenerateFactoryCode = ({ onBack }) => {
       const material = updatedMaterials[materialIndex];
       const netConsumption = parseFloat(material.netConsumptionPerPc) || 0;
       const overage = parseFloat(material.overage) || 0;
-      const poQty = parseFloat(prev.poQty) || 0;
+      const poQty = parseFloat(formData.skus[selectedSku]?.poQty || '0') || 0;
       
       const baseConsumption = netConsumption * poQty;
       const wastageAmount = baseConsumption * (totalWastagePercent / 100);
@@ -1694,9 +2059,9 @@ const GenerateFactoryCode = ({ onBack }) => {
       updatedMaterials[materialIndex].grossConsumption = grossConsumption.toFixed(4);
       
       return {
-        ...prev,
+        ...stepData,
         packaging: {
-          ...prev.packaging,
+          ...stepData.packaging,
           materials: updatedMaterials
         }
       };
@@ -1714,12 +2079,12 @@ const GenerateFactoryCode = ({ onBack }) => {
 
   // Add Packaging Material
   const addPackagingMaterial = () => {
-    setFormData(prev => ({
-      ...prev,
+    updateSelectedSkuStepData((stepData) => ({
+      ...stepData,
       packaging: {
-        ...prev.packaging,
-        materials: [...prev.packaging.materials, {
-          srNo: prev.packaging.materials.length + 1,
+        ...stepData.packaging,
+        materials: [...stepData.packaging.materials, {
+          srNo: stepData.packaging.materials.length + 1,
           product: '',
           components: '',
           materialDescription: '',
@@ -1768,16 +2133,17 @@ const GenerateFactoryCode = ({ onBack }) => {
 
   // Remove Packaging Material
   const removePackagingMaterial = (materialIndex) => {
-    if (formData.packaging.materials.length > 1) {
-      setFormData(prev => {
-        const filteredMaterials = prev.packaging.materials.filter((_, i) => i !== materialIndex);
+    const stepData = getSelectedSkuStepData();
+    if (stepData && stepData.packaging.materials.length > 1) {
+      updateSelectedSkuStepData((stepData) => {
+        const filteredMaterials = stepData.packaging.materials.filter((_, i) => i !== materialIndex);
         filteredMaterials.forEach((material, i) => {
           material.srNo = i + 1;
         });
         return {
-          ...prev,
+          ...stepData,
           packaging: {
-            ...prev.packaging,
+            ...stepData.packaging,
             materials: filteredMaterials
           }
         };
@@ -1794,21 +2160,21 @@ const GenerateFactoryCode = ({ onBack }) => {
   };
 
   const removeWorkOrder = (materialIndex, workOrderIndex) => {
-    setFormData(prev => {
-      const updatedRawMaterials = [...prev.rawMaterials];
-      if (updatedRawMaterials[materialIndex].workOrders.length > 1) {
+    updateSelectedSkuStepData((stepData) => {
+      const updatedRawMaterials = [...(stepData.rawMaterials || [])];
+      if (updatedRawMaterials[materialIndex] && updatedRawMaterials[materialIndex].workOrders.length > 1) {
         updatedRawMaterials[materialIndex] = {
           ...updatedRawMaterials[materialIndex],
           workOrders: updatedRawMaterials[materialIndex].workOrders.filter((_, idx) => idx !== workOrderIndex)
         };
       }
-      return { ...prev, rawMaterials: updatedRawMaterials };
+      return { ...stepData, rawMaterials: updatedRawMaterials };
     });
   };
 
   const removeComponent = (productIndex, componentIndex) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
+    updateSelectedSkuStepData((stepData) => {
+      const updatedProducts = [...stepData.products];
       const currentComponents = updatedProducts[productIndex].components;
       if (currentComponents.length > 1) {
         const filteredComponents = currentComponents.filter((_, i) => i !== componentIndex);
@@ -1821,14 +2187,15 @@ const GenerateFactoryCode = ({ onBack }) => {
           components: filteredComponents
         };
       }
-      return { ...prev, products: updatedProducts };
+      return { ...stepData, products: updatedProducts };
     });
   };
 
   const validateStep2 = () => {
     const newErrors = {};
 
-    const materials = formData.rawMaterials || [];
+    const stepData = getSelectedSkuStepData();
+    const materials = (stepData && stepData.rawMaterials) || [];
     let hasFilledMaterial = false;
 
     materials.forEach((material, materialIndex) => {
@@ -1935,26 +2302,55 @@ const GenerateFactoryCode = ({ onBack }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Reset selected SKU when going back to step 0
+  useEffect(() => {
+    if (currentStep === 0) {
+      setSelectedSku(0);
+    } else if (currentStep > 0 && formData.skus && formData.skus.length > 0) {
+      // Ensure selectedSku is valid when moving to steps 1-5
+      if (selectedSku >= formData.skus.length) {
+        setSelectedSku(0);
+      }
+    }
+  }, [currentStep, formData.skus?.length]);
+
   const handleNext = () => {
     if (currentStep === 0) {
       if (!validateStep0()) {
         return;
+      }
+      // When moving from step 0 to step 1, ensure we have a valid SKU selected
+      if (formData.skus && formData.skus.length > 0) {
+        setSelectedSku(0);
       }
     } else if (currentStep === 1) {
       if (!validateStep1()) {
         return;
       }
       // Initialize raw materials when moving from Step 1 to Step 2
-      const rawMaterials = initializeRawMaterials(formData);
-      setFormData(prev => ({ ...prev, rawMaterials }));
+      const mergedFormData = getMergedFormData();
+      const rawMaterials = initializeRawMaterials(mergedFormData);
+      updateSelectedSkuStepData((stepData) => ({
+        ...stepData,
+        rawMaterials
+      }));
     } else if (currentStep === 2) {
       if (!validateStep2()) {
         return;
       }
       // Initialize consumption materials when moving from Step 2 to Step 3
-      if (!formData.consumptionMaterials || formData.consumptionMaterials.length === 0) {
-        const consumptionMaterials = initializeConsumptionMaterials(formData);
-        setFormData(prev => ({ ...prev, consumptionMaterials }));
+      const stepData = getSelectedSkuStepData();
+      if (!stepData || !stepData.consumptionMaterials || stepData.consumptionMaterials.length === 0) {
+        const mergedFormData = getMergedFormData();
+        const consumptionMaterials = initializeConsumptionMaterials({
+          ...mergedFormData,
+          overagePercentage: formData.skus[selectedSku]?.overagePercentage || '',
+          poQty: formData.skus[selectedSku]?.poQty || ''
+        });
+        updateSelectedSkuStepData((stepData) => ({
+          ...stepData,
+          consumptionMaterials
+        }));
       }
     } else if (currentStep === 3) {
       if (!validateStep3()) {
@@ -1997,8 +2393,35 @@ const GenerateFactoryCode = ({ onBack }) => {
     return ((currentStep + 1) / (totalSteps + 1)) * 100;
   };
 
+  // Get merged formData with selected SKU's step data for steps 1-5
+  const getMergedFormData = () => {
+    if (currentStep === 0) {
+      return formData;
+    }
+    
+    const stepData = getSelectedSkuStepData();
+    if (!stepData) {
+      return formData;
+    }
+    
+    // Merge selected SKU's step data with main formData
+    return {
+      ...formData,
+      products: stepData.products || [],
+      rawMaterials: stepData.rawMaterials || [],
+      consumptionMaterials: stepData.consumptionMaterials || [],
+      artworkMaterials: stepData.artworkMaterials || [],
+      packaging: stepData.packaging || formData.packaging,
+      // Also include SKU-specific data for calculations
+      poQty: formData.skus[selectedSku]?.poQty || formData.poQty || '',
+      overagePercentage: formData.skus[selectedSku]?.overagePercentage || formData.overagePercentage || '',
+    };
+  };
+
   const renderStepContent = () => {
     try {
+      const mergedFormData = getMergedFormData();
+      
       switch (currentStep) {
         case 0:
           return (
@@ -2015,7 +2438,7 @@ const GenerateFactoryCode = ({ onBack }) => {
         case 1:
           return (
             <Step1
-              formData={formData}
+              formData={mergedFormData}
               errors={errors}
               addProduct={addProduct}
               removeProduct={removeProduct}
@@ -2030,7 +2453,7 @@ const GenerateFactoryCode = ({ onBack }) => {
         case 2:
           return (
             <Step2
-              formData={formData}
+              formData={mergedFormData}
               errors={errors}
               handleRawMaterialChange={handleRawMaterialChange}
               handleWorkOrderChange={handleWorkOrderChange}
@@ -2041,7 +2464,7 @@ const GenerateFactoryCode = ({ onBack }) => {
         case 3:
           return (
             <Step3
-              formData={formData}
+              formData={mergedFormData}
               errors={errors}
               handleConsumptionMaterialChange={handleConsumptionMaterialChange}
               addConsumptionMaterial={addConsumptionMaterial}
@@ -2051,7 +2474,7 @@ const GenerateFactoryCode = ({ onBack }) => {
         case 4:
           return (
             <Step4
-              formData={formData}
+              formData={mergedFormData}
               errors={errors}
               handleArtworkMaterialChange={handleArtworkMaterialChange}
               addArtworkMaterial={addArtworkMaterial}
@@ -2061,7 +2484,7 @@ const GenerateFactoryCode = ({ onBack }) => {
         case 5:
           return (
             <Step5
-              formData={formData}
+              formData={mergedFormData}
               errors={errors}
               handlePackagingChange={handlePackagingChange}
               handlePackagingMaterialChange={handlePackagingMaterialChange}
@@ -2188,6 +2611,97 @@ const GenerateFactoryCode = ({ onBack }) => {
           ))}
         </div>
       </div>
+
+      {/* SKU Selector - Show only for steps 1-5 */}
+      {currentStep > 0 && formData.skus && formData.skus.length > 0 && (
+        <div style={{ 
+          marginBottom: '24px', 
+          padding: '20px', 
+          background: '#f9fafb', 
+          borderRadius: '12px', 
+          border: '1px solid #e5e7eb' 
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 className="text-base font-semibold text-gray-800">Select SKU to Work On</h3>
+            <div style={{ 
+              padding: '4px 12px', 
+              background: '#e0e7ff', 
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: '#4338ca'
+            }}>
+              {formData.skus.length} {formData.skus.length === 1 ? 'SKU' : 'SKUs'} Total
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+            {formData.skus.map((skuItem, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setSelectedSku(index)}
+                style={{
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  border: selectedSku === index ? '2px solid #667eea' : '1px solid #d1d5db',
+                  background: selectedSku === index ? '#eef2ff' : '#ffffff',
+                  color: selectedSku === index ? '#4338ca' : '#374151',
+                  fontSize: '14px',
+                  fontWeight: selectedSku === index ? '600' : '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  minWidth: '180px',
+                  boxShadow: selectedSku === index ? '0 2px 8px rgba(102, 126, 234, 0.2)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedSku !== index) {
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                    e.currentTarget.style.background = '#f9fafb';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedSku !== index) {
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                    e.currentTarget.style.background = '#ffffff';
+                  }
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                  {selectedSku === index && (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="6" fill="#667eea" />
+                      <path d="M6 8L7.5 9.5L10 7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  <span style={{ fontWeight: '600' }}>SKU #{index + 1}</span>
+                </div>
+                <div style={{ 
+                  fontSize: '12px', 
+                  color: selectedSku === index ? '#6366f1' : '#6b7280',
+                  marginTop: '4px',
+                  textAlign: 'left',
+                  width: '100%'
+                }}>
+                  {skuItem.sku || 'No SKU code'}
+                </div>
+                <div style={{ 
+                  fontSize: '11px', 
+                  color: '#9ca3af',
+                  marginTop: '2px',
+                  textAlign: 'left',
+                  width: '100%'
+                }}>
+                  {skuItem.product || 'No product'}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Step Content */}
       <div className="mb-8" style={{ maxWidth: '1000px' }}>
