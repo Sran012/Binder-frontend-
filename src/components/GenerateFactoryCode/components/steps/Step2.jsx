@@ -1136,15 +1136,18 @@ const Step2 = ({
                       <label className="text-sm font-semibold text-gray-700 mb-2">
                         WORK ORDER <span className="text-red-600">*</span>
                       </label>
-                      <select
+                      <SearchableDropdown
                         value={workOrder.workOrder || ''}
-                        onChange={(e) => handleWorkOrderChange(materialIndex, woIndex, 'workOrder', e.target.value)}
-                        className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                          errors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_workOrder`] 
-                            ? 'border-red-600' 
-                            : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                        }`}
-                        style={{ padding: '10px 14px', width: '160px', height: '44px' }}
+                        onChange={(selectedValue) => {
+                          handleWorkOrderChange(materialIndex, woIndex, 'workOrder', selectedValue);
+                        }}
+                        options={['WEAVING', 'TUFTING', 'QUILTING', 'PRINTING', 'KNITTING', 'EMBROIDERY', 'DYEING', 'BRAIDING', 'CARPET', 'CUTTING', 'SEWING']}
+                        placeholder="Select Work Order"
+                        strictMode={true}
+                        className={errors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_workOrder`] 
+                          ? 'border-red-600' 
+                          : ''}
+                        style={{ width: '160px' }}
                         onFocus={(e) => {
                           if (!errors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_workOrder`]) {
                             e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
@@ -1153,21 +1156,7 @@ const Step2 = ({
                         onBlur={(e) => {
                           e.target.style.boxShadow = '';
                         }}
-                        required
-                      >
-                        <option value="">Select</option>
-                        <option value="WEAVING">WEAVING</option>
-                        <option value="TUFTING">TUFTING</option>
-                        <option value="QUILTING">QUILTING</option>
-                        <option value="PRINTING">PRINTING</option>
-                        <option value="KNITTING">KNITTING</option>
-                        <option value="EMBROIDERY">EMBROIDERY</option>
-                        <option value="DYEING">DYEING</option>
-                        <option value="BRAIDING">BRAIDING</option>
-                        <option value="CARPET">CARPET</option>
-                        <option value="CUTTING">CUTTING</option>
-                        <option value="SEWING">SEWING</option>
-                      </select>
+                      />
                       {errors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_workOrder`] && (
                         <span className="text-red-600 text-xs mt-1 font-medium">
                           {errors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_workOrder`]}

@@ -9,7 +9,8 @@ const SearchableDropdown = ({
   className = '',
   style = {},
   onFocus,
-  onBlur
+  onBlur,
+  strictMode = false // If true, only accepts values from options list
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +18,7 @@ const SearchableDropdown = ({
   const containerRef = useRef(null);
   const inputRef = useRef(null);
   const blurTimeoutRef = useRef(null);
+  const previousValidValueRef = useRef(value || '');
 
   // Update filtered options when search term or options change
   useEffect(() => {
@@ -58,13 +60,17 @@ const SearchableDropdown = ({
     const newValue = e.target.value;
     setSearchTerm(newValue);
     setIsOpen(true);
-    // Update the value as user types
-    onChange(newValue);
+    // In strict mode, don't update value while typing - only when selecting from dropdown
+    // In non-strict mode, update as user types
+    if (!strictMode) {
+      onChange(newValue);
+    }
   };
 
   const handleSelect = (option) => {
     setSearchTerm('');
     setIsOpen(false);
+    previousValidValueRef.current = option;
     onChange(option);
     if (inputRef.current) {
       inputRef.current.blur();
@@ -89,9 +95,33 @@ const SearchableDropdown = ({
     blurTimeoutRef.current = setTimeout(() => {
       setIsOpen(false);
       setSearchTerm('');
+      
+      // In strict mode, validate the search term on blur
+      if (strictMode && searchTerm) {
+        // Check if search term matches any option (case-insensitive)
+        const matchedOption = options.find(opt => 
+          opt.toLowerCase() === searchTerm.toLowerCase()
+        );
+        if (matchedOption) {
+          // If it matches, set the matched option
+          previousValidValueRef.current = matchedOption;
+          onChange(matchedOption);
+        } else {
+          // If it doesn't match, reset to previous valid value or empty
+          onChange(previousValidValueRef.current || '');
+        }
+      }
+      
       if (onBlur) onBlur(e);
     }, 200);
   };
+
+  // Update previous valid value when value changes externally
+  useEffect(() => {
+    if (value && options.includes(value)) {
+      previousValidValueRef.current = value;
+    }
+  }, [value, options]);
 
   // Show search term when typing, otherwise show value
   const displayValue = isOpen ? searchTerm : (value || '');
