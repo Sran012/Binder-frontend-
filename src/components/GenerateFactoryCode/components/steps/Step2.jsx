@@ -689,42 +689,25 @@ const Step2 = ({
                               />
                             </div>
                             
-                            {/* Certifications (Upload Button) */}
+                            {/* Certifications (Text Input) */}
                             <div className="flex flex-col col-span-2">
                               <label className="text-sm font-semibold text-gray-700 mb-2">
                                 CERTIFICATIONS
                               </label>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="file"
-                                  onChange={(e) => handleRawMaterialChange(materialIndex, 'certifications', e.target.files[0])}
-                                  className="hidden"
-                                  id={`certifications-${materialIndex}`}
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                />
-                                <label
-                                  htmlFor={`certifications-${materialIndex}`}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                  style={{ padding: '10px 14px', height: '44px', minWidth: '200px' }}
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                  </svg>
-                                  <span className="truncate">
-                                    {material.certifications ? material.certifications.name || 'UPLOADED' : 'UPLOAD'}
-                                  </span>
-                                </label>
-                                {material.certifications && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRawMaterialChange(materialIndex, 'certifications', null)}
-                                    className="text-sm text-red-600 hover:text-red-700 font-medium"
-                                    style={{ padding: '4px 8px' }}
-                                  >
-                                    Remove
-                                  </button>
-                                )}
-                              </div>
+                              <input
+                                type="text"
+                                value={material.certifications || ''}
+                                onChange={(e) => handleRawMaterialChange(materialIndex, 'certifications', e.target.value)}
+                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Enter certificate label"
+                                onFocus={(e) => {
+                                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.boxShadow = '';
+                                }}
+                              />
                             </div>
                           </div>
                         </div>
@@ -1050,42 +1033,25 @@ const Step2 = ({
                         />
                       </div>
                       
-                      {/* Certifications (Upload Button) */}
+                      {/* Certifications (Text Input) */}
                       <div className="flex flex-col col-span-2">
                         <label className="text-sm font-semibold text-gray-700 mb-2">
                           CERTIFICATIONS
                         </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="file"
-                            onChange={(e) => handleRawMaterialChange(materialIndex, 'fabricCertifications', e.target.files[0])}
-                            className="hidden"
-                            id={`fabric-certifications-${materialIndex}`}
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                          />
-                          <label
-                            htmlFor={`fabric-certifications-${materialIndex}`}
-                            className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                            style={{ padding: '10px 14px', height: '44px', minWidth: '200px' }}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                            </svg>
-                            <span className="truncate">
-                              {material.fabricCertifications ? material.fabricCertifications.name || 'UPLOADED' : 'UPLOAD'}
-                            </span>
-                          </label>
-                          {material.fabricCertifications && (
-                            <button
-                              type="button"
-                              onClick={() => handleRawMaterialChange(materialIndex, 'fabricCertifications', null)}
-                              className="text-sm text-red-600 hover:text-red-700 font-medium"
-                              style={{ padding: '4px 8px' }}
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
+                        <input
+                          type="text"
+                          value={material.fabricCertifications || ''}
+                          onChange={(e) => handleRawMaterialChange(materialIndex, 'fabricCertifications', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="Enter certificate label"
+                          onFocus={(e) => {
+                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.boxShadow = '';
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
