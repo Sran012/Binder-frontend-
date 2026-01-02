@@ -208,7 +208,7 @@ const Step3 = ({
                 <SearchableDropdown
                   value={material.trimAccessory || ''}
                   onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'trimAccessory', selectedValue)}
-                  options={['ZIPPERS', 'VELCRO (Hook & Loop)', 'STITCHING THREAD', 'BUTTONS', 'RIVETS', 'NIWAR (Webbing/Tapes)', 'LACE', 'INTERLINING/FUSING', 'HOOKS & EYES', 'BUCKLES & ADJUSTERS', 'EYELETS & GROMMETS', 'ELASTIC', 'FELT', 'SHOULDER PADS / CUPS', 'TUBULAR KNITS / RIBBING', 'RFID / EAS TAGS', 'PLASTIC CABLE TIES / LOOPS', 'FRINGE / TASSELS', 'PLASTIC PIPES / RODS', 'SEAM SEALING TAPE', 'ADHESIVES / GUNNING', 'PRE-CUT HEMS / BINDINGS', 'REFLECTIVE TAPES / TRIMS', 'FIRE RETARDANT (FR) TRIMS', 'REPAIR KITS / PATCHES', 'CORD STOPS / CORD LOCKS / TOGGLES', 'D-RINGS / O-RINGS / WEBBING LOOPS', 'FOAM / WADDING (Pre-Cut Shapes)', 'PINS / TAGGING BARBS', 'MAGNETIC CLOSURES / SNAPS']}
+                  options={['ZIPPERS', 'VELCRO (Hook & Loop)', 'STITCHING THREAD', 'BUTTONS', 'RIVETS', 'NIWAR (Webbing/Tapes)', 'LACE', 'INTERLINING/FUSING', 'HOOKS & EYES', 'BUCKLES & ADJUSTERS', 'BUCKLES', 'EYELETS & GROMMETS', 'ELASTIC', 'FELT', 'SHOULDER PADS / CUPS', 'TUBULAR KNITS / RIBBING', 'RFID / EAS TAGS', 'CABLE-TIES', 'FRINGE / TASSELS', 'PLASTIC PIPES / RODS', 'SEAM SEALING TAPE', 'ADHESIVES / GUNNING', 'PRE-CUT HEMS / BINDINGS', 'REFLECTIVE TAPES / TRIMS', 'FIRE RETARDANT (FR) TRIMS', 'REPAIR KITS / PATCHES', 'CORD STOPS / CORD LOCKS / TOGGLES', 'D-RINGS / O-RINGS / WEBBING LOOPS', 'FOAM / WADDING (Pre-Cut Shapes)', 'PINS / TAGGING BARBS', 'MAGNETIC CLOSURES / SNAPS']}
                   placeholder="Select or type Trim/Accessory"
                   style={{ width: '280px' }}
                   onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
@@ -2291,6 +2291,233 @@ const Step3 = ({
                     </>
                   )}
 
+                  {/* BUCKLES Fields */}
+                  {material.trimAccessory === 'BUCKLES' && (
+                    <>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">TYPE</label>
+                        <SearchableDropdown
+                          value={material.bucklesType || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesType', selectedValue)}
+                          options={['Side Release', 'D-Ring', 'Tri-Glide', 'Ladder Lock', 'Belt Buckle', 'Cam Buckle', 'Snap', 'Swivel', 'Center Bar', 'O-Ring', 'Magnetic', 'Roller', 'Military/Web']}
+                          placeholder="Select or type"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">MATERIAL</label>
+                        <SearchableDropdown
+                          value={material.bucklesMaterial || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesMaterial', selectedValue)}
+                          options={['Plastic (Nylon)', 'Plastic (POM/Acetal)', 'Plastic (ABS)', 'Metal (Brass)', 'Metal (Zinc)', 'Metal (Steel)', 'Metal (Stainless)', 'Metal (Aluminium)', 'Acetal/POM', 'Zinc Alloy Die-Cast', 'Carbon Fiber Look']}
+                          placeholder="Select or type"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE (Webbing Width)</label>
+                        <SearchableDropdown
+                          value={material.bucklesSize || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesSize', selectedValue)}
+                          options={['10mm', '15mm', '20mm', '25mm', '32mm', '38mm', '50mm', '1"', '1.5"', '2"']}
+                          placeholder="Select or type (CM)"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">FINISH/COLOUR</label>
+                        <SearchableDropdown
+                          value={material.bucklesFinishColour || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesFinishColour', selectedValue)}
+                          options={['Black', 'Clear', 'DTM', 'Plating (Nickel)', 'Plating (Gunmetal)', 'Plating (Antique Brass)', 'Matte', 'Glossy', 'Antique', 'Plated (Nickel/Chrome)', 'Powder Coated', 'Anodized']}
+                          placeholder="Select or type"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">PLACEMENT</label>
+                        <input
+                          type="text"
+                          value={material.bucklesPlacement || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesPlacement', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="Enter placement location"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* BUCKLES - Complete fields matching table exactly */}
+                  {material.trimAccessory === 'BUCKLES' && (
+                    <>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
+                        <div className="flex flex-col flex-1">
+                          <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS (MULTISELECT)</label>
+                          <SearchableDropdown
+                            value={material.bucklesTestingRequirements || ''}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesTestingRequirements', selectedValue)}
+                            options={['Tensile Load', 'Corrosion (Salt Spray)', 'UV Resistance', 'REACH']}
+                            placeholder="Select or type Testing Requirements"
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                            style={{ padding: '10px 14px', height: '44px' }}
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                          <input
+                            type="file"
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesReferenceImage', e.target.files[0])}
+                            className="hidden"
+                            id={`upload-buckles-ref-${materialIndex}`}
+                            accept="image/*"
+                          />
+                          <label
+                            htmlFor={`upload-buckles-ref-${materialIndex}`}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '100px' }}
+                          >
+                            {material.bucklesReferenceImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}
+                          </label>
+                        </div>
+                      </div>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">QTY</label>
+                        <input
+                          type="text"
+                          value={material.bucklesQty || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesQty', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="Unit: Pieces"
+                        />
+                      </div>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
+                        <input
+                          type="text"
+                          value={material.bucklesSurplus || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesSurplus', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="e.g., 3-5%"
+                        />
+                      </div>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
+                        <SearchableDropdown
+                          value={material.bucklesWastage || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesWastage', selectedValue)}
+                          placeholder="Select or type"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                        <SearchableDropdown
+                          value={material.bucklesApproval || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesApproval', selectedValue)}
+                          options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                          placeholder="Select or type"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
+                        <textarea
+                          value={material.bucklesRemarks || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesRemarks', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', minHeight: '44px' }}
+                          rows="1"
+                          placeholder="e.g., Finger guard, Outdoor suitable, Smooth edges"
+                        />
+                      </div>
+                    </>
+                  )}
+
+
+                                    {/* BUCKLES - Advance Spec Button and Fields */}
+                                    {material.trimAccessory === 'BUCKLES' && (
+                    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full" style={{ marginTop: '20px' }}>
+                      {/* Show/Hide Advance Spec Button */}
+                      <div style={{ marginBottom: '20px', width: '100%' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleConsumptionMaterialChange(materialIndex, 'showBucklesAdvancedSpec', !material.showBucklesAdvancedSpec)}
+                          className="border-2 rounded-lg text-sm font-medium transition-all"
+                          style={{
+                            padding: '10px 20px',
+                            height: '44px',
+                            backgroundColor: material.showBucklesAdvancedSpec ? '#667eea' : '#ffffff',
+                            borderColor: material.showBucklesAdvancedSpec ? '#667eea' : '#e5e7eb',
+                            color: material.showBucklesAdvancedSpec ? '#ffffff' : '#374151'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!material.showBucklesAdvancedSpec) {
+                              e.currentTarget.style.backgroundColor = '#f9fafb';
+                              e.currentTarget.style.borderColor = '#d1d5db';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!material.showBucklesAdvancedSpec) {
+                              e.currentTarget.style.backgroundColor = '#ffffff';
+                              e.currentTarget.style.borderColor = '#e5e7eb';
+                            }
+                          }}
+                        >
+                          ADVANCE DATA
+                        </button>
+                      </div>
+                      
+                      {/* Advanced Spec Fields */}
+                      {material.showBucklesAdvancedSpec && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-5">
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">FUNCTION</label>
+                            <SearchableDropdown
+                              value={material.bucklesFunction || ''}
+                              onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesFunction', selectedValue)}
+                              options={['Load Bearing', 'Decorative', 'Quick Release', 'Adjustable', 'Auto-Lock', 'Swivel']}
+                              placeholder="Select or type"
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', height: '44px' }}
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">TENSILE STRENGTH</label>
+                            <SearchableDropdown
+                              value={material.bucklesTensileStrength || ''}
+                              onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesTensileStrength', selectedValue)}
+                              options={['Break Strength (100kg)', 'Break Strength (500N)', 'Light Duty (<50 kg)', 'Standard (50-150 kg)', 'Heavy Duty (150-500 kg)', 'Safety (>500 kg)']}
+                              placeholder="Select or type"
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', height: '44px' }}
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">SAFETY</label>
+                            <SearchableDropdown
+                              value={material.bucklesSafety || ''}
+                              onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesSafety', selectedValue)}
+                              options={['Standard', 'Child-Safe', 'Breakaway (safety release)']}
+                              placeholder="Select or type"
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', height: '44px' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+
                   {/* EYELETS & GROMMETS Fields */}
                   {material.trimAccessory === 'EYELETS & GROMMETS' && (
                     <>
@@ -2963,15 +3190,15 @@ const Step3 = ({
                     </>
                   )}
 
-                  {/* PLASTIC CABLE TIES / LOOPS Fields */}
-                  {material.trimAccessory === 'PLASTIC CABLE TIES / LOOPS' && (
+                  {/* CABLE-TIES */}
+                  {material.trimAccessory === 'CABLE-TIES' && (
                     <>
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">TYPE</label>
-                                                <SearchableDropdown
+                        <SearchableDropdown
                           value={material.cableTieType || ''}
                           onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieType', selectedValue)}
-                          options={['Standard', 'Releasable', 'Beaded', 'Loop']}
+                          options={['Standard Lock', 'Releasable/Reusable', 'Bar-Lok Loop (hang tags)', 'Security Tie']}
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
@@ -2979,145 +3206,124 @@ const Step3 = ({
                       </div>
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">MATERIAL</label>
-                        <input
-                          type="text"
+                        <SearchableDropdown
                           value={material.cableTieMaterial || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTieMaterial', e.target.value)}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieMaterial', selectedValue)}
+                          options={['Nylon (PA66)', 'Polypropylene (PP)', 'Metal Detectable']}
+                          placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Nylon 6/6, Polypropylene, Stainless Steel"
                         />
                       </div>
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">SIZE</label>
-                                                <SearchableDropdown
+                        <SearchableDropdown
                           value={material.cableTieSize || ''}
                           onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieSize', selectedValue)}
-                          options={['Length x Width (e.g', '100mm x 2.5mm', '150mm x 3.6mm)']}
-                          placeholder="Select or type"
+                          options={['100x2.5mm', '150x3.6mm', '200x4.8mm']}
+                          placeholder="Select or type (CM)"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
                         />
                       </div>
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">COLOUR</label>
-                                                <SearchableDropdown
+                        <SearchableDropdown
                           value={material.cableTieColour || ''}
                           onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieColour', selectedValue)}
-                          options={['White', 'Black', 'Natural', 'DTM']}
+                          options={['Clear/Natural', 'Black', 'Custom']}
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">TENSILE STRENGTH</label>
+                        <label className="text-sm font-semibold text-gray-700 mb-2">PLACEMENT</label>
                         <input
                           type="text"
-                          value={material.cableTieTensileStrength || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTieTensileStrength', e.target.value)}
+                          value={material.cableTiePlacement || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTiePlacement', e.target.value)}
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="e.g., 18 lbs, 50 lbs, 120 lbs"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">FINISH</label>
-                                                <SearchableDropdown
-                          value={material.cableTieFinish || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieFinish', selectedValue)}
-                          options={['Smooth', 'Textured', 'UV Stabilized']}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">USAGE</label>
-                                                <SearchableDropdown
-                          value={material.cableTieUsage || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieUsage', selectedValue)}
-                          options={['Hang tags', 'Security loops', 'Cable management']}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="Enter placement location"
                         />
                       </div>
                     </>
                   )}
 
+                  
                   {/* PLASTIC CABLE TIES / LOOPS - Complete fields matching table exactly */}
-                  {material.trimAccessory === 'PLASTIC CABLE TIES / LOOPS' && (
+                  {material.trimAccessory === 'CABLE-TIES' && (
                     <>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
                         <div className="flex flex-col flex-1">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENT</label>
-                          <input
-                            type="text"
-                            value={material.testingRequirement || ''}
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirement', e.target.value)}
+                          <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS (MULTISELECT)</label>
+                          <SearchableDropdown
+                            value={material.cableTieTestingRequirements || ''}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieTestingRequirements', selectedValue)}
+                            options={['Tensile Test', 'UV Resistance', 'Chemical Resistance']}
+                            placeholder="Select or type Testing Requirements"
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                             style={{ padding: '10px 14px', height: '44px' }}
-                            placeholder="Tensile Test, UV Resistance"
                           />
                         </div>
                         <div className="flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                        <input
-                          type="file"
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
-                          className="hidden"
-                          id={`upload-cable-${materialIndex}`}
-                        />
-                        <label
-                          htmlFor={`upload-cable-${materialIndex}`}
-                          className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                          <input
+                            type="file"
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTieReferenceImage', e.target.files[0])}
+                            className="hidden"
+                            id={`upload-cable-ref-${materialIndex}`}
+                            accept="image/*"
+                          />
+                          <label
+                            htmlFor={`upload-cable-ref-${materialIndex}`}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
                             style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '100px' }}
-                        >
-                            {material.testingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
-                        </label>
-                      </div>
+                          >
+                            {material.cableTieReferenceImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}
+                          </label>
+                        </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">LENGTH/QUANTITY</label>
+                        <label className="text-sm font-semibold text-gray-700 mb-2">QTY</label>
                         <input
                           type="text"
-                          value={material.lengthQuantity || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'lengthQuantity', e.target.value)}
+                          value={material.cableTieQty || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTieQty', e.target.value)}
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Unit: Pieces or Bundles"
+                          placeholder="Unit: Pieces"
                         />
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-                        <div className="flex flex-col flex-1">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS</label>
-                        <input
-                                                  type="text"
-                                                  value={material.surplus || ''}
-                                                  onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'surplus', e.target.value)}
-                                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                                  style={{ padding: '10px 14px', height: '44px' }}
-                                                />
-                      </div>
-                      <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">FOR-SECTION</label>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
                         <input
                           type="text"
-                          value={material.surplusForSection || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'surplusForSection', e.target.value)}
+                          value={material.cableTieSurplus || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTieSurplus', e.target.value)}
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                          placeholder="FOR"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="e.g., 5-10%"
                         />
                       </div>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
+                        <input
+                          type="text"
+                          value={material.cableTieWastage || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTieWastage', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="e.g., 5-10%"
+                        />
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-                                                <SearchableDropdown
-                          value={material.approval || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'approval', selectedValue)}
-                          options={["BUYER'S", 'INITIAL', 'IPP']}
+                        <SearchableDropdown
+                          value={material.cableTieApproval || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieApproval', selectedValue)}
+                          options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
@@ -3126,16 +3332,93 @@ const Step3 = ({
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
                         <textarea
-                          value={material.remarks || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'remarks', e.target.value)}
+                          value={material.cableTieRemarks || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTieRemarks', e.target.value)}
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', minHeight: '44px' }}
                           rows="1"
-                          placeholder="Required: Must have rounded, non-scratching edges..."
+                          placeholder="e.g., Rounded non-scratching edges, Operating temperature"
                         />
                       </div>
                     </>
                   )}
+
+
+                  {/* CABLE-TIES / advance button*/}
+                  {material.trimAccessory === 'CABLE-TIES' && (
+                    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full" style={{ marginTop: '20px' }}>
+                      {/* Show/Hide Advance Spec Button */}
+                      <div style={{ marginBottom: '20px', width: '100%' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleConsumptionMaterialChange(materialIndex, 'showCableTieAdvancedSpec', !material.showCableTieAdvancedSpec)}
+                          className="border-2 rounded-lg text-sm font-medium transition-all"
+                          style={{
+                            padding: '10px 20px',
+                            height: '44px',
+                            backgroundColor: material.showCableTieAdvancedSpec ? '#667eea' : '#ffffff',
+                            borderColor: material.showCableTieAdvancedSpec ? '#667eea' : '#e5e7eb',
+                            color: material.showCableTieAdvancedSpec ? '#ffffff' : '#374151'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!material.showCableTieAdvancedSpec) {
+                              e.currentTarget.style.backgroundColor = '#f9fafb';
+                              e.currentTarget.style.borderColor = '#d1d5db';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!material.showCableTieAdvancedSpec) {
+                              e.currentTarget.style.backgroundColor = '#ffffff';
+                              e.currentTarget.style.borderColor = '#e5e7eb';
+                            }
+                          }}
+                        >
+                          ADVANCE DATA
+                        </button>
+                      </div>
+                      
+                      {/* Advanced Spec Fields */}
+                      {material.showCableTieAdvancedSpec && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-5">
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">TENSILE STRENGTH</label>
+                            <SearchableDropdown
+                              value={material.cableTieTensileStrength || ''}
+                              onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieTensileStrength', selectedValue)}
+                              options={['Holding Force (8kg)', 'Holding Force (18kg)', 'Holding Force (22kg)', 'Holding Force (55kg)']}
+                              placeholder="Select or type"
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', height: '44px' }}
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">FINISH</label>
+                            <SearchableDropdown
+                              value={material.cableTieFinish || ''}
+                              onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieFinish', selectedValue)}
+                              options={['Smooth Edge', 'Rounded Head']}
+                              placeholder="Select or type"
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', height: '44px' }}
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">UV RESISTANCE</label>
+                            <SearchableDropdown
+                              value={material.cableTieUvResistance || ''}
+                              onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieUvResistance', selectedValue)}
+                              options={['Standard (Indoor)', 'UV Stabilized (Outdoor)']}
+                              placeholder="Select or type"
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', height: '44px' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+
 
                   {/* FRINGE / TASSELS Fields */}
                   {material.trimAccessory === 'FRINGE / TASSELS' && (
