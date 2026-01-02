@@ -208,7 +208,7 @@ const Step3 = ({
                 <SearchableDropdown
                   value={material.trimAccessory || ''}
                   onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'trimAccessory', selectedValue)}
-                  options={['ZIPPERS', 'VELCRO (Hook & Loop)', 'STITCHING THREAD', 'BUTTONS', 'RIVETS', 'NIWAR (Webbing/Tapes)', 'LACE', 'INTERLINING/FUSING', 'HOOKS & EYES', 'BUCKLES & ADJUSTERS', 'BUCKLES', 'EYELETS & GROMMETS', 'ELASTIC', 'FELT', 'SHOULDER PADS / CUPS', 'TUBULAR KNITS / RIBBING', 'RFID / EAS TAGS', 'CABLE-TIES', 'FRINGE / TASSELS', 'PLASTIC PIPES / RODS', 'SEAM SEALING TAPE', 'ADHESIVES / GUNNING', 'PRE-CUT HEMS / BINDINGS', 'REFLECTIVE TAPES / TRIMS', 'FIRE RETARDANT (FR) TRIMS', 'REPAIR KITS / PATCHES', 'CORD STOPS / CORD LOCKS / TOGGLES', 'D-RINGS / O-RINGS / WEBBING LOOPS', 'FOAM / WADDING (Pre-Cut Shapes)', 'PINS / TAGGING BARBS', 'MAGNETIC CLOSURES / SNAPS']}
+                  options={['ZIPPERS', 'VELCRO (Hook & Loop)', 'STITCHING THREAD', 'BUTTONS', 'RIVETS', 'NIWAR (Webbing/Tapes)', 'LACE', 'INTERLINING/FUSING', 'HOOKS & EYES', 'BUCKLES & ADJUSTERS', 'BUCKLES', 'EYELETS & GROMMETS', 'ELASTIC', 'FELT', 'SHOULDER PADS', 'TUBULAR KNITS / RIBBING', 'RFID / EAS TAGS', 'CABLE-TIES', 'FRINGE / TASSELS', 'PLASTIC PIPES / RODS', 'SEAM SEALING TAPE', 'ADHESIVES / GUNNING', 'PRE-CUT HEMS / BINDINGS', 'REFLECTIVE TAPES / TRIMS', 'FIRE RETARDANT (FR) TRIMS', 'REPAIR KITS / PATCHES', 'CORD STOPS / CORD LOCKS / TOGGLES', 'D-RINGS / O-RINGS / WEBBING LOOPS', 'FOAM / WADDING (Pre-Cut Shapes)', 'PINS / TAGGING BARBS', 'MAGNETIC CLOSURES / SNAPS']}
                   placeholder="Select or type Trim/Accessory"
                   style={{ width: '280px' }}
                   onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
@@ -2692,31 +2692,36 @@ const Step3 = ({
                     </>
                   )}
 
-                  {/* SHOULDER PADS / CUPS Fields */}
-                  {material.trimAccessory === 'SHOULDER PADS / CUPS' && (
+                  {/* SHOULDER PADS / CUPS Fields - Complete implementation based on image data */}
+                  {material.trimAccessory === 'SHOULDER PADS' && (
                     <>
+                      {/* TYPE */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">TYPE</label>
-                        <input
-                          type="text"
+                        <SearchableDropdown
                           value={material.shoulderPadType || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadType', e.target.value)}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadType', selectedValue)}
+                          options={['Set-In Pad', 'Raglan Pad', 'Sleeve Head Roll', 'Bra Cup', 'Push-Up Pad', 'Removable Insert']}
+                          placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Shoulder Pad, Shoulder Cup, Epaulette"
                         />
                       </div>
+
+                      {/* MATERIAL */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">MATERIAL</label>
-                        <input
-                          type="text"
+                        <SearchableDropdown
                           value={material.shoulderPadMaterial || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadMaterial', e.target.value)}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadMaterial', selectedValue)}
+                          options={['Foam (Polyurethane)', 'Synthetic Fiber', 'Felt', 'Cotton Wadding']}
+                          placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Polyurethane Foam, Polyester Fiber, Cotton"
                         />
                       </div>
+
+                      {/* SIZE */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">SIZE</label>
                         <input
@@ -2725,118 +2730,208 @@ const Step3 = ({
                           onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadSize', e.target.value)}
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Small, Medium, Large, Custom dimensions"
+                          placeholder="Dimensions (LxWxThickness) / Cup Size (A, B, C, D) CM"
                         />
                       </div>
+
+                      {/* THICKNESS */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">THICKNESS</label>
+                        <input
+                          type="text"
+                          value={material.shoulderPadThickness || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadThickness', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="At center/edge (e.g., 5mm center, 3mm edge) CM"
+                        />
+                      </div>
+
+                      {/* SHAPE */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">SHAPE</label>
-                                                <SearchableDropdown
-                          value={material.shape || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shape', selectedValue)}
-                          options={['Rounded', 'Square', 'Tapered', 'Contoured']}
+                        <SearchableDropdown
+                          value={material.shoulderPadShape || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadShape', selectedValue)}
+                          options={['Crescent', 'Triangular', 'Oval', 'Round', 'Custom Molded']}
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
                         />
                       </div>
+
+                      {/* COVERING */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">COVERING</label>
-                                                <SearchableDropdown
-                          value={material.covering || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'covering', selectedValue)}
-                          options={['Fabric', 'Mesh', 'Non-woven', 'Uncovered']}
+                        <SearchableDropdown
+                          value={material.shoulderPadCovering || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadCovering', selectedValue)}
+                          options={['Covered (knit/non-woven)', 'Uncovered (raw)']}
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
                         />
                       </div>
+
+                      {/* COVERING COLOUR */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">COVERING COLOUR</label>
+                        <SearchableDropdown
+                          value={material.shoulderPadCoveringColour || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadCoveringColour', selectedValue)}
+                          options={['White', 'Black', 'DTM', 'Nude']}
+                          placeholder="Select or type"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+
+                      {/* ATTACHMENT */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">ATTACHMENT</label>
-                        <input
-                          type="text"
+                        <SearchableDropdown
                           value={material.shoulderPadAttachment || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadAttachment', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Sewn-in, Removable, Snap-on, Velcro"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">WEIGHT</label>
-                                                <SearchableDropdown
-                          value={material.weight || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'weight', selectedValue)}
-                          options={['Light', 'Medium', 'Heavy (e.g', '5g', '10g)']}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadAttachment', selectedValue)}
+                          options={['Sew-In', 'Fusible (adhesive)', 'Removable (pocket)']}
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
                         />
                       </div>
-                    </>
-                  )}
 
-                  {/* SHOULDER PADS / CUPS - Complete fields matching table exactly */}
-                  {material.trimAccessory === 'SHOULDER PADS / CUPS' && (
-                    <>
+                      {/* DENSITY */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">DENSITY</label>
+                        <SearchableDropdown
+                          value={material.shoulderPadDensity || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadDensity', selectedValue)}
+                          options={['Soft', 'Medium', 'Firm']}
+                          placeholder="Select or type"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+
+                      {/* PLACEMENT with UPLOAD REFERENCE IMAGE */}
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
                         <div className="flex flex-col flex-1">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENT</label>
-                        <input
-                          type="text"
-                          value={material.testingRequirement || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirement', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Dry Cleaning, Washing Resistance"
-                        />
-                </div>
+                          <label className="text-sm font-semibold text-gray-700 mb-2">PLACEMENT</label>
+                          <input
+                            type="text"
+                            value={material.shoulderPadPlacement || ''}
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadPlacement', e.target.value)}
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                            style={{ padding: '10px 14px', height: '44px' }}
+                            placeholder="TEXT"
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="text-sm font-semibold text-gray-700 mb-2">UPLOAD REFERENCE IMAGE</label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadReferenceImage', e.target.files[0])}
+                            className="hidden"
+                            id={`upload-reference-image-${materialIndex}`}
+                          />
+                          <label
+                            htmlFor={`upload-reference-image-${materialIndex}`}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '140px' }}
+                          >
+                            {material.shoulderPadReferenceImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* TESTING REQUIREMENT */}
                       <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                        <input
-                          type="file"
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
-                          className="hidden"
-                          id={`upload-shoulder-${materialIndex}`}
-                        />
-                        <label
-                          htmlFor={`upload-shoulder-${materialIndex}`}
-                          className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '100px' }}
-                        >
-                            {material.testingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
-                        </label>
-                      </div>
-                      </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">LENGTH/QUANTITY</label>
-                        <input
-                          type="text"
-                          value={material.lengthQuantity || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'lengthQuantity', e.target.value)}
+                        <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENT</label>
+                        <SearchableDropdown
+                          value={material.shoulderPadTestingRequirements || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadTestingRequirements', selectedValue)}
+                          options={['Wash Resistance', 'Flammability', 'Hypoallergenic']}
+                          placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Unit: Pairs"
                         />
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS</label>
+
+                      {/* MULTISELECT - Empty field as per image */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">MULTISELECT</label>
                         <input
-                                                  type="text"
-                                                  value={material.approval || ''}
-                                                  onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'approval', e.target.value)}
-                                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                                  style={{ padding: '10px 14px', height: '44px' }}
-                                                />
+                          type="text"
+                          value={material.shoulderPadMultiselect || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadMultiselect', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder=""
+                        />
                       </div>
+
+                      {/* QTY */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">QTY</label>
+                        <input
+                          type="text"
+                          value={material.shoulderPadQty || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadQty', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="Pairs"
+                        />
+                      </div>
+
+                      {/* SURPLUS %} */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
+                        <input
+                          type="text"
+                          value={material.shoulderPadSurplus || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadSurplus', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="%AGE (e.g., 2-5%)"
+                        />
+                      </div>
+
+                      {/* WASTAGE %} */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
+                        <input
+                          type="text"
+                          value={material.shoulderPadWastage || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadWastage', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="%AGE"
+                        />
+                      </div>
+
+                      {/* APPROVAL */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                        <SearchableDropdown
+                          value={material.shoulderPadApproval || ''}
+                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadApproval', selectedValue)}
+                          options={["BUYER'S / INITIAL / PP SAMPLE", 'BUYER\'S', 'INITIAL', 'PP SAMPLE']}
+                          placeholder="Select or type"
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                        />
+                      </div>
+
+                      {/* REMARKS */}
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
                         <textarea
-                          value={material.remarks || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'remarks', e.target.value)}
+                          value={material.shoulderPadRemarks || ''}
+                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadRemarks', e.target.value)}
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', minHeight: '44px' }}
-                          rows="1"
-                          placeholder="Required: Lightweight, resilient to pressure..."
+                          style={{ padding: '10px 14px', minHeight: '80px' }}
+                          rows="3"
+                          placeholder="Lightweight, Resilient, Hold shape after steam"
                         />
                       </div>
                     </>
