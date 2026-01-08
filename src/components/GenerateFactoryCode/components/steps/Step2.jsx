@@ -188,8 +188,18 @@ const Step2 = ({
       alert('Please select a component first');
       return;
     }
+    // Mark component as saved
     setSavedComponents(prev => new Set([...prev, selectedComponent]));
+    // Save the data
     handleSave(); // Call the parent save function
+    
+    // Clear selected component to hide the form
+    setSelectedComponent('');
+    
+    // Scroll to top smoothly
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   useEffect(() => {
@@ -291,15 +301,11 @@ const Step2 = ({
                     COMPONENT
                   </label>
           <SearchableDropdown
-            value={selectedComponent ? (isComponentDone(selectedComponent) ? `${selectedComponent} ✓` : selectedComponent) : ''}
+            value={selectedComponent || ''}
             onChange={(selectedValue) => {
-              const cleanValue = selectedValue?.replace(' ✓', '') || '';
-              setSelectedComponent(cleanValue);
+              setSelectedComponent(selectedValue || '');
             }}
-            options={getAllComponents().map(comp => {
-              const isDone = isComponentDone(comp);
-              return isDone ? `${comp} ✓` : comp;
-            })}
+            options={getAllComponents()}
             placeholder="Select component"
             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
             style={{ padding: '10px 14px', height: '44px', width: '100%' }}
