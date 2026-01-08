@@ -1923,26 +1923,12 @@ const Step2 = ({
                   {/* Conditional Fields based on Work Order Type */}
                   {workOrder.workOrder && (
                     <div className="w-full flex flex-wrap items-start mt-14 pt-6 border-t border-gray-50" style={{ gap: '24px 32px', marginTop: '20px' }}>
-                      {/* TYPE field for CUTTING - Before MACHINE TYPE */}
-                      {workOrder.workOrder === 'CUTTING' && (
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">TYPE</label>
-                          <SearchableDropdown
-                            value={workOrder.cuttingType || ''}
-                            onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'cuttingType', selectedValue)}
-                            options={['SCISSOR', 'STRAIGHT KNIFE', 'ROUND KNIFE', 'BAND KNIFE', 'DIE CUTTER', 'CNC CUTTER', 'LASER', 'WATERJET', 'ULTRASONIC', 'ROTARY HAND', 'OTHERS']}
-                            placeholder="Select or type Type"
-                            style={{ width: '160px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                          />
-                        </div>
-                      )}
-
                       {/* Machine Type / Specific Type Dropdown */}
                       {(['WEAVING', 'TUFTING', 'KNITTING', 'EMBROIDERY', 'BRAIDING', 'CARPET', 'CUTTING'].includes(workOrder.workOrder)) && (
                         <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">MACHINE TYPE</label>
+                          <label className="text-sm font-semibold text-gray-700 mb-2">
+                            {workOrder.workOrder === 'CUTTING' ? 'TOOL TYPE' : 'MACHINE TYPE'}
+                          </label>
                           <SearchableDropdown
                             value={workOrder.machineType || ''}
                             onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'machineType', selectedValue)}
@@ -1956,7 +1942,7 @@ const Step2 = ({
                               workOrder.workOrder === 'CUTTING' ? ['SCISSOR', 'STRAIGHT KNIFE', 'ROUND KNIFE', 'BAND KNIFE', 'DIE CUTTER', 'CNC CUTTER', 'LASER', 'WATERJET', 'ULTRASONIC', 'ROTARY HAND', 'OTHERS'] :
                               []
                             }
-                            placeholder="Select or type Machine Type"
+                            placeholder={workOrder.workOrder === 'CUTTING' ? "Select or type Tool Type" : "Select or type Machine Type"}
                             style={{ width: '160px' }}
                             onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
                             onBlur={(e) => e.target.style.boxShadow = ''}
@@ -3170,93 +3156,91 @@ const Step2 = ({
                               onBlur={(e) => e.target.style.boxShadow = ''}
                             />
                           </div>
-                        </>
-                      )}
 
-                      {/* Advance Spec Section for FRINGE/TASSELS */}
-                      {workOrder.workOrder === 'FRINGE/TASSELS' && (
-                        <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showFringeAdvancedSpec', !workOrder.showFringeAdvancedSpec)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showFringeAdvancedSpec ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showFringeAdvancedSpec ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showFringeAdvancedSpec ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showFringeAdvancedSpec) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showFringeAdvancedSpec) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
-                            >
-                              Advance Filter
-                            </button>
-                          </div>
+                          {/* Advance Spec Section for FRINGE/TASSELS */}
+                          <div className="w-full" style={{ marginTop: '20px' }}>
+                            {/* Show/Hide Advance Filter Button */}
+                            <div style={{ marginBottom: '20px', width: '100%' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showFringeAdvancedSpec', !workOrder.showFringeAdvancedSpec)}
+                                className="border-2 rounded-lg text-sm font-medium transition-all"
+                                style={{
+                                  padding: '10px 20px',
+                                  height: '44px',
+                                  backgroundColor: workOrder.showFringeAdvancedSpec ? '#667eea' : '#ffffff',
+                                  borderColor: workOrder.showFringeAdvancedSpec ? '#667eea' : '#e5e7eb',
+                                  color: workOrder.showFringeAdvancedSpec ? '#ffffff' : '#374151'
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!workOrder.showFringeAdvancedSpec) {
+                                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                                    e.currentTarget.style.borderColor = '#d1d5db';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!workOrder.showFringeAdvancedSpec) {
+                                    e.currentTarget.style.backgroundColor = '#ffffff';
+                                    e.currentTarget.style.borderColor = '#e5e7eb';
+                                  }
+                                }}
+                              >
+                                Advance Filter
+                              </button>
+                            </div>
 
-                          {/* Advanced Spec UI Table */}
-                          {workOrder.showFringeAdvancedSpec && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
+                            {/* Advanced Spec UI Table */}
+                            {workOrder.showFringeAdvancedSpec && (
+                              <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
+                                <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {/* FINISH */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">FINISH</label>
-                                  <SearchableDropdown
-                                    value={workOrder.fringeFinish || ''}
-                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeFinish', selectedValue)}
-                                    options={['High Sheen', 'Matte', 'Twisted', 'Braided Header']}
-                                    placeholder="Select or type"
-                                    style={{ width: '100%' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
-                                  />
-                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                  {/* FINISH */}
+                                  <div className="flex flex-col">
+                                    <label className="text-sm font-semibold text-gray-700 mb-2">FINISH</label>
+                                    <SearchableDropdown
+                                      value={workOrder.fringeFinish || ''}
+                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeFinish', selectedValue)}
+                                      options={['High Sheen', 'Matte', 'Twisted', 'Braided Header']}
+                                      placeholder="Select or type"
+                                      style={{ width: '100%' }}
+                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                                      onBlur={(e) => e.target.style.boxShadow = ''}
+                                    />
+                                  </div>
 
-                                {/* ATTACHMENT */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">ATTACHMENT</label>
-                                  <SearchableDropdown
-                                    value={workOrder.fringeAttachment || ''}
-                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeAttachment', selectedValue)}
-                                    options={['Sew-On Header', 'Adhesive Back', 'Loop for Hanging']}
-                                    placeholder="Select or type"
-                                    style={{ width: '100%' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
-                                  />
-                                </div>
+                                  {/* ATTACHMENT */}
+                                  <div className="flex flex-col">
+                                    <label className="text-sm font-semibold text-gray-700 mb-2">ATTACHMENT</label>
+                                    <SearchableDropdown
+                                      value={workOrder.fringeAttachment || ''}
+                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeAttachment', selectedValue)}
+                                      options={['Sew-On Header', 'Adhesive Back', 'Loop for Hanging']}
+                                      placeholder="Select or type"
+                                      style={{ width: '100%' }}
+                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                                      onBlur={(e) => e.target.style.boxShadow = ''}
+                                    />
+                                  </div>
 
-                                {/* CONSTRUCTION */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">CONSTRUCTION</label>
-                                  <SearchableDropdown
-                                    value={workOrder.fringeConstruction || ''}
-                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeConstruction', selectedValue)}
-                                    options={['Knot Density', 'Fiber Count', 'Threads per inch']}
-                                    placeholder="Select or type"
-                                    style={{ width: '100%' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
-                                  />
+                                  {/* CONSTRUCTION */}
+                                  <div className="flex flex-col">
+                                    <label className="text-sm font-semibold text-gray-700 mb-2">CONSTRUCTION</label>
+                                    <SearchableDropdown
+                                      value={workOrder.fringeConstruction || ''}
+                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeConstruction', selectedValue)}
+                                      options={['Knot Density', 'Fiber Count', 'Threads per inch']}
+                                      placeholder="Select or type"
+                                      style={{ width: '100%' }}
+                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                                      onBlur={(e) => e.target.style.boxShadow = ''}
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
+                            )}
+                          </div>
+                        </>
                       )}
 
                       
