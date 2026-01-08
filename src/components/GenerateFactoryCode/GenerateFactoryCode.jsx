@@ -1234,6 +1234,24 @@ const GenerateFactoryCode = ({ onBack }) => {
                 fringeAttachment: '',
                 fringeConstruction: '',
                 showFringeAdvancedSpec: false,
+                // KNITTING fields
+                knittingDesignRef: null,
+                knittingGauge: '',
+                knittingGsm: '',
+                knittingWalesRatio: '',
+                knittingCoursesRatio: '',
+                knittingRatioWeightWales: '',
+                knittingRatioWeightCourses: '',
+                knittingDesign: '',
+                knittingVariant: '',
+                showKnittingAdvancedFilter: false,
+                // Clear old knitting fields if they exist
+                wales: false,
+                courses: false,
+                ratioWales: '',
+                ratioCourses: '',
+                ratioWeightWales: '',
+                ratioWeightCourses: '',
               };
             }
 
@@ -1265,28 +1283,27 @@ const GenerateFactoryCode = ({ onBack }) => {
               }
             }
 
-            // KNITTING: Wales/Courses logic
-            if (field === 'wales' || field === 'courses') {
-              if (updatedWO.wales && !updatedWO.courses) {
-                updatedWO.ratioWales = totalCns.toFixed(3);
-                updatedWO.ratioCourses = '';
-              } else if (!updatedWO.wales && updatedWO.courses) {
-                updatedWO.ratioCourses = totalCns.toFixed(3);
-                updatedWO.ratioWales = '';
-              } else if (!updatedWO.wales && !updatedWO.courses) {
-                updatedWO.ratioWales = '';
-                updatedWO.ratioCourses = '';
-              }
+            // KNITTING: Clear DESIGN and VARIANTS when machineType changes
+            if (field === 'machineType' && updatedWO.workOrder === 'KNITTING') {
+              updatedWO.knittingDesign = '';
+              updatedWO.knittingVariant = '';
+              updatedWO.knittingGauge = '';
             }
 
-            if (field === 'ratioWales' || field === 'ratioCourses') {
-              if (updatedWO.wales && updatedWO.courses) {
-                if (field === 'ratioWales') {
-                  const val = parseFloat(value) || 0;
-                  updatedWO.ratioCourses = Math.max(0, totalCns - val).toFixed(3);
+            // KNITTING: Wales/Courses ratio logic (using knittingWalesRatio and knittingCoursesRatio)
+            if (field === 'knittingWalesRatio' || field === 'knittingCoursesRatio') {
+              const walesRatio = parseFloat(updatedWO.knittingWalesRatio || '0');
+              const coursesRatio = parseFloat(updatedWO.knittingCoursesRatio || '0');
+              const totalRatio = walesRatio + coursesRatio;
+              
+              // If both are set and total is not 1, adjust them proportionally
+              if (walesRatio > 0 && coursesRatio > 0 && Math.abs(totalRatio - 1) > 0.001) {
+                if (field === 'knittingWalesRatio') {
+                  // Adjust courses to make total = 1
+                  updatedWO.knittingCoursesRatio = Math.max(0, Math.min(1, (1 - walesRatio).toFixed(3)));
                 } else {
-                  const val = parseFloat(value) || 0;
-                  updatedWO.ratioWales = Math.max(0, totalCns - val).toFixed(3);
+                  // Adjust wales to make total = 1
+                  updatedWO.knittingWalesRatio = Math.max(0, Math.min(1, (1 - coursesRatio).toFixed(3)));
                 }
               }
             }
@@ -1410,6 +1427,17 @@ const GenerateFactoryCode = ({ onBack }) => {
           fringeAttachment: '',
           fringeConstruction: '',
           showFringeAdvancedSpec: false,
+          // KNITTING fields
+          knittingDesignRef: null,
+          knittingGauge: '',
+          knittingGsm: '',
+          knittingWalesRatio: '',
+          knittingCoursesRatio: '',
+          knittingRatioWeightWales: '',
+          knittingRatioWeightCourses: '',
+          knittingDesign: '',
+          knittingVariant: '',
+          showKnittingAdvancedFilter: false,
         }]
       };
       return { ...stepData, rawMaterials: updatedRawMaterials };

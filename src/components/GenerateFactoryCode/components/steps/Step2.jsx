@@ -2075,6 +2075,294 @@ const Step2 = ({
                         </>
                       )}
 
+                      {/* KNITTING Specific Fields */}
+                      {workOrder.workOrder === 'KNITTING' && (
+                        <>
+                          {/* DESIGN REF (Upload) */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="file"
+                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingDesignRef', e.target.files[0])}
+                                className="hidden"
+                                id={`knitting-file-${materialIndex + 1}-${woIndex}`}
+                              />
+                              <label
+                                htmlFor={`knitting-file-${materialIndex + 1}-${woIndex}`}
+                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
+                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                                <span className="truncate">{workOrder.knittingDesignRef ? 'UPLOADED' : 'UPLOAD'}</span>
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* GAUGE */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">
+                              GAUGE
+                              {workOrder.machineType && getKnittingGaugeRange(workOrder.machineType) && (
+                                <span className="text-xs text-gray-500 ml-2">
+                                  ({getKnittingGaugeRange(workOrder.machineType)})
+                                </span>
+                              )}
+                            </label>
+                            <input
+                              type="text"
+                              value={workOrder.knittingGauge || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingGauge', e.target.value)}
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                              placeholder={workOrder.machineType && getKnittingGaugeRange(workOrder.machineType) ? getKnittingGaugeRange(workOrder.machineType) : 'Numeric'}
+                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                              onBlur={(e) => e.target.style.boxShadow = ''}
+                            />
+                          </div>
+
+                          {/* GSM */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
+                            <input
+                              type="text"
+                              value={workOrder.knittingGsm || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingGsm', e.target.value)}
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                              placeholder="Numeric"
+                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                              onBlur={(e) => e.target.style.boxShadow = ''}
+                            />
+                          </div>
+
+                          {/* WALES Ratio */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">WALES Ratio</label>
+                            <input
+                              type="number"
+                              step="0.001"
+                              min="0"
+                              max="1"
+                              value={workOrder.knittingWalesRatio || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingWalesRatio', e.target.value)}
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                              placeholder="0-1"
+                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                              onBlur={(e) => e.target.style.boxShadow = ''}
+                            />
+                          </div>
+
+                          {/* COURSES Ratio */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">COURSES Ratio</label>
+                            <input
+                              type="number"
+                              step="0.001"
+                              min="0"
+                              max="1"
+                              value={workOrder.knittingCoursesRatio || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingCoursesRatio', e.target.value)}
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                              placeholder="0-1"
+                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                              onBlur={(e) => e.target.style.boxShadow = ''}
+                            />
+                          </div>
+
+                          {/* RATIO WEIGHT/%AGE (Wales) */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">RATIO WEIGHT/%AGE (Wales)</label>
+                            <input
+                              type="text"
+                              value={workOrder.knittingRatioWeightWales || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingRatioWeightWales', e.target.value)}
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
+                              placeholder="Ratio/%"
+                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                              onBlur={(e) => e.target.style.boxShadow = ''}
+                            />
+                          </div>
+
+                          {/* RATIO WEIGHT/%AGE (Courses) */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">RATIO WEIGHT/%AGE (Courses)</label>
+                            <input
+                              type="text"
+                              value={workOrder.knittingRatioWeightCourses || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingRatioWeightCourses', e.target.value)}
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
+                              placeholder="Ratio/%"
+                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                              onBlur={(e) => e.target.style.boxShadow = ''}
+                            />
+                          </div>
+
+                          {/* WASTAGE % */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
+                            <input
+                              type="text"
+                              value={workOrder.wastage || ''}
+                              onChange={(e) => {
+                                let value = e.target.value.replace(/%/g, '');
+                                if (value && !isNaN(value)) {
+                                  value = value + '%';
+                                }
+                                handleWorkOrderChange(actualIndex, woIndex, 'wastage', value);
+                              }}
+                              className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                                errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
+                                  ? 'border-red-600' 
+                                  : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                              }`}
+                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                              placeholder="%AGE"
+                              onFocus={(e) => {
+                                if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
+                                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                }
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.boxShadow = '';
+                                const currentValue = workOrder.wastage || '';
+                                if (currentValue && !currentValue.includes('%') && !isNaN(currentValue)) {
+                                  handleWorkOrderChange(actualIndex, woIndex, 'wastage', currentValue + '%');
+                                }
+                              }}
+                            />
+                            {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
+                              <span className="text-red-600 text-xs mt-1 font-medium">
+                                {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* APPROVAL */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                            <SearchableDropdown
+                              value={workOrder.approval || ''}
+                              onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
+                              options={KNITTING_APPROVAL_OPTIONS}
+                              placeholder="Select or type Approval"
+                              style={{ width: '200px' }}
+                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                              onBlur={(e) => e.target.style.boxShadow = ''}
+                            />
+                          </div>
+
+                          {/* REMARKS */}
+                          <div className="flex flex-col">
+                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
+                            <input
+                              type="text"
+                              value={workOrder.remarks || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
+                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
+                              placeholder="Text"
+                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                              onBlur={(e) => e.target.style.boxShadow = ''}
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* Advanced Filter for KNITTING - Button right after REMARKS */}
+                      {workOrder.workOrder === 'KNITTING' && (
+                        <div className="w-full" style={{ marginTop: '20px' }}>
+                          {/* Show/Hide Advance Filter Button */}
+                          <div style={{ marginBottom: '20px', width: '100%' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showKnittingAdvancedFilter', !workOrder.showKnittingAdvancedFilter)}
+                              className="border-2 rounded-lg text-sm font-medium transition-all"
+                              style={{
+                                padding: '10px 20px',
+                                height: '44px',
+                                backgroundColor: workOrder.showKnittingAdvancedFilter ? '#667eea' : '#ffffff',
+                                borderColor: workOrder.showKnittingAdvancedFilter ? '#667eea' : '#e5e7eb',
+                                color: workOrder.showKnittingAdvancedFilter ? '#ffffff' : '#374151'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!workOrder.showKnittingAdvancedFilter) {
+                                  e.currentTarget.style.backgroundColor = '#f9fafb';
+                                  e.currentTarget.style.borderColor = '#d1d5db';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!workOrder.showKnittingAdvancedFilter) {
+                                  e.currentTarget.style.backgroundColor = '#ffffff';
+                                  e.currentTarget.style.borderColor = '#e5e7eb';
+                                }
+                              }}
+                            >
+                              Advance Filter
+                            </button>
+                          </div>
+
+                          {/* Advanced Filter UI Table */}
+                          {workOrder.showKnittingAdvancedFilter && (
+                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
+                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* DESIGN - Dropdown */}
+                                <div className="flex flex-col">
+                                  <label className="text-sm font-semibold text-gray-700 mb-2">
+                                    DESIGN
+                                    {workOrder.machineType && (
+                                      <span className="text-xs text-gray-500 ml-2">
+                                        ({getKnittingDesigns(workOrder.machineType).length} options)
+                                      </span>
+                                    )}
+                                  </label>
+                                  <SearchableDropdown
+                                    value={workOrder.knittingDesign || ''}
+                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'knittingDesign', selectedValue)}
+                                    options={workOrder.machineType ? getKnittingDesigns(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Design" : "Select Machine Type First"}
+                                    disabled={!workOrder.machineType}
+                                    style={{ width: '100%' }}
+                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                                    onBlur={(e) => e.target.style.boxShadow = ''}
+                                  />
+                                </div>
+
+                                {/* VARIANTS - Dropdown */}
+                                <div className="flex flex-col">
+                                  <label className="text-sm font-semibold text-gray-700 mb-2">
+                                    VARIANTS
+                                    {workOrder.machineType && (
+                                      <span className="text-xs text-gray-500 ml-2">
+                                        ({getKnittingVariants(workOrder.machineType).length} options)
+                                      </span>
+                                    )}
+                                  </label>
+                                  <SearchableDropdown
+                                    value={workOrder.knittingVariant || ''}
+                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'knittingVariant', selectedValue)}
+                                    options={workOrder.machineType ? getKnittingVariants(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Variant" : "Select Machine Type First"}
+                                    disabled={!workOrder.machineType}
+                                    style={{ width: '100%' }}
+                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
+                                    onBlur={(e) => e.target.style.boxShadow = ''}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Advanced Filter for BRAIDING - Button right after REMARKS */}
                       {workOrder.workOrder === 'BRAIDING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
