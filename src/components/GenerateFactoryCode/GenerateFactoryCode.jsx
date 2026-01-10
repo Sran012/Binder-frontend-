@@ -1114,7 +1114,7 @@ const GenerateFactoryCode = ({ onBack }) => {
           // Clear Trim & Accessory fields (all trim/accessory specific fields will be cleared)
           trimAccessory: '',
           // Clear Fiber fields
-          fiberTableType: '', fiberFiberType: '', fiberSubtype: '', fiberForm: '', fiberDenier: '', fiberSiliconized: '', fiberConjugateCrimp: '', fiberColour: '', fiberBirdType: '', fiberDownPercentage: '', fiberDownProofRequired: '', fiberTestingRequirements: [], fiberQty: '', fiberGsm: '', fiberLength: '', fiberWidth: '', fiberQtyType: '', fiberQtyValue: '', fiberSurplus: '', fiberWastage: '', fiberApproval: '', fiberRemarks: '', showFiberAdvancedSpec: false, fiberFiberLength: '', fiberStructure: '', fiberThermalBonded: '', fiberAntiMicrobial: '', fiberFireRetardant: '', fiberCertification: '', fiberLoftFillPower: '', fiberFillPower: '', fiberProcessing: '', fiberOxygenNumber: '', fiberTurbidity: '', fiberOdor: '', fiberTraceability: '', fiberClusterSize: '',
+          fiberTableType: '', fiberFiberType: '', fiberSubtype: '', fiberForm: '', fiberDenier: '', fiberSiliconized: '', fiberConjugateCrimp: '', fiberColour: '', fiberBirdType: '', fiberDownPercentage: '', fiberDownProofRequired: '', fiberWoolType: '', fiberMicron: '', fiberTestingRequirements: [], fiberQty: '', fiberGsm: '', fiberLength: '', fiberWidth: '', fiberQtyType: '', fiberQtyValue: '', fiberSurplus: '', fiberWastage: '', fiberApproval: '', fiberRemarks: '', showFiberAdvancedSpec: false, fiberFiberLength: '', fiberStructure: '', fiberThermalBonded: '', fiberAntiMicrobial: '', fiberFireRetardant: '', fiberCertification: '', fiberLoftFillPower: '', fiberFillPower: '', fiberProcessing: '', fiberOxygenNumber: '', fiberTurbidity: '', fiberOdor: '', fiberTraceability: '', fiberClusterSize: '', fiberLanolinContent: '', fiberTemperatureRegulating: '', fiberMoistureWicking: '', fiberMulesingFree: '', fiberOrganicCertified: '',
           // All trim/accessory specific fields should be cleared here - this matches the clearing logic in handleConsumptionMaterialChange
           // For now, we'll initialize them as empty, and they'll be properly initialized when trimAccessory is selected
         };
@@ -1615,6 +1615,15 @@ const GenerateFactoryCode = ({ onBack }) => {
           fiberOdor: '',
           fiberTraceability: '',
           fiberClusterSize: '',
+          // Wool-Natural fields
+          fiberWoolType: '',
+          fiberMicron: '',
+          // Wool-Natural Advanced Spec
+          fiberLanolinContent: '',
+          fiberTemperatureRegulating: '',
+          fiberMoistureWicking: '',
+          fiberMulesingFree: '',
+          fiberOrganicCertified: '',
         });
       }
 
