@@ -1116,6 +1116,8 @@ const GenerateFactoryCode = ({ onBack }) => {
           // Clear Fiber fields
           fiberTableType: '', fiberFiberType: '', fiberSubtype: '', fiberForm: '', fiberDenier: '', fiberSiliconized: '', fiberConjugateCrimp: '', fiberColour: '', fiberBirdType: '', fiberDownPercentage: '', fiberDownProofRequired: '', fiberWoolType: '', fiberMicron: '', fiberTestingRequirements: [], fiberQty: '', fiberGsm: '', fiberLength: '', fiberWidth: '', fiberQtyType: '', fiberQtyValue: '', fiberSurplus: '', fiberWastage: '', fiberApproval: '', fiberRemarks: '', showFiberAdvancedSpec: false, fiberFiberLength: '', fiberStructure: '', fiberThermalBonded: '', fiberAntiMicrobial: '', fiberFireRetardant: '', fiberCertification: '', fiberLoftFillPower: '', fiberFillPower: '', fiberProcessing: '', fiberOxygenNumber: '', fiberTurbidity: '', fiberOdor: '', fiberTraceability: '', fiberClusterSize: '', fiberLanolinContent: '', fiberTemperatureRegulating: '', fiberMoistureWicking: '', fiberMulesingFree: '', fiberOrganicCertified: '',fiberKapokSource: '', fiberKapokProperties: '', fiberBambooType: '', fiberBambooProperties: '', fiberSilkFlossType: '', fiberSilkFlossGrade: '', fiberRecycledSource: '', fiberRecycledCertification: '', fiberTencelType: '', fiberBlending: '', fiberEcoCertification: '', fiberBiodegradable: '',fiberMicrofiberFiberLength: '', fiberMicrofiberStructure: '', fiberMicrofiberClusterType: '', fiberMicrofiberClusterSize: '', fiberMicrofiberAntiMicrobial: '', fiberMicrofiberHypoallergenic: '', fiberMicrofiberLoftFillPower: '', fiberMicrofiberHandFeel: '', fiberMicrofiberCertification: '',fiberDownAlternativeConstruction: '', fiberDownAlternativeLoftRating: '', fiberDownAlternativeFillPowerEquivalent: '', fiberDownAlternativeWarmthToWeight: '', fiberDownAlternativeWaterResistance: '', fiberDownAlternativeQuickDry: '', fiberDownAlternativeHypoallergenic: '', fiberDownAlternativeAntiMicrobial: '', fiberDownAlternativeVeganCrueltyFree: '', fiberDownAlternativeCertification: '', fiberDownAlternativeMachineWashable: '',
           fiberCottonGrade: '', fiberCottonStapleLength: '', fiberCottonProcessing: '', fiberCottonBonding: '', fiberCottonNeedlePunched: '', fiberCottonFireRetardant: '', fiberCottonDustTrashContent: '', fiberCottonOrganicCertified: '',
+          // Clear Foam fields
+          foamTableType: '', foamType: '', foamSubtype: '', foamVaContent: '', foamColour: '', foamThickness: '', foamShape: '', foamShapeRefImage: null, foamSheetPcs: '', foamGsm: '', foamLengthCm: '', foamWidthCm: '', foamKgsCns: '', foamYardageCns: '', foamTestingRequirements: '', foamTestingRequirementsFile: null, foamSurplus: '', foamWastage: '', foamApproval: '', foamRemarks: '', showFoamAdvancedSpec: false, foamShoreHardness: '', foamCellStructure: '', foamCompressionSet: '', foamTensileStrength: '', foamElongation: '', foamWaterResistance: '', foamUvResistance: '', foamFireRetardant: '', foamSurfaceTexture: '', foamAntiSlip: '', foamInterlocking: '', foamCertification: '', foamDensity: '',
           // All trim/accessory specific fields should be cleared here - this matches the clearing logic in handleConsumptionMaterialChange
           // For now, we'll initialize them as empty, and they'll be properly initialized when trimAccessory is selected
         };
@@ -1250,12 +1252,12 @@ const GenerateFactoryCode = ({ onBack }) => {
                 knittingVariant: '',
                 showKnittingAdvancedFilter: false,
                 // Clear old knitting fields if they exist
-                wales: false,
-                courses: false,
-                ratioWales: '',
-                ratioCourses: '',
-                ratioWeightWales: '',
-                ratioWeightCourses: '',
+                // wales: false,
+                // courses: false,
+                // ratioWales: '',
+                // ratioCourses: '',
+                // ratioWeightWales: '',
+                // ratioWeightCourses: '',
               };
             }
 
@@ -1674,6 +1676,43 @@ const GenerateFactoryCode = ({ onBack }) => {
           fiberCottonFireRetardant: '',
           fiberCottonDustTrashContent: '',
           fiberCottonOrganicCertified: '',
+        });
+      } else if (materialType === 'Foam') {
+        Object.assign(baseMaterial, {
+          foamTableType: '',
+          foamType: '',
+          foamSubtype: '',
+          foamVaContent: '',
+          foamColour: '',
+          foamThickness: '',
+          foamShape: '',
+          foamShapeRefImage: null,
+          foamSheetPcs: '',
+          foamGsm: '',
+          foamLengthCm: '',
+          foamWidthCm: '',
+          foamKgsCns: '',
+          foamYardageCns: '',
+          foamTestingRequirements: '',
+          foamTestingRequirementsFile: null,
+          foamSurplus: '',
+          foamWastage: '',
+          foamApproval: '',
+          foamRemarks: '',
+          showFoamAdvancedSpec: false,
+          foamShoreHardness: '',
+          foamCellStructure: '',
+          foamCompressionSet: '',
+          foamTensileStrength: '',
+          foamElongation: '',
+          foamWaterResistance: '',
+          foamUvResistance: '',
+          foamFireRetardant: '',
+          foamSurfaceTexture: '',
+          foamAntiSlip: '',
+          foamInterlocking: '',
+          foamCertification: '',
+          foamDensity: '',
         });
       }
 

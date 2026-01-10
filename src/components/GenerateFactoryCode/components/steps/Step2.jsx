@@ -1382,7 +1382,60 @@ const Step2 = ({
                   </div>
                   
                   <div className="bg-white rounded-lg border border-gray-200" style={{ padding: '20px' }}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Table Selection Dropdown */}
+                    <div className="flex flex-col" style={{ marginBottom: '24px', maxWidth: '300px' }}>
+                      <label className="text-sm font-semibold text-gray-700 mb-2">SELECT FOAM TABLE</label>
+                      <SearchableDropdown
+                        value={material.foamTableType || ''}
+                        onChange={(selectedValue) => {
+                          handleRawMaterialChange(actualIndex, 'foamTableType', selectedValue);
+                          // Clear all foam fields when table changes
+                          if (selectedValue !== material.foamTableType) {
+                            handleRawMaterialChange(actualIndex, 'foamType', '');
+                            handleRawMaterialChange(actualIndex, 'foamSubtype', '');
+                            handleRawMaterialChange(actualIndex, 'foamVaContent', '');
+                            handleRawMaterialChange(actualIndex, 'foamColour', '');
+                            handleRawMaterialChange(actualIndex, 'foamThickness', '');
+                            handleRawMaterialChange(actualIndex, 'foamShape', '');
+                            handleRawMaterialChange(actualIndex, 'foamShapeRefImage', null);
+                            handleRawMaterialChange(actualIndex, 'foamSheetPcs', '');
+                            handleRawMaterialChange(actualIndex, 'foamGsm', '');
+                            handleRawMaterialChange(actualIndex, 'foamLengthCm', '');
+                            handleRawMaterialChange(actualIndex, 'foamWidthCm', '');
+                            handleRawMaterialChange(actualIndex, 'foamKgsCns', '');
+                            handleRawMaterialChange(actualIndex, 'foamYardageCns', '');
+                            handleRawMaterialChange(actualIndex, 'foamTestingRequirements', '');
+                            handleRawMaterialChange(actualIndex, 'foamTestingRequirementsFile', null);
+                            handleRawMaterialChange(actualIndex, 'foamSurplus', '');
+                            handleRawMaterialChange(actualIndex, 'foamWastage', '');
+                            handleRawMaterialChange(actualIndex, 'foamApproval', '');
+                            handleRawMaterialChange(actualIndex, 'foamRemarks', '');
+                            handleRawMaterialChange(actualIndex, 'showFoamAdvancedSpec', false);
+                            handleRawMaterialChange(actualIndex, 'foamShoreHardness', '');
+                            handleRawMaterialChange(actualIndex, 'foamCellStructure', '');
+                            handleRawMaterialChange(actualIndex, 'foamCompressionSet', '');
+                            handleRawMaterialChange(actualIndex, 'foamTensileStrength', '');
+                            handleRawMaterialChange(actualIndex, 'foamElongation', '');
+                            handleRawMaterialChange(actualIndex, 'foamWaterResistance', '');
+                            handleRawMaterialChange(actualIndex, 'foamUvResistance', '');
+                            handleRawMaterialChange(actualIndex, 'foamFireRetardant', '');
+                            handleRawMaterialChange(actualIndex, 'foamSurfaceTexture', '');
+                            handleRawMaterialChange(actualIndex, 'foamAntiSlip', '');
+                            handleRawMaterialChange(actualIndex, 'foamInterlocking', '');
+                            handleRawMaterialChange(actualIndex, 'foamCertification', '');
+                            handleRawMaterialChange(actualIndex, 'foamDensity', '');
+                          }
+                        }}
+                        options={['pe-epe']}
+                        placeholder="Select foam table"
+                        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                        style={{ padding: '10px 14px', height: '44px' }}
+                      />
+                    </div>
+
+                    {/* pe-epe Table */}
+                    {material.foamTableType === 'pe-epe' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       {/* FOAM TYPE */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">FOAM TYPE</label>
@@ -1851,6 +1904,7 @@ const Step2 = ({
                         )}
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
               </>
