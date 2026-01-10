@@ -1113,6 +1113,8 @@ const GenerateFactoryCode = ({ onBack }) => {
           fiberType: '', yarnType: '', spinningMethod: '', yarnComposition: '', yarnCountRange: '', yarnDoublingOptions: '', yarnPlyOptions: '', surplus: '', approval: '', remarks: '', showAdvancedFilter: false, spinningType: '', testingRequirements: '', fiberCategory: '', origin: '', certifications: '',
           // Clear Trim & Accessory fields (all trim/accessory specific fields will be cleared)
           trimAccessory: '',
+          // Clear Fiber fields
+          fiberFiberType: '', fiberSubtype: '', fiberForm: '', fiberDenier: '', fiberSiliconized: '', fiberConjugateCrimp: '', fiberColour: '', fiberTestingRequirements: [], fiberQty: '', fiberGsm: '', fiberLength: '', fiberWidth: '', fiberQtyType: '', fiberQtyValue: '', fiberSurplus: '', fiberWastage: '', fiberApproval: '', fiberRemarks: '', showFiberAdvancedSpec: false, fiberFiberLength: '', fiberStructure: '', fiberThermalBonded: '', fiberAntiMicrobial: '', fiberFireRetardant: '', fiberCertification: '', fiberLoftFillPower: '',
           // All trim/accessory specific fields should be cleared here - this matches the clearing logic in handleConsumptionMaterialChange
           // For now, we'll initialize them as empty, and they'll be properly initialized when trimAccessory is selected
         };
@@ -1572,6 +1574,35 @@ const GenerateFactoryCode = ({ onBack }) => {
         });
         // Import all trim fields from addConsumptionMaterial initialization
         // For now, we'll initialize them as empty, and handleRawMaterialChange will manage them
+      } else if (materialType === 'Fiber') {
+        Object.assign(baseMaterial, {
+          fiberFiberType: '',
+          fiberSubtype: '',
+          fiberForm: '',
+          fiberDenier: '',
+          fiberSiliconized: '',
+          fiberConjugateCrimp: '',
+          fiberColour: '',
+          fiberTestingRequirements: [],
+          fiberQty: '',
+          fiberGsm: '',
+          fiberLength: '',
+          fiberWidth: '',
+          fiberQtyType: '',
+          fiberQtyValue: '',
+          fiberSurplus: '',
+          fiberWastage: '',
+          fiberApproval: '',
+          fiberRemarks: '',
+          showFiberAdvancedSpec: false,
+          fiberFiberLength: '',
+          fiberStructure: '',
+          fiberThermalBonded: '',
+          fiberAntiMicrobial: '',
+          fiberFireRetardant: '',
+          fiberCertification: '',
+          fiberLoftFillPower: '',
+        });
       }
 
       return {
