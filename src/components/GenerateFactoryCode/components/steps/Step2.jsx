@@ -2091,8 +2091,8 @@ const Step2 = ({
                             </div>
                           </div>
                         </div>
-                        {/* TESTING REQUIREMENTS - Multi-select with chips (like fiber) */}
-                        <div className="flex flex-col col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
+                                                {/* TESTING REQUIREMENTS - Multi-select with chips (FIXED VERSION) */}
+                                                <div className="flex flex-col col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
                           <div style={{ position: 'relative' }}>
                             <div
@@ -2106,6 +2106,26 @@ const Step2 = ({
                                 alignItems: 'center',
                                 cursor: 'text'
                               }}
+                              onKeyDown={(e) => {
+                                // Handle Enter key on the container
+                                if (e.key === 'Enter') {
+                                  const input = e.target.querySelector('input');
+                                  if (input && input.value && input.value.trim()) {
+                                    e.preventDefault();
+                                    const newValue = input.value.trim();
+                                    const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
+                                    if (!current.includes(newValue)) {
+                                      const updated = [...current, newValue];
+                                      handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
+                                    }
+                                    // Clear the input
+                                    if (input) {
+                                      input.value = '';
+                                      input.blur();
+                                    }
+                                  }
+                                }
+                              }}
                             >
                               {/* Selected chips */}
                               {(Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : []).map((req, index) => (
@@ -2117,52 +2137,59 @@ const Step2 = ({
                                     color: '#4338ca',
                                     border: '1px solid #c7d2fe'
                                   }}
-                                > {req}
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
-                                    const updated = current.filter((_, i) => i !== index);
-                                    handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
-                                  }}
-                                  style={{
-                                    marginLeft: '4px',
-                                    cursor: 'pointer',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: '#4338ca',
-                                    fontWeight: 'bold',
-                                    fontSize: '14px',
-                                    lineHeight: '1',
-                                    padding: 0,
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: '16px',
-                                    height: '16px'
-                                  }}
-                                >×
-                                </button>
-                              </span>
-                            ))}
-                            {/* Dropdown for selecting new options */}
-                            <div 
-                              id={`hr-foam-testing-wrapper-${actualIndex}`}
-                              style={{ flex: 1, minWidth: '200px' }}
-                            >
-                              <SearchableDropdown
-                                value=""
-                                onChange={(selectedValue) => {
-                                  if (selectedValue) {
-                                    const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
-                                    if (!current.includes(selectedValue)) {
-                                      const updated = [...current, selectedValue];
+                                >
+                                  {req}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
+                                      const updated = current.filter((_, i) => i !== index);
                                       handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
+                                    }}
+                                    style={{
+                                      marginLeft: '4px',
+                                      cursor: 'pointer',
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#4338ca',
+                                      fontWeight: 'bold',
+                                      fontSize: '14px',
+                                      lineHeight: '1',
+                                      padding: 0,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: '16px',
+                                      height: '16px'
+                                    }}
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                                                            {/* Dropdown for selecting new options */}
+                                                            <div 
+                                id={`hr-foam-testing-wrapper-${actualIndex}`}
+                                style={{ flex: 1, minWidth: '200px' }}
+                              >
+                                <SearchableDropdown
+                                  value=""
+                                  strictMode={false}
+                                  onChange={(selectedValue) => {
+                                    // Only add if it's an exact match from options (meaning it was selected from dropdown)
+                                    const options = ['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test'];
+                                    if (selectedValue && options.includes(selectedValue)) {
+                                      // It's a selection from dropdown, add it
+                                      const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
+                                      if (!current.includes(selectedValue)) {
+                                        const updated = [...current, selectedValue];
+                                        handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
+                                      }
                                     }
-                                  }
-                                }}
-                                options={['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test']}
+                                    // If it's not in options, it's typing - ignore it (will be added on Enter/blur)
+                                  }}
+                                  options={['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test']}
                                   placeholder={(Array.isArray(material.foamHrTestingRequirements) && material.foamHrTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
                                   className="border-0 outline-none"
                                   style={{ 
@@ -2186,9 +2213,38 @@ const Step2 = ({
                                       container.style.borderColor = '#667eea';
                                       container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                                     }
+                                    // Add keydown listener to the input when it gets focus
+                                    const handleKeyDown = (keyEvent) => {
+                                      if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                        keyEvent.preventDefault();
+                                        keyEvent.stopPropagation();
+                                        const newValue = input.value.trim();
+                                        const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
+                                        const options = ['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test'];
+                                        // Add if it's not already in the list
+                                        if (!current.includes(newValue)) {
+                                          // If it's custom text (not in options), add it
+                                          if (!options.includes(newValue)) {
+                                            const updated = [...current, newValue];
+                                            handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
+                                          }
+                                          // Clear the input
+                                          input.value = '';
+                                          input.blur();
+                                        }
+                                      }
+                                    };
+                                    input.addEventListener('keydown', handleKeyDown);
+                                    // Store the handler so we can remove it later
+                                    input._enterHandler = handleKeyDown;
                                   }}
                                   onBlur={(e) => {
                                     const input = e.target;
+                                    // Remove the keydown listener
+                                    if (input._enterHandler) {
+                                      input.removeEventListener('keydown', input._enterHandler);
+                                      input._enterHandler = null;
+                                    }
                                     input.style.border = 'none';
                                     input.style.borderWidth = '0';
                                     input.style.outline = 'none';
@@ -2197,6 +2253,21 @@ const Step2 = ({
                                     if (container) {
                                       container.style.borderColor = '#e5e7eb';
                                       container.style.boxShadow = 'none';
+                                    }
+                                    // On blur, if there's a typed value that's not in options, add it as custom text
+                                    if (input.value && input.value.trim()) {
+                                      const typedValue = input.value.trim();
+                                      const options = ['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test'];
+                                      // Only add if it's custom text (not in options)
+                                      if (!options.includes(typedValue)) {
+                                        const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
+                                        if (!current.includes(typedValue)) {
+                                          const updated = [...current, typedValue];
+                                          handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
+                                        }
+                                      }
+                                      // Clear the input
+                                      input.value = '';
                                     }
                                   }}
                                 />
