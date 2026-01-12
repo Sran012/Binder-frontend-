@@ -581,68 +581,172 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                           </label>
                         </div>
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'].map((option) => {
-                                  const currentValues = Array.isArray(material.niwarTestingRequirements) 
-                                    ? material.niwarTestingRequirements 
-                                    : (material.niwarTestingRequirements ? (typeof material.niwarTestingRequirements === 'string' ? material.niwarTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.niwarTestingRequirements) 
-                                            ? material.niwarTestingRequirements 
-                                            : (material.niwarTestingRequirements ? (typeof material.niwarTestingRequirements === 'string' ? material.niwarTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'niwarTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                              {material.niwarTestingRequirements && Array.isArray(material.niwarTestingRequirements) && material.niwarTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.niwarTestingRequirements.join(', ')}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                              <input
-                                type="file"
-                                onChange={(e) => handleChange(materialIndex, 'niwarTestingRequirementFile', e.target.files[0])}
-                                className="hidden"
-                                id={`upload-niwar-testing-${materialIndex}`}
-                                accept="image/*"
-                              />
-                              <label
-                                htmlFor={`upload-niwar-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.niwarTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'niwarTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`niwar-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'niwarTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage']}
+                                placeholder={(Array.isArray(material.niwarTestingRequirements) && material.niwarTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : [];
+                                      const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'niwarTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'niwarTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                             </div>
                           </div>
+                        </div>
+                        {/* UPLOAD button for testing requirements */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
+                          <input
+                            type="file"
+                            onChange={(e) => handleChange(materialIndex, 'niwarTestingRequirementFile', e.target.files[0])}
+                            className="hidden"
+                            id={`upload-niwar-testing-${materialIndex}`}
+                            accept="image/*"
+                          />
+                          <label
+                            htmlFor={`upload-niwar-testing-${materialIndex}`}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
+                          >
+                            {material.niwarTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
+                          </label>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -898,6 +1002,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                           </div>
                         </div>
                       </div>
+                      
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">SIZE SPEC</label>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
