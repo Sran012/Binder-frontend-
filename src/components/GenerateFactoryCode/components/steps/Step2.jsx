@@ -11943,7 +11943,7 @@ const Step2 = ({
                           </div>
 
                           {/* REFERENCE - Text Field (appears after REFERENCE TYPE is selected) */}
-                          {workOrder.referenceType && (
+                          
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">REFERENCE</label>
                               <input
@@ -11951,13 +11951,13 @@ const Step2 = ({
                                 value={workOrder.dyeingReference || ''}
                                 onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'dyeingReference', e.target.value)}
                                 className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', width: '300px', height: '44px' }}
+                                style={{ padding: '10px 14px', width: '200px', height: '44px' }}
                                 placeholder="Enter reference"
                                 onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
                                 onBlur={(e) => e.target.style.boxShadow = ''}
                               />
                             </div>
-                          )}
+                          
 
                           {/* REFERENCE IMAGE (Upload) */}
                           <div className="flex flex-col">
