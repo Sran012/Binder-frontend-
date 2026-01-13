@@ -19,8 +19,8 @@ const DepartmentContent = () => {
   const subMenuRef = useRef(null);
 
   const departmentItems = [
-    { id: 'chd-code', label: 'CHD CODE CREATION', hasSubMenu: true },
-    { id: 'chd-po', label: 'CHD PO ISSUE', hasSubMenu: true },
+    { id: 'chd-code', label: 'CODE CREATION', hasSubMenu: true },
+    { id: 'chd-po', label: 'PO ISSUE', hasSubMenu: true },
     { id: 'sourcing', label: 'SOURCING', hasSubMenu: true },
     { id: 'ims', label: 'IMS', hasSubMenu: true },
     { id: 'operations', label: 'OPERATIONS', hasSubMenu: true },
@@ -36,6 +36,8 @@ const DepartmentContent = () => {
       { id: 'buyer', label: 'BUYER' },
       { id: 'vendor', label: 'VENDOR' },
       { id: 'factory', label: 'FACTORY' },
+      { id: 'company essentials', label: 'COMPANY ESSENTIALS' },
+      { id: 'Internal Purchase Order', label: 'INTERNAL PURCHASE ORDER' },
     ],
     'chd-po': [
       { id: 'generate-po', label: 'GENERATE PO' },
