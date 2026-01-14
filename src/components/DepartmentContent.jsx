@@ -5,6 +5,7 @@ import GeneratePOCode from './GeneratePOCode';
 import GenerateFactoryCode from './GenerateFactoryCode';
 import VendorMasterSheet from './VendorMasterSheet';
 import CompanyEssentials from './CompanyEssentials';
+import InternalPurchaseOrder from './InternalPurchaseOrder/InternalPurchaseOrder';
 
 const DepartmentContent = () => {
   const [hoveredDeptItem, setHoveredDeptItem] = useState(null);
@@ -17,6 +18,7 @@ const DepartmentContent = () => {
   const [showGenerateFactoryCode, setShowGenerateFactoryCode] = useState(false);
   const [showVendorMasterSheet, setShowVendorMasterSheet] = useState(false);
   const [showCompanyEssentials, setShowCompanyEssentials] = useState(false);
+  const [showInternalPurchaseOrder, setShowInternalPurchaseOrder] = useState(false);
   
   const subMenuRef = useRef(null);
 
@@ -384,6 +386,7 @@ const DepartmentContent = () => {
     setShowGenerateFactoryCode(false);
     setShowVendorMasterSheet(false);
     setShowCompanyEssentials(false);
+    setShowInternalPurchaseOrder(false);
   };
 
   // Determine if submenu should be shown (either hovered or sticky)
@@ -534,6 +537,29 @@ const DepartmentContent = () => {
     </div>
   );
 
+  const renderInternalPurchaseOrderContent = () => (
+    <div className="fullscreen-content">
+      <div className="content-header">
+        <button className="back-button" onClick={handleBackToDepartments}>
+          ← Back to Departments
+        </button>
+        <h1 className="fullscreen-title">Internal Purchase Order</h1>
+        <p className="fullscreen-description">Create internal purchase orders for production, sampling, or company use</p>
+      </div>
+      <div className="fullscreen-buttons">
+        <button 
+          className="fullscreen-action-button primary"
+          onClick={() => setShowInternalPurchaseOrder(true)}
+        >
+          <div className="button-content">
+            <span className="button-title">CREATE INTERNAL PO</span>
+            <span className="button-subtitle">Generate internal purchase order with factory code steps</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+
   // Content renderers for CHD PO ISSUE  
   const renderGeneratePOContent = () => (
     <div className="fullscreen-content">
@@ -667,6 +693,14 @@ const DepartmentContent = () => {
         />
       );
     }
+
+    if (showInternalPurchaseOrder) {
+      return (
+        <InternalPurchaseOrder 
+          onBack={() => setShowInternalPurchaseOrder(false)} 
+        />
+      );
+    }
     
     // Handle specific content for CHD CODE CREATION
     if (selectedSubMenuItem === 'buyer') {
@@ -680,6 +714,9 @@ const DepartmentContent = () => {
     }
     if (selectedSubMenuItem === 'company essentials') {
       return renderCompanyEssentialsContent();
+    }
+    if (selectedSubMenuItem === 'Internal Purchase Order') {
+      return renderInternalPurchaseOrderContent();
     }
 
     // Handle specific content for CHD PO ISSUE
@@ -717,7 +754,7 @@ const DepartmentContent = () => {
   };
 
   // If a submenu item is selected, show fullscreen content
-  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showGenerateFactoryCode || showVendorMasterSheet || showCompanyEssentials) {
+  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showGenerateFactoryCode || showVendorMasterSheet || showCompanyEssentials || showInternalPurchaseOrder) {
     return renderDepartmentMainContent();
   }
 

@@ -10,13 +10,16 @@ import Step3 from './components/steps/Step3';
 import Step4 from './components/steps/Step4';
 import Step5 from './components/steps/Step5';
 
-const GenerateFactoryCode = ({ onBack }) => {
+const GenerateFactoryCode = ({ onBack, initialFormData = {} }) => {
   const scrollContainerRef = useRef(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedSku, setSelectedSku] = useState('product_0'); // Format: 'product_0' or 'subproduct_0_1'
   const [formData, setFormData] = useState({
+    // Internal Purchase Order fields (if provided)
+    orderType: initialFormData.orderType || '',
+    programName: initialFormData.programName || '',
     // Step 0 - Multiple SKUs
-    buyerCode: '',
+    buyerCode: initialFormData.buyerCode || '',
     skus: [{
       sku: '',
       product: '',
