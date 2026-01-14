@@ -4,6 +4,7 @@ import GenerateVendorCode from './GenerateVendorCode';
 import GeneratePOCode from './GeneratePOCode';
 import GenerateFactoryCode from './GenerateFactoryCode';
 import VendorMasterSheet from './VendorMasterSheet';
+import CompanyEssentials from './CompanyEssentials';
 
 const DepartmentContent = () => {
   const [hoveredDeptItem, setHoveredDeptItem] = useState(null);
@@ -15,6 +16,7 @@ const DepartmentContent = () => {
   const [showGeneratePOCode, setShowGeneratePOCode] = useState(false);
   const [showGenerateFactoryCode, setShowGenerateFactoryCode] = useState(false);
   const [showVendorMasterSheet, setShowVendorMasterSheet] = useState(false);
+  const [showCompanyEssentials, setShowCompanyEssentials] = useState(false);
   
   const subMenuRef = useRef(null);
 
@@ -381,6 +383,7 @@ const DepartmentContent = () => {
     setShowGeneratePOCode(false);
     setShowGenerateFactoryCode(false);
     setShowVendorMasterSheet(false);
+    setShowCompanyEssentials(false);
   };
 
   // Determine if submenu should be shown (either hovered or sticky)
@@ -502,6 +505,29 @@ const DepartmentContent = () => {
           <div className="button-content">
             <span className="button-title">FACTORY MASTER SHEET</span>
             <span className="button-subtitle">View and manage factory master data</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderCompanyEssentialsContent = () => (
+    <div className="fullscreen-content">
+      <div className="content-header">
+        <button className="back-button" onClick={handleBackToDepartments}>
+          ← Back to Departments
+        </button>
+        <h1 className="fullscreen-title">Company Essentials</h1>
+        <p className="fullscreen-description">Generate codes for company essential items</p>
+      </div>
+      <div className="fullscreen-buttons">
+        <button 
+          className="fullscreen-action-button primary"
+          onClick={() => setShowCompanyEssentials(true)}
+        >
+          <div className="button-content">
+            <span className="button-title">CODE CREATION</span>
+            <span className="button-subtitle">Create codes for stationary, pantry, machinery and more</span>
           </div>
         </button>
       </div>
@@ -633,6 +659,14 @@ const DepartmentContent = () => {
         />
       );
     }
+
+    if (showCompanyEssentials) {
+      return (
+        <CompanyEssentials 
+          onBack={() => setShowCompanyEssentials(false)} 
+        />
+      );
+    }
     
     // Handle specific content for CHD CODE CREATION
     if (selectedSubMenuItem === 'buyer') {
@@ -643,6 +677,9 @@ const DepartmentContent = () => {
     }
     if (selectedSubMenuItem === 'factory') {
       return renderFactoryContent();
+    }
+    if (selectedSubMenuItem === 'company essentials') {
+      return renderCompanyEssentialsContent();
     }
 
     // Handle specific content for CHD PO ISSUE
@@ -680,7 +717,7 @@ const DepartmentContent = () => {
   };
 
   // If a submenu item is selected, show fullscreen content
-  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showGenerateFactoryCode || showVendorMasterSheet) {
+  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showGenerateFactoryCode || showVendorMasterSheet || showCompanyEssentials) {
     return renderDepartmentMainContent();
   }
 
