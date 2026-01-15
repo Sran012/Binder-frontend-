@@ -15,6 +15,7 @@ const SearchableDropdown = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
+  const [dropdownWidth, setDropdownWidth] = useState(null);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
   const blurTimeoutRef = useRef(null);
@@ -123,6 +124,14 @@ const SearchableDropdown = ({
     }
   }, [value, options]);
 
+  // Measure input width when dropdown opens to match dropdown width
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      const inputWidth = inputRef.current.offsetWidth;
+      setDropdownWidth(inputWidth);
+    }
+  }, [isOpen]);
+
   // Show search term when typing, otherwise show value
   const displayValue = isOpen ? searchTerm : (value || '');
 
@@ -142,8 +151,8 @@ const SearchableDropdown = ({
       />
       {isOpen && !disabled && filteredOptions.length > 0 && (
         <div
-          className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
-          style={{ top: '100%', left: 0 }}
+          className="absolute z-50 mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+          style={{ top: '100%', left: 0, width: dropdownWidth || '100%' }}
         >
           {filteredOptions.map((option, index) => (
             <div

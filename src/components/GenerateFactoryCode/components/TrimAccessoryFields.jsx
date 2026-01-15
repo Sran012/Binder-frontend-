@@ -581,68 +581,172 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                           </label>
                         </div>
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'].map((option) => {
-                                  const currentValues = Array.isArray(material.niwarTestingRequirements) 
-                                    ? material.niwarTestingRequirements 
-                                    : (material.niwarTestingRequirements ? (typeof material.niwarTestingRequirements === 'string' ? material.niwarTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.niwarTestingRequirements) 
-                                            ? material.niwarTestingRequirements 
-                                            : (material.niwarTestingRequirements ? (typeof material.niwarTestingRequirements === 'string' ? material.niwarTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'niwarTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                              {material.niwarTestingRequirements && Array.isArray(material.niwarTestingRequirements) && material.niwarTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.niwarTestingRequirements.join(', ')}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                              <input
-                                type="file"
-                                onChange={(e) => handleChange(materialIndex, 'niwarTestingRequirementFile', e.target.files[0])}
-                                className="hidden"
-                                id={`upload-niwar-testing-${materialIndex}`}
-                                accept="image/*"
-                              />
-                              <label
-                                htmlFor={`upload-niwar-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.niwarTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'niwarTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`niwar-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'niwarTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage']}
+                                placeholder={(Array.isArray(material.niwarTestingRequirements) && material.niwarTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : [];
+                                      const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'niwarTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.niwarTestingRequirements) ? material.niwarTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'niwarTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                             </div>
                           </div>
+                        </div>
+                        {/* UPLOAD button for testing requirements */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
+                          <input
+                            type="file"
+                            onChange={(e) => handleChange(materialIndex, 'niwarTestingRequirementFile', e.target.files[0])}
+                            className="hidden"
+                            id={`upload-niwar-testing-${materialIndex}`}
+                            accept="image/*"
+                          />
+                          <label
+                            htmlFor={`upload-niwar-testing-${materialIndex}`}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
+                          >
+                            {material.niwarTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
+                          </label>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -834,70 +938,175 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                           </label>
                         </div>
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Colour Fastness', 'Shrinkage', 'Pilling', 'Azo-Free', 'OEKO-TEX'].map((option) => {
-                                  const currentValues = Array.isArray(material.laceTestingRequirements) 
-                                    ? material.laceTestingRequirements 
-                                    : (material.laceTestingRequirements ? (typeof material.laceTestingRequirements === 'string' ? material.laceTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.laceTestingRequirements) 
-                                            ? material.laceTestingRequirements 
-                                            : (material.laceTestingRequirements ? (typeof material.laceTestingRequirements === 'string' ? material.laceTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'laceTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                              {material.laceTestingRequirements && Array.isArray(material.laceTestingRequirements) && material.laceTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.laceTestingRequirements.join(', ')}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                              <input
-                                type="file"
-                                onChange={(e) => handleChange(materialIndex, 'laceTestingRequirementFile', e.target.files[0])}
-                                className="hidden"
-                                id={`upload-lace-testing-${materialIndex}`}
-                                accept="image/*"
-                              />
-                              <label
-                                htmlFor={`upload-lace-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.laceTestingRequirements) ? material.laceTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.laceTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.laceTestingRequirements) ? material.laceTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'laceTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`lace-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Colour Fastness', 'Shrinkage', 'Pilling', 'Azo-Free', 'OEKO-TEX'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.laceTestingRequirements) ? material.laceTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'laceTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Colour Fastness', 'Shrinkage', 'Pilling', 'Azo-Free', 'OEKO-TEX']}
+                                placeholder={(Array.isArray(material.laceTestingRequirements) && material.laceTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.laceTestingRequirements) ? material.laceTestingRequirements : [];
+                                      const options = ['Colour Fastness', 'Shrinkage', 'Pilling', 'Azo-Free', 'OEKO-TEX'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'laceTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Colour Fastness', 'Shrinkage', 'Pilling', 'Azo-Free', 'OEKO-TEX'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.laceTestingRequirements) ? material.laceTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'laceTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                             </div>
                           </div>
                         </div>
+                        {/* UPLOAD button for testing requirements */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
+                          <input
+                            type="file"
+                            onChange={(e) => handleChange(materialIndex, 'laceTestingRequirementFile', e.target.files[0])}
+                            className="hidden"
+                            id={`upload-lace-testing-${materialIndex}`}
+                            accept="image/*"
+                          />
+                          <label
+                            htmlFor={`upload-lace-testing-${materialIndex}`}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
+                          >
+                            {material.laceTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
+                          </label>
+                        </div>
                       </div>
+                      
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">SIZE SPEC</label>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -942,67 +1151,172 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* ZIPPERS - Complete fields matching table exactly */}
                   {material.trimAccessory === 'ZIPPERS' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                                            <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENT</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Slider Durability (Cycling test)', 'Lateral Strength (Teeth-pulling strength)', 'Puller'].map((option) => {
-                                  const currentValues = Array.isArray(material.testingRequirement) 
-                                    ? material.testingRequirement 
-                                    : (material.testingRequirement ? (typeof material.testingRequirement === 'string' ? material.testingRequirement.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.testingRequirement) 
-                                            ? material.testingRequirement 
-                                            : (material.testingRequirement ? (typeof material.testingRequirement === 'string' ? material.testingRequirement.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'testingRequirement', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.testingRequirement) ? material.testingRequirement : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.testingRequirement) ? material.testingRequirement : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'testingRequirement', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`zippers-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Slider Durability (Cycling test)', 'Lateral Strength (Teeth-pulling strength)', 'Puller'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.testingRequirement) ? material.testingRequirement : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'testingRequirement', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Slider Durability (Cycling test)', 'Lateral Strength (Teeth-pulling strength)', 'Puller']}
+                                placeholder={(Array.isArray(material.testingRequirement) && material.testingRequirement.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.testingRequirement) ? material.testingRequirement : [];
+                                      const options = ['Slider Durability (Cycling test)', 'Lateral Strength (Teeth-pulling strength)', 'Puller'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'testingRequirement', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Slider Durability (Cycling test)', 'Lateral Strength (Teeth-pulling strength)', 'Puller'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.testingRequirement) ? material.testingRequirement : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'testingRequirement', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.testingRequirement && Array.isArray(material.testingRequirement) && material.testingRequirement.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.testingRequirement.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button for testing requirements */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
                                 className="hidden"
                                 id={`upload-zippers-${materialIndex}`}
+                            accept="image/*"
                               />
                               <label
                                 htmlFor={`upload-zippers-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.testingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.testingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
@@ -1101,49 +1415,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                           </div>
                         </div>
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Tensile Strength', 'Colour Fastness', 'Abrasion Resistance', 'Flammability', 'REACH/OEKO-TEX'].map((option) => {
-                                  const currentValues = Array.isArray(material.velcroTestingRequirements) 
-                                    ? material.velcroTestingRequirements 
-                                    : (material.velcroTestingRequirements ? (typeof material.velcroTestingRequirements === 'string' ? material.velcroTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.velcroTestingRequirements) 
-                                            ? material.velcroTestingRequirements 
-                                            : (material.velcroTestingRequirements ? (typeof material.velcroTestingRequirements === 'string' ? material.velcroTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'velcroTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.velcroTestingRequirements) ? material.velcroTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.velcroTestingRequirements) ? material.velcroTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'velcroTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`velcro-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Tensile Strength', 'Colour Fastness', 'Abrasion Resistance', 'Flammability', 'REACH/OEKO-TEX'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.velcroTestingRequirements) ? material.velcroTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'velcroTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Tensile Strength', 'Colour Fastness', 'Abrasion Resistance', 'Flammability', 'REACH/OEKO-TEX']}
+                                placeholder={(Array.isArray(material.velcroTestingRequirements) && material.velcroTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.velcroTestingRequirements) ? material.velcroTestingRequirements : [];
+                                      const options = ['Tensile Strength', 'Colour Fastness', 'Abrasion Resistance', 'Flammability', 'REACH/OEKO-TEX'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'velcroTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Tensile Strength', 'Colour Fastness', 'Abrasion Resistance', 'Flammability', 'REACH/OEKO-TEX'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.velcroTestingRequirements) ? material.velcroTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'velcroTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.velcroTestingRequirements && Array.isArray(material.velcroTestingRequirements) && material.velcroTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.velcroTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button for testing requirements */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'velcroTestingRequirementFile', e.target.files[0])}
@@ -1153,16 +1576,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-velcro-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.velcroTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.velcroTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -1320,67 +1738,172 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* STITCHING THREAD - Complete fields matching table exactly */}
                   {material.trimAccessory === 'STITCHING THREAD' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENT</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Tensile Strength', 'Elongation', 'Abrasion'].map((option) => {
-                                  const currentValues = Array.isArray(material.testingRequirement) 
-                                    ? material.testingRequirement 
-                                    : (material.testingRequirement ? (typeof material.testingRequirement === 'string' ? material.testingRequirement.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.testingRequirement) 
-                                            ? material.testingRequirement 
-                                            : (material.testingRequirement ? (typeof material.testingRequirement === 'string' ? material.testingRequirement.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'testingRequirement', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.testingRequirement) ? material.testingRequirement : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.testingRequirement) ? material.testingRequirement : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'testingRequirement', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`thread-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Tensile Strength', 'Elongation', 'Abrasion'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.testingRequirement) ? material.testingRequirement : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'testingRequirement', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Tensile Strength', 'Elongation', 'Abrasion']}
+                                placeholder={(Array.isArray(material.testingRequirement) && material.testingRequirement.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.testingRequirement) ? material.testingRequirement : [];
+                                      const options = ['Tensile Strength', 'Elongation', 'Abrasion'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'testingRequirement', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Tensile Strength', 'Elongation', 'Abrasion'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.testingRequirement) ? material.testingRequirement : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'testingRequirement', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.testingRequirement && Array.isArray(material.testingRequirement) && material.testingRequirement.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.testingRequirement.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button for testing requirements */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
                                 className="hidden"
                                 id={`upload-thread-${materialIndex}`}
+                            accept="image/*"
                               />
                               <label
                                 htmlFor={`upload-thread-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.testingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.testingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -1445,49 +1968,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* BUTTONS - Complete fields matching table exactly */}
                   {material.trimAccessory === 'BUTTONS' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Needle Detection', 'Pull Strength', 'Colour Fastness', 'REACH/OEKO-TEX', 'Corrosion'].map((option) => {
-                                  const currentValues = Array.isArray(material.buttonTestingRequirements) 
-                                    ? material.buttonTestingRequirements 
-                                    : (material.buttonTestingRequirements ? (typeof material.buttonTestingRequirements === 'string' ? material.buttonTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.buttonTestingRequirements) 
-                                            ? material.buttonTestingRequirements 
-                                            : (material.buttonTestingRequirements ? (typeof material.buttonTestingRequirements === 'string' ? material.buttonTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'buttonTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.buttonTestingRequirements) ? material.buttonTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.buttonTestingRequirements) ? material.buttonTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'buttonTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`button-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Needle Detection', 'Pull Strength', 'Colour Fastness', 'REACH/OEKO-TEX', 'Corrosion'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.buttonTestingRequirements) ? material.buttonTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'buttonTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Needle Detection', 'Pull Strength', 'Colour Fastness', 'REACH/OEKO-TEX', 'Corrosion']}
+                                placeholder={(Array.isArray(material.buttonTestingRequirements) && material.buttonTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.buttonTestingRequirements) ? material.buttonTestingRequirements : [];
+                                      const options = ['Needle Detection', 'Pull Strength', 'Colour Fastness', 'REACH/OEKO-TEX', 'Corrosion'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'buttonTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Needle Detection', 'Pull Strength', 'Colour Fastness', 'REACH/OEKO-TEX', 'Corrosion'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.buttonTestingRequirements) ? material.buttonTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'buttonTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.buttonTestingRequirements && Array.isArray(material.buttonTestingRequirements) && material.buttonTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.buttonTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button for testing requirements */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'buttonTestingRequirementFile', e.target.files[0])}
@@ -1497,16 +2129,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-button-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.buttonTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.buttonTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       
@@ -1681,49 +2308,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* RIVETS - Complete fields matching table exactly */}
                   {material.trimAccessory === 'RIVETS' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Needle Detection', 'Pull Strength (90N)', 'Corrosion (Salt Spray)'].map((option) => {
-                                  const currentValues = Array.isArray(material.rivetTestingRequirements) 
-                                    ? material.rivetTestingRequirements 
-                                    : (material.rivetTestingRequirements ? (typeof material.rivetTestingRequirements === 'string' ? material.rivetTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.rivetTestingRequirements) 
-                                            ? material.rivetTestingRequirements 
-                                            : (material.rivetTestingRequirements ? (typeof material.rivetTestingRequirements === 'string' ? material.rivetTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'rivetTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.rivetTestingRequirements) ? material.rivetTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.rivetTestingRequirements) ? material.rivetTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'rivetTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`rivet-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Needle Detection', 'Pull Strength (90N)', 'Corrosion (Salt Spray)'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.rivetTestingRequirements) ? material.rivetTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'rivetTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Needle Detection', 'Pull Strength (90N)', 'Corrosion (Salt Spray)']}
+                                placeholder={(Array.isArray(material.rivetTestingRequirements) && material.rivetTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.rivetTestingRequirements) ? material.rivetTestingRequirements : [];
+                                      const options = ['Needle Detection', 'Pull Strength (90N)', 'Corrosion (Salt Spray)'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'rivetTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Needle Detection', 'Pull Strength (90N)', 'Corrosion (Salt Spray)'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.rivetTestingRequirements) ? material.rivetTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'rivetTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.rivetTestingRequirements && Array.isArray(material.rivetTestingRequirements) && material.rivetTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.rivetTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button for testing requirements */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'rivetTestingRequirementFile', e.target.files[0])}
@@ -1733,16 +2469,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-rivet-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.rivetTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.rivetTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -2492,43 +3223,152 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                        <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                          <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                            <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                              {['Flammability', 'Pilling', 'Colour Fastness', 'Tensile', 'Compression'].map((option) => {
-                                const currentValues = Array.isArray(material.feltTestingRequirements) 
-                                  ? material.feltTestingRequirements 
-                                  : (material.feltTestingRequirements ? (typeof material.feltTestingRequirements === 'string' ? material.feltTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                const isChecked = currentValues.includes(option);
-                                return (
-                                  <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={(e) => {
-                                        const currentValues = Array.isArray(material.feltTestingRequirements) 
-                                          ? material.feltTestingRequirements 
-                                          : (material.feltTestingRequirements ? (typeof material.feltTestingRequirements === 'string' ? material.feltTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                        let newValues;
-                                        if (e.target.checked) {
-                                          newValues = [...currentValues, option];
-                                        } else {
-                                          newValues = currentValues.filter(v => v !== option);
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.feltTestingRequirements) ? material.feltTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.feltTestingRequirements) ? material.feltTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'feltTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`felt-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Flammability', 'Pilling', 'Colour Fastness', 'Tensile', 'Compression'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.feltTestingRequirements) ? material.feltTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'feltTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Flammability', 'Pilling', 'Colour Fastness', 'Tensile', 'Compression']}
+                                placeholder={(Array.isArray(material.feltTestingRequirements) && material.feltTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.feltTestingRequirements) ? material.feltTestingRequirements : [];
+                                      const options = ['Flammability', 'Pilling', 'Colour Fastness', 'Tensile', 'Compression'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'feltTestingRequirements', updated);
                                         }
-                                        handleChange(materialIndex, 'feltTestingRequirements', newValues);
-                                      }}
-                                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                    />
-                                    <span className="text-sm text-gray-900">{option}</span>
-                                  </label>
-                                );
-                              })}
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Flammability', 'Pilling', 'Colour Fastness', 'Tensile', 'Compression'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.feltTestingRequirements) ? material.feltTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'feltTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                             </div>
-                            {material.feltTestingRequirements && Array.isArray(material.feltTestingRequirements) && material.feltTestingRequirements.length > 0 && (
-                              <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                <strong>Selected:</strong> {material.feltTestingRequirements.join(', ')}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -2817,43 +3657,152 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                        <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                          <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                            <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                              {['Bond Strength', 'Residual Shrinkage', 'Wash Resistance', 'Strike-Through'].map((option) => {
-                                const currentValues = Array.isArray(material.interliningTestingRequirements) 
-                                  ? material.interliningTestingRequirements 
-                                  : (material.interliningTestingRequirements ? (typeof material.interliningTestingRequirements === 'string' ? material.interliningTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                const isChecked = currentValues.includes(option);
-                                return (
-                                  <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={(e) => {
-                                        const currentValues = Array.isArray(material.interliningTestingRequirements) 
-                                          ? material.interliningTestingRequirements 
-                                          : (material.interliningTestingRequirements ? (typeof material.interliningTestingRequirements === 'string' ? material.interliningTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                        let newValues;
-                                        if (e.target.checked) {
-                                          newValues = [...currentValues, option];
-                                        } else {
-                                          newValues = currentValues.filter(v => v !== option);
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.interliningTestingRequirements) ? material.interliningTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.interliningTestingRequirements) ? material.interliningTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'interliningTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`interlining-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Bond Strength', 'Residual Shrinkage', 'Wash Resistance', 'Strike-Through'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.interliningTestingRequirements) ? material.interliningTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'interliningTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Bond Strength', 'Residual Shrinkage', 'Wash Resistance', 'Strike-Through']}
+                                placeholder={(Array.isArray(material.interliningTestingRequirements) && material.interliningTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.interliningTestingRequirements) ? material.interliningTestingRequirements : [];
+                                      const options = ['Bond Strength', 'Residual Shrinkage', 'Wash Resistance', 'Strike-Through'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'interliningTestingRequirements', updated);
                                         }
-                                        handleChange(materialIndex, 'interliningTestingRequirements', newValues);
-                                      }}
-                                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                    />
-                                    <span className="text-sm text-gray-900">{option}</span>
-                                  </label>
-                                );
-                              })}
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Bond Strength', 'Residual Shrinkage', 'Wash Resistance', 'Strike-Through'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.interliningTestingRequirements) ? material.interliningTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'interliningTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                             </div>
-                            {material.interliningTestingRequirements && Array.isArray(material.interliningTestingRequirements) && material.interliningTestingRequirements.length > 0 && (
-                              <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                <strong>Selected:</strong> {material.interliningTestingRequirements.join(', ')}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -3107,43 +4056,152 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                       {/* TESTING REQUIREMENTS */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                        <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                          <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                            <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                              {['Holding Power', 'Corrosion', 'Needle Detection', 'Edge Smoothness'].map((option) => {
-                                const currentValues = Array.isArray(material.hookEyeTestingRequirements) 
-                                  ? material.hookEyeTestingRequirements 
-                                  : (material.hookEyeTestingRequirements ? (typeof material.hookEyeTestingRequirements === 'string' ? material.hookEyeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                const isChecked = currentValues.includes(option);
-                                return (
-                                  <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={(e) => {
-                                        const currentValues = Array.isArray(material.hookEyeTestingRequirements) 
-                                          ? material.hookEyeTestingRequirements 
-                                          : (material.hookEyeTestingRequirements ? (typeof material.hookEyeTestingRequirements === 'string' ? material.hookEyeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                        let newValues;
-                                        if (e.target.checked) {
-                                          newValues = [...currentValues, option];
-                                        } else {
-                                          newValues = currentValues.filter(v => v !== option);
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.hookEyeTestingRequirements) ? material.hookEyeTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.hookEyeTestingRequirements) ? material.hookEyeTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'hookEyeTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`hookeye-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Holding Power', 'Corrosion', 'Needle Detection', 'Edge Smoothness'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.hookEyeTestingRequirements) ? material.hookEyeTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'hookEyeTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Holding Power', 'Corrosion', 'Needle Detection', 'Edge Smoothness']}
+                                placeholder={(Array.isArray(material.hookEyeTestingRequirements) && material.hookEyeTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.hookEyeTestingRequirements) ? material.hookEyeTestingRequirements : [];
+                                      const options = ['Holding Power', 'Corrosion', 'Needle Detection', 'Edge Smoothness'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'hookEyeTestingRequirements', updated);
                                         }
-                                        handleChange(materialIndex, 'hookEyeTestingRequirements', newValues);
-                                      }}
-                                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                    />
-                                    <span className="text-sm text-gray-900">{option}</span>
-                                  </label>
-                                );
-                              })}
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Holding Power', 'Corrosion', 'Needle Detection', 'Edge Smoothness'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.hookEyeTestingRequirements) ? material.hookEyeTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'hookEyeTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                             </div>
-                            {material.hookEyeTestingRequirements && Array.isArray(material.hookEyeTestingRequirements) && material.hookEyeTestingRequirements.length > 0 && (
-                              <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                <strong>Selected:</strong> {material.hookEyeTestingRequirements.join(', ')}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -3510,49 +4568,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* BUCKLES - Complete fields matching table exactly */}
                   {material.trimAccessory === 'BUCKLES' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Tensile Load', 'Corrosion (Salt Spray)', 'UV Resistance', 'REACH'].map((option) => {
-                                  const currentValues = Array.isArray(material.bucklesTestingRequirements) 
-                                    ? material.bucklesTestingRequirements 
-                                    : (material.bucklesTestingRequirements ? (typeof material.bucklesTestingRequirements === 'string' ? material.bucklesTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.bucklesTestingRequirements) 
-                                            ? material.bucklesTestingRequirements 
-                                            : (material.bucklesTestingRequirements ? (typeof material.bucklesTestingRequirements === 'string' ? material.bucklesTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'bucklesTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.bucklesTestingRequirements) ? material.bucklesTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.bucklesTestingRequirements) ? material.bucklesTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'bucklesTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`buckles-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Tensile Load', 'Corrosion (Salt Spray)', 'UV Resistance', 'REACH'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.bucklesTestingRequirements) ? material.bucklesTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'bucklesTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Tensile Load', 'Corrosion (Salt Spray)', 'UV Resistance', 'REACH']}
+                                placeholder={(Array.isArray(material.bucklesTestingRequirements) && material.bucklesTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.bucklesTestingRequirements) ? material.bucklesTestingRequirements : [];
+                                      const options = ['Tensile Load', 'Corrosion (Salt Spray)', 'UV Resistance', 'REACH'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'bucklesTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Tensile Load', 'Corrosion (Salt Spray)', 'UV Resistance', 'REACH'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.bucklesTestingRequirements) ? material.bucklesTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'bucklesTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.bucklesTestingRequirements && Array.isArray(material.bucklesTestingRequirements) && material.bucklesTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.bucklesTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'bucklesReferenceImage', e.target.files[0])}
@@ -3562,16 +4729,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-buckles-ref-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.bucklesReferenceImage ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.bucklesReferenceImage ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -4060,43 +5222,152 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                       {/* TESTING REQUIREMENT */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENT</label>
-                        <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                          <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                            <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                              {['Wash Resistance', 'Flammability', 'Hypoallergenic'].map((option) => {
-                                const currentValues = Array.isArray(material.shoulderPadTestingRequirements) 
-                                  ? material.shoulderPadTestingRequirements 
-                                  : (material.shoulderPadTestingRequirements ? (typeof material.shoulderPadTestingRequirements === 'string' ? material.shoulderPadTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                const isChecked = currentValues.includes(option);
-                                return (
-                                  <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={(e) => {
-                                        const currentValues = Array.isArray(material.shoulderPadTestingRequirements) 
-                                          ? material.shoulderPadTestingRequirements 
-                                          : (material.shoulderPadTestingRequirements ? (typeof material.shoulderPadTestingRequirements === 'string' ? material.shoulderPadTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                        let newValues;
-                                        if (e.target.checked) {
-                                          newValues = [...currentValues, option];
-                                        } else {
-                                          newValues = currentValues.filter(v => v !== option);
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.shoulderPadTestingRequirements) ? material.shoulderPadTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.shoulderPadTestingRequirements) ? material.shoulderPadTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'shoulderPadTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`shoulderpad-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Wash Resistance', 'Flammability', 'Hypoallergenic'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.shoulderPadTestingRequirements) ? material.shoulderPadTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'shoulderPadTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Wash Resistance', 'Flammability', 'Hypoallergenic']}
+                                placeholder={(Array.isArray(material.shoulderPadTestingRequirements) && material.shoulderPadTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.shoulderPadTestingRequirements) ? material.shoulderPadTestingRequirements : [];
+                                      const options = ['Wash Resistance', 'Flammability', 'Hypoallergenic'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'shoulderPadTestingRequirements', updated);
                                         }
-                                        handleChange(materialIndex, 'shoulderPadTestingRequirements', newValues);
-                                      }}
-                                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                    />
-                                    <span className="text-sm text-gray-900">{option}</span>
-                                  </label>
-                                );
-                              })}
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Wash Resistance', 'Flammability', 'Hypoallergenic'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.shoulderPadTestingRequirements) ? material.shoulderPadTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'shoulderPadTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                             </div>
-                            {material.shoulderPadTestingRequirements && Array.isArray(material.shoulderPadTestingRequirements) && material.shoulderPadTestingRequirements.length > 0 && (
-                              <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                <strong>Selected:</strong> {material.shoulderPadTestingRequirements.join(', ')}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -4266,49 +5537,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                           </label>
                         </div>
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'].map((option) => {
-                                  const currentValues = Array.isArray(material.ribbingTestingRequirements) 
-                                    ? material.ribbingTestingRequirements 
-                                    : (material.ribbingTestingRequirements ? (typeof material.ribbingTestingRequirements === 'string' ? material.ribbingTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.ribbingTestingRequirements) 
-                                            ? material.ribbingTestingRequirements 
-                                            : (material.ribbingTestingRequirements ? (typeof material.ribbingTestingRequirements === 'string' ? material.ribbingTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'ribbingTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.ribbingTestingRequirements) ? material.ribbingTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.ribbingTestingRequirements) ? material.ribbingTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'ribbingTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`ribbing-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.ribbingTestingRequirements) ? material.ribbingTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'ribbingTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage']}
+                                placeholder={(Array.isArray(material.ribbingTestingRequirements) && material.ribbingTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.ribbingTestingRequirements) ? material.ribbingTestingRequirements : [];
+                                      const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'ribbingTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Tensile Test', 'Colour Fastness', 'Abrasion Resistance', 'Shrinkage'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.ribbingTestingRequirements) ? material.ribbingTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'ribbingTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.ribbingTestingRequirements && Array.isArray(material.ribbingTestingRequirements) && material.ribbingTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.ribbingTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'ribbingTestingRequirementFile', e.target.files[0])}
@@ -4318,16 +5698,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-ribbing-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.ribbingTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.ribbingTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -4840,49 +6215,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* PLASTIC CABLE TIES / LOOPS - Complete fields matching table exactly */}
                   {material.trimAccessory === 'CABLE-TIES' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Tensile Test', 'UV Resistance', 'Chemical Resistance'].map((option) => {
-                                  const currentValues = Array.isArray(material.cableTieTestingRequirements) 
-                                    ? material.cableTieTestingRequirements 
-                                    : (material.cableTieTestingRequirements ? (typeof material.cableTieTestingRequirements === 'string' ? material.cableTieTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.cableTieTestingRequirements) 
-                                            ? material.cableTieTestingRequirements 
-                                            : (material.cableTieTestingRequirements ? (typeof material.cableTieTestingRequirements === 'string' ? material.cableTieTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'cableTieTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.cableTieTestingRequirements) ? material.cableTieTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.cableTieTestingRequirements) ? material.cableTieTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'cableTieTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`cabletie-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Tensile Test', 'UV Resistance', 'Chemical Resistance'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.cableTieTestingRequirements) ? material.cableTieTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'cableTieTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Tensile Test', 'UV Resistance', 'Chemical Resistance']}
+                                placeholder={(Array.isArray(material.cableTieTestingRequirements) && material.cableTieTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.cableTieTestingRequirements) ? material.cableTieTestingRequirements : [];
+                                      const options = ['Tensile Test', 'UV Resistance', 'Chemical Resistance'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'cableTieTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Tensile Test', 'UV Resistance', 'Chemical Resistance'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.cableTieTestingRequirements) ? material.cableTieTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'cableTieTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.cableTieTestingRequirements && Array.isArray(material.cableTieTestingRequirements) && material.cableTieTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.cableTieTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'cableTieReferenceImage', e.target.files[0])}
@@ -4892,16 +6376,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-cable-ref-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.cableTieReferenceImage ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.cableTieReferenceImage ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -5522,49 +7001,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* SEAM TAPE - Complete fields matching table exactly */}
                   {material.trimAccessory === 'SEAM TAPE' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Hydrostatic Head', 'Wash Resistance', 'Adhesion/Peel Test'].map((option) => {
-                                  const currentValues = Array.isArray(material.seamTapeTestingRequirements) 
-                                    ? material.seamTapeTestingRequirements 
-                                    : (material.seamTapeTestingRequirements ? (typeof material.seamTapeTestingRequirements === 'string' ? material.seamTapeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.seamTapeTestingRequirements) 
-                                            ? material.seamTapeTestingRequirements 
-                                            : (material.seamTapeTestingRequirements ? (typeof material.seamTapeTestingRequirements === 'string' ? material.seamTapeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'seamTapeTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.seamTapeTestingRequirements) ? material.seamTapeTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.seamTapeTestingRequirements) ? material.seamTapeTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'seamTapeTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`seamtape-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Hydrostatic Head', 'Wash Resistance', 'Adhesion/Peel Test'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.seamTapeTestingRequirements) ? material.seamTapeTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'seamTapeTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Hydrostatic Head', 'Wash Resistance', 'Adhesion/Peel Test']}
+                                placeholder={(Array.isArray(material.seamTapeTestingRequirements) && material.seamTapeTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.seamTapeTestingRequirements) ? material.seamTapeTestingRequirements : [];
+                                      const options = ['Hydrostatic Head', 'Wash Resistance', 'Adhesion/Peel Test'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'seamTapeTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Hydrostatic Head', 'Wash Resistance', 'Adhesion/Peel Test'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.seamTapeTestingRequirements) ? material.seamTapeTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'seamTapeTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.seamTapeTestingRequirements && Array.isArray(material.seamTapeTestingRequirements) && material.seamTapeTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.seamTapeTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'seamTapeTestingRequirementFile', e.target.files[0])}
@@ -5574,16 +7162,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-seam-tape-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.seamTapeTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.seamTapeTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -6178,49 +7761,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* REFLECTIVE TAPES - Complete fields matching table exactly */}
                   {material.trimAccessory === 'REFLECTIVE TAPES' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Retro-reflection Test', 'Wash Cycling', 'Abrasion Resistance'].map((option) => {
-                                  const currentValues = Array.isArray(material.reflectiveTapeTestingRequirements) 
-                                    ? material.reflectiveTapeTestingRequirements 
-                                    : (material.reflectiveTapeTestingRequirements ? (typeof material.reflectiveTapeTestingRequirements === 'string' ? material.reflectiveTapeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.reflectiveTapeTestingRequirements) 
-                                            ? material.reflectiveTapeTestingRequirements 
-                                            : (material.reflectiveTapeTestingRequirements ? (typeof material.reflectiveTapeTestingRequirements === 'string' ? material.reflectiveTapeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'reflectiveTapeTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.reflectiveTapeTestingRequirements) ? material.reflectiveTapeTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.reflectiveTapeTestingRequirements) ? material.reflectiveTapeTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'reflectiveTapeTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`reflective-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Retro-reflection Test', 'Wash Cycling', 'Abrasion Resistance'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.reflectiveTapeTestingRequirements) ? material.reflectiveTapeTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'reflectiveTapeTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Retro-reflection Test', 'Wash Cycling', 'Abrasion Resistance']}
+                                placeholder={(Array.isArray(material.reflectiveTapeTestingRequirements) && material.reflectiveTapeTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.reflectiveTapeTestingRequirements) ? material.reflectiveTapeTestingRequirements : [];
+                                      const options = ['Retro-reflection Test', 'Wash Cycling', 'Abrasion Resistance'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'reflectiveTapeTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Retro-reflection Test', 'Wash Cycling', 'Abrasion Resistance'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.reflectiveTapeTestingRequirements) ? material.reflectiveTapeTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'reflectiveTapeTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.reflectiveTapeTestingRequirements && Array.isArray(material.reflectiveTapeTestingRequirements) && material.reflectiveTapeTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.reflectiveTapeTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'reflectiveTapeTestingRequirementFile', e.target.files[0])}
@@ -6230,16 +7922,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-reflective-tape-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.reflectiveTapeTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.reflectiveTapeTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -6466,49 +8153,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                           style={{ padding: '10px 14px', height: '44px' }}
                         />
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Vertical Flame Test', 'LOI', 'Wash Durability (re-test after wash)'].map((option) => {
-                                  const currentValues = Array.isArray(material.frTrimsTestingRequirements) 
-                                    ? material.frTrimsTestingRequirements 
-                                    : (material.frTrimsTestingRequirements ? (typeof material.frTrimsTestingRequirements === 'string' ? material.frTrimsTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.frTrimsTestingRequirements) 
-                                            ? material.frTrimsTestingRequirements 
-                                            : (material.frTrimsTestingRequirements ? (typeof material.frTrimsTestingRequirements === 'string' ? material.frTrimsTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'frTrimsTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.frTrimsTestingRequirements) ? material.frTrimsTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.frTrimsTestingRequirements) ? material.frTrimsTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'frTrimsTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`frtrim-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Vertical Flame Test', 'LOI', 'Wash Durability (re-test after wash)'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.frTrimsTestingRequirements) ? material.frTrimsTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'frTrimsTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Vertical Flame Test', 'LOI', 'Wash Durability (re-test after wash)']}
+                                placeholder={(Array.isArray(material.frTrimsTestingRequirements) && material.frTrimsTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.frTrimsTestingRequirements) ? material.frTrimsTestingRequirements : [];
+                                      const options = ['Vertical Flame Test', 'LOI', 'Wash Durability (re-test after wash)'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'frTrimsTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Vertical Flame Test', 'LOI', 'Wash Durability (re-test after wash)'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.frTrimsTestingRequirements) ? material.frTrimsTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'frTrimsTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.frTrimsTestingRequirements && Array.isArray(material.frTrimsTestingRequirements) && material.frTrimsTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.frTrimsTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'frTrimsTestingRequirementFile', e.target.files[0])}
@@ -6518,16 +8314,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-fr-trims-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.frTrimsTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.frTrimsTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       
@@ -7021,49 +8812,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* CORD RING - Complete fields matching table exactly */}
                   {material.trimAccessory === 'CORD STOPS' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Locking Strength', 'UV Resistance', 'Cold Weather', 'Non-Toxic'].map((option) => {
-                                  const currentValues = Array.isArray(material.cordStopTestingRequirements) 
-                                    ? material.cordStopTestingRequirements 
-                                    : (material.cordStopTestingRequirements ? (typeof material.cordStopTestingRequirements === 'string' ? material.cordStopTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.cordStopTestingRequirements) 
-                                            ? material.cordStopTestingRequirements 
-                                            : (material.cordStopTestingRequirements ? (typeof material.cordStopTestingRequirements === 'string' ? material.cordStopTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'cordStopTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.cordStopTestingRequirements) ? material.cordStopTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.cordStopTestingRequirements) ? material.cordStopTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'cordStopTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`cordstop-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Locking Strength', 'UV Resistance', 'Cold Weather', 'Non-Toxic'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.cordStopTestingRequirements) ? material.cordStopTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'cordStopTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Locking Strength', 'UV Resistance', 'Cold Weather', 'Non-Toxic']}
+                                placeholder={(Array.isArray(material.cordStopTestingRequirements) && material.cordStopTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.cordStopTestingRequirements) ? material.cordStopTestingRequirements : [];
+                                      const options = ['Locking Strength', 'UV Resistance', 'Cold Weather', 'Non-Toxic'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'cordStopTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Locking Strength', 'UV Resistance', 'Cold Weather', 'Non-Toxic'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.cordStopTestingRequirements) ? material.cordStopTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'cordStopTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.cordStopTestingRequirements && Array.isArray(material.cordStopTestingRequirements) && material.cordStopTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.cordStopTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'cordStopPlacementReferenceImage', e.target.files[0])}
@@ -7073,16 +8973,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-cord-placement-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.cordStopPlacementReferenceImage ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.cordStopPlacementReferenceImage ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       
@@ -7296,49 +9191,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* RINGS-LOOPS - Complete fields matching table exactly */}
                   {material.trimAccessory === 'RINGS-LOOPS' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Tensile Strength', 'Corrosion (Salt Spray)', 'Weld Integrity'].map((option) => {
-                                  const currentValues = Array.isArray(material.ringsLoopsTestingRequirements) 
-                                    ? material.ringsLoopsTestingRequirements 
-                                    : (material.ringsLoopsTestingRequirements ? (typeof material.ringsLoopsTestingRequirements === 'string' ? material.ringsLoopsTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.ringsLoopsTestingRequirements) 
-                                            ? material.ringsLoopsTestingRequirements 
-                                            : (material.ringsLoopsTestingRequirements ? (typeof material.ringsLoopsTestingRequirements === 'string' ? material.ringsLoopsTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'ringsLoopsTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.ringsLoopsTestingRequirements) ? material.ringsLoopsTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.ringsLoopsTestingRequirements) ? material.ringsLoopsTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'ringsLoopsTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`ringsloops-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Tensile Strength', 'Corrosion (Salt Spray)', 'Weld Integrity'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.ringsLoopsTestingRequirements) ? material.ringsLoopsTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'ringsLoopsTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Tensile Strength', 'Corrosion (Salt Spray)', 'Weld Integrity']}
+                                placeholder={(Array.isArray(material.ringsLoopsTestingRequirements) && material.ringsLoopsTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.ringsLoopsTestingRequirements) ? material.ringsLoopsTestingRequirements : [];
+                                      const options = ['Tensile Strength', 'Corrosion (Salt Spray)', 'Weld Integrity'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'ringsLoopsTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Tensile Strength', 'Corrosion (Salt Spray)', 'Weld Integrity'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.ringsLoopsTestingRequirements) ? material.ringsLoopsTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'ringsLoopsTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.ringsLoopsTestingRequirements && Array.isArray(material.ringsLoopsTestingRequirements) && material.ringsLoopsTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.ringsLoopsTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'ringsLoopsTestingRequirementFile', e.target.files[0])}
@@ -7348,16 +9352,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-rings-loops-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.ringsLoopsTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.ringsLoopsTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -7766,49 +9765,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* PIN-BARBS - Complete fields matching table exactly */}
                   {material.trimAccessory === 'PIN-BARBS' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Needle Sharpness', 'Non-Rusting', 'Metal Detection (ferrous)'].map((option) => {
-                                  const currentValues = Array.isArray(material.pinBarbTestingRequirements) 
-                                    ? material.pinBarbTestingRequirements 
-                                    : (material.pinBarbTestingRequirements ? (typeof material.pinBarbTestingRequirements === 'string' ? material.pinBarbTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.pinBarbTestingRequirements) 
-                                            ? material.pinBarbTestingRequirements 
-                                            : (material.pinBarbTestingRequirements ? (typeof material.pinBarbTestingRequirements === 'string' ? material.pinBarbTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'pinBarbTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.pinBarbTestingRequirements) ? material.pinBarbTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.pinBarbTestingRequirements) ? material.pinBarbTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'pinBarbTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`pinbarb-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Needle Sharpness', 'Non-Rusting', 'Metal Detection (ferrous)'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.pinBarbTestingRequirements) ? material.pinBarbTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'pinBarbTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Needle Sharpness', 'Non-Rusting', 'Metal Detection (ferrous)']}
+                                placeholder={(Array.isArray(material.pinBarbTestingRequirements) && material.pinBarbTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.pinBarbTestingRequirements) ? material.pinBarbTestingRequirements : [];
+                                      const options = ['Needle Sharpness', 'Non-Rusting', 'Metal Detection (ferrous)'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'pinBarbTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Needle Sharpness', 'Non-Rusting', 'Metal Detection (ferrous)'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.pinBarbTestingRequirements) ? material.pinBarbTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'pinBarbTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.pinBarbTestingRequirements && Array.isArray(material.pinBarbTestingRequirements) && material.pinBarbTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.pinBarbTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'pinBarbTestingRequirementFile', e.target.files[0])}
@@ -7818,16 +9926,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-pin-barb-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.pinBarbTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.pinBarbTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
@@ -8031,49 +10134,158 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                   {/* MAGNETIC CLOSURE - Complete fields matching table exactly */}
                   {material.trimAccessory === 'MAGNETIC CLOSURE' && (
                     <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-start gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                            <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                              <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                {['Pull Force Test', 'Corrosion', 'Needle Detection (if shielded)'].map((option) => {
-                                  const currentValues = Array.isArray(material.magneticClosureTestingRequirements) 
-                                    ? material.magneticClosureTestingRequirements 
-                                    : (material.magneticClosureTestingRequirements ? (typeof material.magneticClosureTestingRequirements === 'string' ? material.magneticClosureTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                  const isChecked = currentValues.includes(option);
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentValues = Array.isArray(material.magneticClosureTestingRequirements) 
-                                            ? material.magneticClosureTestingRequirements 
-                                            : (material.magneticClosureTestingRequirements ? (typeof material.magneticClosureTestingRequirements === 'string' ? material.magneticClosureTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                          let newValues;
-                                          if (e.target.checked) {
-                                            newValues = [...currentValues, option];
-                                          } else {
-                                            newValues = currentValues.filter(v => v !== option);
-                                          }
-                                          handleChange(materialIndex, 'magneticClosureTestingRequirements', newValues);
-                                        }}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                      />
-                                      <span className="text-sm text-gray-900">{option}</span>
-                                    </label>
-                                  );
-                                })}
+                        <div style={{ position: 'relative' }}>
+                          <div
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
+                            style={{ 
+                              padding: '8px 12px',
+                              minHeight: '44px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                              alignItems: 'center',
+                              cursor: 'text'
+                            }}
+                          >
+                            {/* Selected chips */}
+                            {(Array.isArray(material.magneticClosureTestingRequirements) ? material.magneticClosureTestingRequirements : []).map((req, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
+                                style={{
+                                  backgroundColor: '#e0e7ff',
+                                  color: '#4338ca',
+                                  border: '1px solid #c7d2fe'
+                                }}
+                              >
+                                {req}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const current = Array.isArray(material.magneticClosureTestingRequirements) ? material.magneticClosureTestingRequirements : [];
+                                    const updated = current.filter((_, i) => i !== index);
+                                    handleChange(materialIndex, 'magneticClosureTestingRequirements', updated);
+                                  }}
+                                  style={{
+                                    marginLeft: '4px',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#4338ca',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    lineHeight: '1',
+                                    padding: 0,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '16px',
+                                    height: '16px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            {/* Dropdown for selecting new options */}
+                            <div 
+                              id={`magnetic-testing-wrapper-${materialIndex}`}
+                              style={{ flex: 1, minWidth: '200px' }}
+                            >
+                              <SearchableDropdown
+                                value=""
+                                strictMode={false}
+                                onChange={(selectedValue) => {
+                                  const options = ['Pull Force Test', 'Corrosion', 'Needle Detection (if shielded)'];
+                                  if (selectedValue && options.includes(selectedValue)) {
+                                    const current = Array.isArray(material.magneticClosureTestingRequirements) ? material.magneticClosureTestingRequirements : [];
+                                    if (!current.includes(selectedValue)) {
+                                      const updated = [...current, selectedValue];
+                                      handleChange(materialIndex, 'magneticClosureTestingRequirements', updated);
+                                    }
+                                  }
+                                }}
+                                options={['Pull Force Test', 'Corrosion', 'Needle Detection (if shielded)']}
+                                placeholder={(Array.isArray(material.magneticClosureTestingRequirements) && material.magneticClosureTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
+                                className="border-0 outline-none"
+                                style={{ 
+                                  padding: '4px 0', 
+                                  height: 'auto', 
+                                  minHeight: '32px',
+                                  backgroundColor: 'transparent', 
+                                  boxShadow: 'none',
+                                  border: 'none',
+                                  borderWidth: '0',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  const input = e.target;
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#667eea';
+                                    container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                  }
+                                  const handleKeyDown = (keyEvent) => {
+                                    if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
+                                      keyEvent.preventDefault();
+                                      keyEvent.stopPropagation();
+                                      const newValue = input.value.trim();
+                                      const current = Array.isArray(material.magneticClosureTestingRequirements) ? material.magneticClosureTestingRequirements : [];
+                                      const options = ['Pull Force Test', 'Corrosion', 'Needle Detection (if shielded)'];
+                                      if (!current.includes(newValue)) {
+                                        if (!options.includes(newValue)) {
+                                          const updated = [...current, newValue];
+                                          handleChange(materialIndex, 'magneticClosureTestingRequirements', updated);
+                                        }
+                                        input.value = '';
+                                        input.blur();
+                                      }
+                                    }
+                                  };
+                                  input.addEventListener('keydown', handleKeyDown);
+                                  input._enterHandler = handleKeyDown;
+                                }}
+                                onBlur={(e) => {
+                                  const input = e.target;
+                                  if (input._enterHandler) {
+                                    input.removeEventListener('keydown', input._enterHandler);
+                                    input._enterHandler = null;
+                                  }
+                                  input.style.border = 'none';
+                                  input.style.borderWidth = '0';
+                                  input.style.outline = 'none';
+                                  input.style.boxShadow = 'none';
+                                  const container = input.closest('[class*="border-2"]');
+                                  if (container) {
+                                    container.style.borderColor = '#e5e7eb';
+                                    container.style.boxShadow = 'none';
+                                  }
+                                  if (input.value && input.value.trim()) {
+                                    const typedValue = input.value.trim();
+                                    const options = ['Pull Force Test', 'Corrosion', 'Needle Detection (if shielded)'];
+                                    if (!options.includes(typedValue)) {
+                                      const current = Array.isArray(material.magneticClosureTestingRequirements) ? material.magneticClosureTestingRequirements : [];
+                                      if (!current.includes(typedValue)) {
+                                        const updated = [...current, typedValue];
+                                        handleChange(materialIndex, 'magneticClosureTestingRequirements', updated);
+                                      }
+                                    }
+                                    input.value = '';
+                                  }
+                                }}
+                              />
                               </div>
-                              {material.magneticClosureTestingRequirements && Array.isArray(material.magneticClosureTestingRequirements) && material.magneticClosureTestingRequirements.length > 0 && (
-                                <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                  <strong>Selected:</strong> {material.magneticClosureTestingRequirements.join(', ')}
                                 </div>
-                              )}
                             </div>
-                            <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                              <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+                        {/* UPLOAD button */}
+                        <div className="flex flex-col" style={{ marginTop: '12px' }}>
                               <input
                                 type="file"
                                 onChange={(e) => handleChange(materialIndex, 'magneticClosureTestingRequirementFile', e.target.files[0])}
@@ -8083,16 +10295,11 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                               />
                               <label
                                 htmlFor={`upload-magnetic-testing-${materialIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
+                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{material.magneticClosureTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}</span>
+                            {material.magneticClosureTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
                               </label>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
