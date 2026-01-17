@@ -10,15 +10,11 @@ import Step2 from './components/steps/Step2';
 import Step3 from './components/steps/Step3';
 import Step4 from './components/steps/Step4';
 import Step5 from './components/steps/Step5';
-import { Button } from '@/components/ui/button';
-import { FormCard } from '@/components/ui/form-layout';
 
 const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCreation, onNavigateToIPO }) => {
   const scrollContainerRef = useRef(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedSku, setSelectedSku] = useState('product_0'); // Format: 'product_0' or 'subproduct_0_1'
-  const [showIPCPopup, setShowIPCPopup] = useState(false);
-  const [generatedIPCCodes, setGeneratedIPCCodes] = useState([]);
   const [formData, setFormData] = useState({
     // Internal Purchase Order fields (if provided)
     orderType: initialFormData.orderType || '',
@@ -633,12 +629,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     }));
   };
 
-  // Handle Add More SKU from IPC popup
-  const handleAddMoreSKUFromPopup = () => {
-    setShowIPCPopup(false);
-    addSku();
-  };
-
   // Subproduct handlers
   const addSubproduct = (skuIndex) => {
     setFormData(prev => {
@@ -821,7 +811,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       material.stitchingThreadTex?.trim() ||
       material.stitchingThreadPly?.trim() ||
       material.stitchingThreadColour?.trim() ||
-      material.stitchingThreadRef?.trim() ||
       hasWorkOrderSelection
     );
   };
@@ -2051,9 +2040,18 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         existingIPCs.push(ipcCodes);
         localStorage.setItem('ipcCodes', JSON.stringify(existingIPCs));
         
-        // Store generated IPC codes for popup display
-        setGeneratedIPCCodes(updatedSkus);
-        setShowIPCPopup(true);
+        // Create alert message with all IPC codes
+        let alertMessage = 'IPC codes generated and saved successfully!\n\n';
+        updatedSkus.forEach((sku, idx) => {
+          alertMessage += `SKU ${idx + 1}: ${sku.ipcCode}\n`;
+          if (sku.subproducts && sku.subproducts.length > 0) {
+            sku.subproducts.forEach((sp, spIdx) => {
+              alertMessage += `  Subproduct ${spIdx + 1}: ${sp.ipcCode}\n`;
+            });
+          }
+        });
+        
+        alert(alertMessage);
         console.log('Generated IPC codes:', ipcCodes);
       } catch (error) {
         console.error('Error saving IPC codes:', error);
@@ -3545,7 +3543,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               handleSubproductChange={handleSubproductChange}
               handleSubproductImageChange={handleSubproductImageChange}
               handleSave={handleSaveStep0}
-              handleNext={handleNext}
             />
           );
         case 1:
@@ -3634,111 +3631,194 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         -moz-appearance: textfield;
       }
     `}</style>
-    <div
-      ref={scrollContainerRef}
-      className="w-full h-full overflow-y-auto rounded-xl border border-border bg-background shadow-sm"
-      style={{ padding: '40px' }}
-    >
+    <div ref={scrollContainerRef} className="w-full h-full bg-white rounded-xl shadow-sm overflow-y-auto" style={{ padding: '40px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)' }}>
       <div style={{ marginBottom: '40px' }}>
-        <Button
-          variant="outline"
-          onClick={onBack}
+        <button 
+          className="border px-4 py-2.5 rounded-md cursor-pointer text-sm font-medium transition-all hover:-translate-x-0.5"
+          style={{
+            backgroundColor: '#f3f4f6',
+            borderColor: '#d1d5db',
+            color: '#374151',
+            marginBottom: '24px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#e5e7eb';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#f3f4f6';
+          }}
+          onClick={onBack} 
           type="button"
-          className="mb-6 bg-background transition-transform hover:-translate-x-0.5"
         >
           ← Back to Department
-        </Button>
+        </button>
         
         {/* Breadcrumb Navigation */}
-        <div
-          className="w-full flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-muted/60 text-sm text-muted-foreground"
-          style={{ padding: '12px 18px', marginTop: '4px', marginBottom: '24px' }}
+        <div 
+          className="flex items-center gap-2 mb-4"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            padding: '8px 12px',
+            backgroundColor: '#f9fafb',
+            borderRadius: '6px',
+            border: '1px solid #e5e7eb'
+          }}
         >
-          <button
-            type="button"
+          {/* Departments */}
+          <span
             onClick={() => handleBreadcrumbClick(-1)}
-            className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            style={{
+              cursor: 'pointer',
+              color: '#667eea',
+              fontSize: '14px',
+              fontWeight: '500',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#eef2ff';
+              e.currentTarget.style.color = '#5568d3';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#667eea';
+            }}
           >
             Departments
-          </button>
-          <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
-          <button
-            type="button"
+          </span>
+          
+          {/* Separator */}
+          <span style={{ color: '#9ca3af', fontSize: '14px', margin: '0 4px' }}>›</span>
+          
+          {/* Code creation */}
+          <span
             onClick={() => handleBreadcrumbClick(-2)}
-            className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            style={{
+              cursor: 'pointer',
+              color: '#667eea',
+              fontSize: '14px',
+              fontWeight: '500',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#eef2ff';
+              e.currentTarget.style.color = '#5568d3';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#667eea';
+            }}
           >
             Code creation
-          </button>
-          <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
-          <button
-            type="button"
+          </span>
+          
+          {/* Separator */}
+          <span style={{ color: '#9ca3af', fontSize: '14px', margin: '0 4px' }}>›</span>
+          
+          {/* IPO */}
+          <span
             onClick={() => handleBreadcrumbClick(-3)}
-            className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            style={{
+              cursor: 'pointer',
+              color: '#667eea',
+              fontSize: '14px',
+              fontWeight: '500',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#eef2ff';
+              e.currentTarget.style.color = '#5568d3';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#667eea';
+            }}
           >
             IPO
-          </button>
-
-          {Array.from({ length: currentStep + 1 }, (_, i) => (
+          </span>
+          
+          {/* Steps */}
+          {Array.from({ length: currentStep + 1 }, (_, i) => [
+            <span key={`separator-${i}`} style={{ color: '#9ca3af', fontSize: '14px', margin: '0 4px' }}>›</span>,
             <span
-              key={`crumb-${i}`}
-              className="inline-flex items-center ml-2 sm:ml-3"
-            >
-              <span
-                className="text-foreground/60 text-xs sm:text-sm"
-                style={{ marginRight: 8 }}
-              >
-                ›
-              </span>
-              <button
-                type="button"
-                onClick={() => handleBreadcrumbClick(i)}
-                className={
-                  i === currentStep
-                    ? "rounded-lg bg-accent px-3 py-1.5 font-semibold text-foreground"
-                    : "rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+              key={`step-${i}`}
+              onClick={() => handleBreadcrumbClick(i)}
+              style={{
+                cursor: 'pointer',
+                color: i === currentStep ? '#374151' : '#667eea',
+                fontSize: '14px',
+                fontWeight: i === currentStep ? '600' : '500',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                transition: 'all 0.2s',
+                backgroundColor: i === currentStep ? '#e5e7eb' : 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                if (i !== currentStep) {
+                  e.currentTarget.style.backgroundColor = '#eef2ff';
+                  e.currentTarget.style.color = '#5568d3';
                 }
-              >
-                {`Step ${i}`}
-              </button>
+              }}
+              onMouseLeave={(e) => {
+                if (i !== currentStep) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#667eea';
+                }
+              }}
+            >
+              Step{i} ({stepLabels[i]})
             </span>
-          ))}
+          ])}
         </div>
         
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-1">
-          Generate Factory Code
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Complete all steps to generate a factory code
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2" style={{ fontSize: '32px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>Generate Factory Code</h1>
+        <p className="text-base text-gray-600 mb-6" style={{ fontSize: '16px', color: '#6b7280', marginBottom: '24px' }}>Complete all steps to generate a factory code</p>
       </div>
 
       {/* Progress Bar */}
       <div className="mb-10" style={{ marginBottom: '40px' }}>
         <div className="flex justify-between items-center relative" style={{ marginTop: '20px', marginBottom: '24px' }}>
           {/* Progress line behind the steps */}
-          <div
-            className="absolute left-0 right-0 rounded-full bg-border/70"
-            style={{ top: '20px', height: '4px', zIndex: 0 }}
-          />
-          <div
-            className="absolute left-0 rounded-full bg-primary transition-all duration-300"
-            style={{
+          <div 
+            className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200"
+            style={{ 
               top: '20px',
-              height: '4px',
-              width: `${((currentStep + 0.5) / (totalSteps + 1)) * 100}%`,
-              zIndex: 1,
+              height: '2px',
+              zIndex: 0
             }}
-          />
+          ></div>
+          <div 
+            className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300"
+            style={{ 
+              top: '20px',
+              height: '2px',
+              width: `${((currentStep + 0.5) / (totalSteps + 1)) * 100}%`,
+              zIndex: 1
+            }}
+          ></div>
           
           {/* Step numbers */}
           {Array.from({ length: totalSteps + 1 }, (_, i) => (
             <div key={i} className="flex flex-col items-center flex-1 relative" style={{ zIndex: 2 }}>
               <div 
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-base transition-all cursor-pointer ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-base transition-all cursor-pointer hover:scale-110 ${
                   i <= currentStep
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-muted text-muted-foreground'
-                } ${i === currentStep ? 'outline outline-2 outline-ring/60 outline-offset-2 shadow-md' : 'hover:scale-105'}`}
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                    : 'bg-gray-200 text-gray-600'
+                } ${i === currentStep ? 'scale-110 shadow-xl' : ''}`}
+                style={{ 
+                  width: '40px',
+                  height: '40px',
+                  boxShadow: i <= currentStep ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none'
+                }}
                 onClick={() => {
                   // Allow direct navigation for testing - bypass validation
                   setCurrentStep(i);
@@ -3751,20 +3831,18 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                 }}
                 title={`Go to ${stepLabels[i]}`}
               >
-                {i < currentStep ? (
-                  <span aria-hidden="true" style={{ lineHeight: 1 }}>
-                    ✓
-                  </span>
-                ) : (
-                  i
-                )}
+                {i}
               </div>
-              <div
-                className={`mt-3 text-center text-[10px] leading-tight ${
-                  i <= currentStep ? 'text-primary font-semibold' : 'text-muted-foreground'
-                }`}
-                style={{ width: '100%', maxWidth: '120px', wordWrap: 'break-word' }}
-              >
+              <div className={`mt-2 text-xs font-medium text-center ${
+                i <= currentStep ? 'text-indigo-600 font-semibold' : 'text-gray-500'
+              }`} style={{ 
+                marginTop: '8px', 
+                fontSize: '10px', 
+                lineHeight: '1.2',
+                width: '100%',
+                maxWidth: '120px',
+                wordWrap: 'break-word'
+              }}>
                 {stepLabels[i]}
               </div>
             </div>
@@ -4011,147 +4089,61 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         </div>
       )}
 
-      {showIPCPopup ? (
-        // Buyer/Vendor-style success view (inline, not modal)
-        <div className="w-full max-w-3xl mx-auto" style={{ marginTop: '24px' }}>
-          <FormCard className="rounded-2xl border-border bg-muted" style={{ padding: '24px 20px' }}>
-            <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full flex items-center justify-center text-4xl font-bold mb-5">
-                ✓
-              </div>
+      {/* Step Content */}
+      <div className="mb-8" style={{ maxWidth: '1000px' }}>
+        {renderStepContent()}
+      </div>
 
-              <div className="w-full" style={{ marginTop: '8px' }}>
-                <div className="text-sm font-semibold text-foreground/80 mb-3">
-                  IPC Codes Generated
-                </div>
-
-                <FormCard className="rounded-xl border-border bg-card" style={{ padding: '20px 18px' }}>
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {generatedIPCCodes.map((sku, idx) => (
-                      <div key={idx} style={{ marginBottom: idx === generatedIPCCodes.length - 1 ? 0 : '12px' }}>
-                        <div className="text-sm font-semibold text-foreground">
-                          SKU {idx + 1}: <span className="text-primary font-semibold">{sku.ipcCode}</span>
-                        </div>
-                        {sku.subproducts && sku.subproducts.length > 0 && (
-                          <div className="text-sm text-muted-foreground" style={{ marginLeft: '16px', marginTop: '6px' }}>
-                            {sku.subproducts.map((sp, spIdx) => (
-                              <div key={spIdx} style={{ marginTop: spIdx === 0 ? 0 : '4px' }}>
-                                Subproduct {spIdx + 1}: <span className="text-foreground">{sp.ipcCode}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </FormCard>
-              </div>
-
-              <div className="flex justify-center gap-3" style={{ marginTop: '40px' }}>
-                <Button onClick={handleAddMoreSKUFromPopup} type="button" variant="default">
-                  Add More SKU
-                </Button>
-                <Button
-                  onClick={() => {
-                    setShowIPCPopup(false);
-                    handleNext();
-                  }}
-                  type="button"
-                  variant="outline"
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </FormCard>
-        </div>
-      ) : (
-        <>
-          {/* Step Content */}
-          <div className="mb-8 mx-auto" style={{ maxWidth: '1000px' }}>
-            {renderStepContent()}
-          </div>
-
-          {/* Navigation Buttons */}
-          <div className="mx-auto" style={{ maxWidth: '1000px' }}>
-            {currentStep === totalSteps ? (
-              <div className="flex justify-center items-center" style={{ marginTop: '32px' }}>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    // Handle final submission
-                    alert('Factory code generation will be implemented here');
-                  }}
-                >
-                  Generate Factory Code
-                </Button>
-              </div>
-            ) : currentStep === 3 ? (
-              // Artwork / Labelling step: Add on left, Prev/Next on right (like Step0 layout)
-              <div className="flex items-center justify-between" style={{ marginTop: '32px' }}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const currentLength = formData.artworkMaterials?.length || 0;
-                    addArtworkMaterial();
-                    const newIndex = currentLength;
-                    const attemptScroll = (attempts = 0) => {
-                      if (attempts > 30) return;
-                      const element = document.getElementById(`artwork-material-${newIndex}`);
-                      if (element) {
-                        setTimeout(() => {
-                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 150);
-                      } else {
-                        setTimeout(() => attemptScroll(attempts + 1), 50);
-                      }
-                    };
-                    attemptScroll();
-                  }}
-                >
-                  + Add Material
-                </Button>
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handlePrevious}
-                  >
-                    ← Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                  >
-                    Next →
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex justify-end items-center gap-3" style={{ marginTop: '32px' }}>
-                {currentStep > 0 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handlePrevious}
-                  >
-                    ← Previous
-                  </Button>
-                )}
-                {currentStep > 0 && currentStep < totalSteps && (
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                  >
-                    Next →
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        </>
-      )}
+      {/* Navigation Buttons */}
+      <div className="flex justify-center gap-4" style={{ marginTop: '32px', gap: '16px' }}>
+        {currentStep > 0 && (
+          <button 
+            type="button" 
+            className="flex items-center gap-2 border rounded-lg text-sm font-semibold transition-all hover:bg-gray-200 hover:-translate-x-0.5"
+            style={{
+              padding: '12px 24px',
+              background: '#f3f4f6',
+              color: '#374151',
+              borderColor: '#d1d5db',
+              borderWidth: '1px'
+            }}
+            onClick={handlePrevious}
+          >
+            ← Previous
+          </button>
+        )}
+        {currentStep < totalSteps ? (
+          <button 
+            type="button" 
+            className="flex items-center gap-2 text-white rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+            style={{
+              padding: '12px 24px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: '0 6px 16px rgba(102, 126, 234, 0.3)'
+            }}
+            onClick={handleNext}
+          >
+            Next →
+          </button>
+        ) : (
+          <button 
+            type="button" 
+            className="flex items-center gap-3 text-white rounded-lg text-base font-semibold transition-all justify-center hover:-translate-y-0.5"
+            style={{
+              padding: '16px 32px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              minWidth: '200px',
+              boxShadow: '0 8px 24px rgba(102, 126, 234, 0.3)'
+            }}
+            onClick={() => {
+              // Handle final submission
+              alert('Factory code generation will be implemented here');
+            }}
+          >
+            🎯 Generate Factory Code
+          </button>
+        )}
+      </div>
     </div>
     </>
   );
