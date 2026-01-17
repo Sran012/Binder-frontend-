@@ -4,12 +4,12 @@ import GenerateVendorCode from './GenerateVendorCode';
 import GeneratePOCode from './GeneratePOCode';
 import GenerateFactoryCode from './GenerateFactoryCode';
 import VendorMasterSheet from './VendorMasterSheet';
-import BuyerMasterSheet from './BuyerMasterSheet';
 import CompanyEssentials from './CompanyEssentials';
 import InternalPurchaseOrder from './InternalPurchaseOrder/InternalPurchaseOrder';
 
-const DepartmentContent = ({ resetKey }) => {
+const DepartmentContent = () => {
   const [hoveredDeptItem, setHoveredDeptItem] = useState(null);
+  const [stickySubMenu, setStickySubMenu] = useState(null);
   const [selectedSubMenuItem, setSelectedSubMenuItem] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [showGenerateBuyerCode, setShowGenerateBuyerCode] = useState(false);
@@ -17,12 +17,10 @@ const DepartmentContent = ({ resetKey }) => {
   const [showGeneratePOCode, setShowGeneratePOCode] = useState(false);
   const [showGenerateFactoryCode, setShowGenerateFactoryCode] = useState(false);
   const [showVendorMasterSheet, setShowVendorMasterSheet] = useState(false);
-  const [showBuyerMasterSheet, setShowBuyerMasterSheet] = useState(false);
   const [showCompanyEssentials, setShowCompanyEssentials] = useState(false);
   const [showInternalPurchaseOrder, setShowInternalPurchaseOrder] = useState(false);
   
   const subMenuRef = useRef(null);
-  const hoverTimeoutRef = useRef(null);
 
   // Automatically open Company Essentials form when menu item is selected (skip intermediate screen)
   useEffect(() => {
@@ -37,13 +35,6 @@ const DepartmentContent = ({ resetKey }) => {
       setShowInternalPurchaseOrder(true);
     }
   }, [selectedSubMenuItem, showInternalPurchaseOrder]);
-
-  // Reset department view when resetKey changes (e.g., sidebar Departments clicked)
-  useEffect(() => {
-    if (resetKey !== undefined) {
-      handleBackToDepartments();
-    }
-  }, [resetKey]);
 
   const departmentItems = [
     { id: 'chd-code', label: 'CODE CREATION', hasSubMenu: true },
@@ -362,56 +353,36 @@ const DepartmentContent = ({ resetKey }) => {
 
   // Handle hover to show submenu temporarily
   const handleDeptItemHover = (itemId) => {
-    // Clear any pending timeout when hovering a new item
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    
     if (departmentItems.find(item => item.id === itemId)?.hasSubMenu) {
       setHoveredDeptItem(itemId);
     }
   };
 
-  // Handle mouse leave from department item
-  // Don't clear immediately - allow mouse to move to submenu panel or submenu items
-  const handleDeptItemLeave = (itemId) => {
-    // Clear any existing timeout
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    // Longer delay to allow mouse to move to submenu panel (especially for items far down like HR)
-    hoverTimeoutRef.current = setTimeout(() => {
-      // Only clear if we're still on the same item (not moved to panel)
-      if (hoveredDeptItem === itemId) {
-        setHoveredDeptItem(null);
-      }
-    }, 600);
-  };
-
-  // Handle mouse enter on submenu panel - keep it visible
-  const handleSubMenuPanelEnter = (deptId) => {
-    // Clear any pending timeout and keep submenu visible
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    // Always set to keep the correct submenu visible
-    setHoveredDeptItem(deptId);
-  };
-
-  // Handle mouse leave from submenu panel
-  const handleSubMenuPanelLeave = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
+  // Handle mouse leave to hide temporary submenu
+  const handleDeptItemLeave = () => {
     setHoveredDeptItem(null);
+  };
+
+  // Handle click to make submenu sticky or select department
+  const handleDeptItemClick = (itemId) => {
+    const item = departmentItems.find(item => item.id === itemId);
+    
+    if (item?.hasSubMenu) {
+      // If item has submenu, make it sticky
+      setStickySubMenu(stickySubMenu === itemId ? null : itemId);
+      setSelectedDepartment(null);
+    } else {
+      // If item doesn't have submenu, select it
+      setSelectedDepartment(itemId);
+      setStickySubMenu(null);
+      setSelectedSubMenuItem(null);
+    }
   };
 
   // Handle submenu item click - hide both menus and show fullscreen content
   const handleSubItemClick = (subItemId) => {
     setSelectedSubMenuItem(subItemId);
+    setStickySubMenu(null);
     setHoveredDeptItem(null);
     setSelectedDepartment(null);
   };
@@ -420,20 +391,20 @@ const DepartmentContent = ({ resetKey }) => {
   const handleBackToDepartments = () => {
     setSelectedSubMenuItem(null);
     setSelectedDepartment(null);
+    setStickySubMenu(null);
     setHoveredDeptItem(null);
     setShowGenerateBuyerCode(false);
     setShowGenerateVendorCode(false);
     setShowGeneratePOCode(false);
     setShowGenerateFactoryCode(false);
     setShowVendorMasterSheet(false);
-    setShowBuyerMasterSheet(false);
     setShowCompanyEssentials(false);
     setShowInternalPurchaseOrder(false);
   };
 
-  // Determine if submenu should be shown (hover only)
+  // Determine if submenu should be shown (either hovered or sticky)
   const shouldShowSubMenu = (itemId) => {
-    return hoveredDeptItem === itemId;
+    return hoveredDeptItem === itemId || stickySubMenu === itemId;
   };
 
   // Get department name from item ID
@@ -536,10 +507,7 @@ const DepartmentContent = ({ resetKey }) => {
             <span className="button-subtitle">Create new buyer codes for procurement</span>
           </div>
         </button>
-        <button 
-          className="fullscreen-action-button secondary"
-          onClick={() => setShowBuyerMasterSheet(true)}
-        >
+        <button className="fullscreen-action-button secondary">
           <div className="button-content">
             <span className="button-title">BUYER MASTER SHEET</span>
             <span className="button-subtitle">View and manage buyer master data</span>
@@ -793,14 +761,6 @@ const DepartmentContent = ({ resetKey }) => {
       );
     }
 
-    if (showBuyerMasterSheet) {
-      return (
-        <BuyerMasterSheet 
-          onBack={() => setShowBuyerMasterSheet(false)} 
-        />
-      );
-    }
-
     if (showCompanyEssentials) {
       return (
         <CompanyEssentials 
@@ -859,7 +819,7 @@ const DepartmentContent = ({ resetKey }) => {
   };
 
   // If a submenu item is selected, show fullscreen content
-  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showGenerateFactoryCode || showVendorMasterSheet || showBuyerMasterSheet || showCompanyEssentials || showInternalPurchaseOrder) {
+  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showGenerateFactoryCode || showVendorMasterSheet || showCompanyEssentials || showInternalPurchaseOrder) {
     return renderDepartmentMainContent();
   }
 
@@ -874,17 +834,18 @@ const DepartmentContent = ({ resetKey }) => {
               key={deptItem.id}
               className="dept-menu-item-wrapper"
               onMouseEnter={() => handleDeptItemHover(deptItem.id)}
-              onMouseLeave={() => handleDeptItemLeave(deptItem.id)}
+              onMouseLeave={handleDeptItemLeave}
             >
               <div 
                 className={`dept-menu-item ${
-                  selectedDepartment === deptItem.id || hoveredDeptItem === deptItem.id ? 'active' : ''
+                  selectedDepartment === deptItem.id || stickySubMenu === deptItem.id ? 'active' : ''
                 }`}
+                onClick={() => handleDeptItemClick(deptItem.id)}
               >
                 <span className="dept-menu-label">{deptItem.label}</span>
                 {deptItem.hasSubMenu && (
-                  <span className={`forward-arrow ${hoveredDeptItem === deptItem.id ? 'active' : ''}`}>
-                    →
+                  <span className={`forward-arrow ${stickySubMenu === deptItem.id ? 'active' : ''}`}>
+                    {stickySubMenu === deptItem.id ? '▼' : '→'}
                   </span>
                 )}
               </div>
@@ -900,10 +861,10 @@ const DepartmentContent = ({ resetKey }) => {
         return shouldShowSubMenu(deptId) && (
           <div 
             key={deptId}
-            className="department-submenu-panel hover"
+            className={`department-submenu-panel ${stickySubMenu === deptId ? 'sticky' : 'hover'}`}
             ref={subMenuRef}
-            onMouseEnter={() => handleSubMenuPanelEnter(deptId)}
-            onMouseLeave={handleSubMenuPanelLeave}
+            onMouseEnter={() => setHoveredDeptItem(deptId)}
+            onMouseLeave={handleDeptItemLeave}
             style={isTwoColumn ? {
               minWidth: '500px',
               maxWidth: '600px',
@@ -913,6 +874,7 @@ const DepartmentContent = ({ resetKey }) => {
           >
             <h3 className="dept-menu-title">
               {getDepartmentName(deptId)}
+              {/* {stickySubMenu === deptId && <span className="sticky-indicator">📌</span>} */}
             </h3>
             <div 
               className="dept-menu-list"
@@ -928,7 +890,6 @@ const DepartmentContent = ({ resetKey }) => {
                   key={subItem.id}
                   className="dept-menu-item-wrapper"
                   style={isTwoColumn ? { width: '100%' } : {}}
-                  onMouseEnter={() => handleSubMenuPanelEnter(deptId)}
                 >
                   <div 
                     className="dept-menu-item submenu-item"
