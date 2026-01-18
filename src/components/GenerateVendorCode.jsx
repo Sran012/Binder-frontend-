@@ -1,217 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import SearchableDropdown from './SearchableDropdown';
-import { Input } from '@/components/ui/input';
-import { Field } from '@/components/ui/field';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { FormCard } from '@/components/ui/form-layout';
-
-// Premium Multi-Select Component
-const PremiumMultiSelect = ({ options, selectedValues = [], onChange, placeholder, error }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState(options);
-  const dropdownRef = useRef(null);
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    const filtered = options.filter(option =>
-      option.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !selectedValues.includes(option)
-    );
-    setFilteredOptions(filtered);
-  }, [searchTerm, options, selectedValues]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-        setSearchTerm('');
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  const handleAddClick = (e) => {
-    e.stopPropagation();
-    setIsOpen(!isOpen);
-    if (!isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  };
-
-  const handleOptionSelect = (option) => {
-    if (!selectedValues.includes(option)) {
-      onChange([...selectedValues, option]);
-    }
-    setSearchTerm('');
-  };
-
-  const handleRemoveChip = (option, e) => {
-    e.stopPropagation();
-    onChange(selectedValues.filter(val => val !== option));
-  };
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && searchTerm && filteredOptions.length > 0) {
-      e.preventDefault();
-      handleOptionSelect(filteredOptions[0]);
-    } else if (e.key === 'Escape') {
-      setIsOpen(false);
-      setSearchTerm('');
-    }
-  };
-
-  return (
-    <div 
-      className={cn("premium-multi-select", error && "error")} 
-      ref={dropdownRef}
-      style={{ position: 'relative' }}
-    >
-      <div 
-        className={cn(
-          "multi-select-container border-input h-11 w-full min-w-0 rounded-md border bg-white shadow-xs transition-[color,box-shadow] outline-none",
-          "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-          error && "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border-destructive"
-        )}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          paddingLeft: '1.25rem',
-          paddingRight: '0.75rem',
-          paddingTop: '8px',
-          paddingBottom: '8px',
-          cursor: 'text',
-          boxShadow: isOpen ? 'var(--shadow-md)' : 'var(--shadow-xs)'
-        }}
-        onClick={() => !isOpen && setIsOpen(true)}
-      >
-        <div
-          className="chip-scroll flex flex-nowrap items-center gap-2 flex-1 min-w-0 overflow-x-auto"
-          style={{
-            paddingRight: '8px',
-            scrollbarWidth: 'none', // Firefox
-            msOverflowStyle: 'none', // IE/Edge legacy
-          }}
-        >
-          {/* Selected Chips */}
-          {selectedValues.length > 0 ? (
-            selectedValues.map((value, index) => (
-              <span
-                key={index}
-                className="premium-chip inline-flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 bg-muted text-foreground border border-border rounded-full text-xs font-medium"
-                style={{
-                  animation: 'fadeInScale 0.2s ease'
-                }}
-              >
-                {value}
-                <button
-                  type="button"
-                  onClick={(e) => handleRemoveChip(value, e)}
-                  className="bg-transparent border-none rounded-full w-4.5 h-4.5 flex items-center justify-center cursor-pointer text-muted-foreground text-base leading-none p-0 transition-colors hover:text-foreground"
-                >
-                  ×
-                </button>
-              </span>
-            ))
-          ) : (
-            <span className="text-muted-foreground text-sm truncate">{placeholder}</span>
-          )}
-        </div>
-
-        {/* Add Button */}
-        <button
-          type="button"
-          onClick={handleAddClick}
-          className="bg-white border border-input rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-muted-foreground text-xl font-light leading-none p-0 flex-shrink-0 transition-all hover:border-muted-foreground/50 hover:text-foreground"
-          title="Add category"
-        >
-          <span className="inline-block leading-none">+</span>
-        </button>
-      </div>
-
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div
-          className="premium-dropdown-menu absolute top-full left-0 right-0 mt-2 bg-white border-2 border-border rounded-xl shadow-xl z-[1000] overflow-hidden"
-          style={{
-            animation: 'slideDown 0.2s ease'
-          }}
-        >
-          {/* Search Input */}
-          <div className="p-3 border-b border-border">
-            <Input
-              ref={inputRef}
-              type="text"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Search categories..."
-              className="h-9 text-sm"
-            />
-          </div>
-
-          {/* Options List */}
-          <div className="max-h-60 overflow-y-auto">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleOptionSelect(option)}
-                  className={cn(
-                    "px-4 py-3 cursor-pointer transition-colors flex items-center text-sm font-medium text-foreground",
-                    index < filteredOptions.length - 1 && "border-b border-border",
-                    "hover:bg-accent"
-                  )}
-                >
-                  {option}
-                </div>
-              ))
-            ) : (
-              <div className="p-6 text-center text-muted-foreground text-sm">
-                {searchTerm ? 'No matching options' : 'All options selected'}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        .chip-scroll::-webkit-scrollbar {
-          display: none;
-        }
-        @keyframes fadeInScale {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-    </div>
-  );
-};
+import './GenerateVendorCode.css';
 
 const GenerateVendorCode = ({ onBack }) => {
   const [formData, setFormData] = useState({
@@ -221,8 +10,8 @@ const GenerateVendorCode = ({ onBack }) => {
     bankName: '',
     accNo: '',
     ifscCode: '',
-    jobWorkCategory: [],
-    jobWorkSubCategory: [],
+    jobWorkCategory: '',
+    jobWorkSubCategory: '',
     contactPerson: '',
     whatsappNo: '',
     altWhatsappNo: '',
@@ -306,7 +95,8 @@ const GenerateVendorCode = ({ onBack }) => {
     const newErrors = {};
     const requiredFields = [
       'vendorName', 'address', 'gst', 'bankName', 'accNo', 'ifscCode',
-      'contactPerson', 'whatsappNo', 'email', 'paymentTerms'
+      'jobWorkCategory', 'jobWorkSubCategory', 'contactPerson', 'whatsappNo', 
+      'email', 'paymentTerms'
     ];
 
     requiredFields.forEach(field => {
@@ -314,14 +104,6 @@ const GenerateVendorCode = ({ onBack }) => {
         newErrors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')} is required`;
       }
     });
-
-    // Validate arrays
-    if (!formData.jobWorkCategory || formData.jobWorkCategory.length === 0) {
-      newErrors.jobWorkCategory = 'Job Work Category is required';
-    }
-    if (!formData.jobWorkSubCategory || formData.jobWorkSubCategory.length === 0) {
-      newErrors.jobWorkSubCategory = 'Job Work Sub-Category is required';
-    }
 
     // Email validation
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -415,8 +197,8 @@ const GenerateVendorCode = ({ onBack }) => {
       bankName: '',
       accNo: '',
       ifscCode: '',
-      jobWorkCategory: [],
-      jobWorkSubCategory: [],
+      jobWorkCategory: '',
+      jobWorkSubCategory: '',
       contactPerson: '',
       whatsappNo: '',
       altWhatsappNo: '',
@@ -429,375 +211,305 @@ const GenerateVendorCode = ({ onBack }) => {
 
   if (generatedCode) {
     return (
-      <div className="fullscreen-content" style={{ overflowY: 'auto' }}>
-        <div className="content-header">
-          <Button 
-            variant="outline"
-            onClick={onBack} 
-            type="button"
-            className="mb-6 bg-white"
+      <div className="generate-vendor-container">
+        <div className="generated-code-display" style={{ position: 'relative' }}>
+          {/* Close button in top right */}
+          <button 
+            className="close-button" 
+            onClick={onBack}
+            style={{
+              position: 'absolute',
+              top: '0',
+              right: '0',
+              background: 'transparent',
+              border: 'none',
+              fontSize: '32px',
+              cursor: 'pointer',
+              color: '#6b7280',
+              padding: '8px',
+              lineHeight: '1',
+              transition: 'color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#374151'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}
+            title="Close"
           >
-            ← Back to Department
-          </Button>
-          <h1 className="fullscreen-title">Vendor Code Generated Successfully!</h1>
-        </div>
+            ×
+          </button>
 
-        <div className="w-full max-w-3xl mx-auto">
-          <FormCard className="rounded-2xl border-border bg-muted" style={{ padding: '24px 20px' }}>
-            <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full flex items-center justify-center text-4xl font-bold mb-5">
-                ✓
-              </div>
-
-              <div className="w-full" style={{ marginTop: '8px' }}>
-                <div className="text-sm font-semibold text-foreground/80 mb-3">
-                  {formData.vendorName} vendor code
-                </div>
-
-                <FormCard className="rounded-xl border-border bg-card" style={{ padding: '20px 18px' }}>
-                  <div className="flex items-center justify-center gap-3">
-                    <span
-                      className="text-primary font-black"
-                      style={{
-                        fontSize: '36px',
-                        fontFamily:
-                          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace',
-                        letterSpacing: '3px',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {generatedCode}
-                    </span>
-                    <Button
-                      variant="default"
-                      size="icon"
-                      onClick={copyToClipboard}
-                      title="Copy to clipboard"
-                      type="button"
-                    >
-                      📋
-                    </Button>
-                  </div>
-                </FormCard>
-              </div>
-
-              <div className="flex justify-center gap-3" style={{ marginTop: '40px' }}>
-                <Button variant="default" onClick={resetForm} type="button">
-                  Generate Another Code
-                </Button>
-                <Button variant="outline" onClick={onBack} type="button">
-                  Back to Department
-                </Button>
-              </div>
+          <div className="success-animation">
+            <div className="success-icon">✓</div>
+            <h2 className="success-title">Vendor Code Generated Successfully!</h2>
+          </div>
+          
+          <div className="code-display-card">
+            <h3 className="code-label">{formData.vendorName} vendor code </h3>
+            <div className="code-display">
+              <span className="code-text">{generatedCode}</span>
+              <button 
+                className="copy-button" 
+                onClick={copyToClipboard}
+                title="Copy to clipboard"
+              >
+                📋
+              </button>
             </div>
-          </FormCard>
+          </div>
+
+          <div className="action-buttons">
+            <button className="generate-another-btn" onClick={resetForm}>
+              Generate Another Code
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fullscreen-content" style={{ overflowY: 'auto' }}>
-      <div className="content-header">
-        <Button 
-          variant="outline"
-          onClick={onBack} 
-          type="button"
-          className="mb-6 bg-white"
-        >
+    <div className="generate-vendor-container">
+      <div className="form-header">
+        <button className="back-button" onClick={onBack}>
           ← Back to Department
-        </Button>
-        <h1 className="fullscreen-title">Generate Vendor Code</h1>
-        <p className="fullscreen-description">Fill in the vendor details to generate a unique vendor code</p>
+        </button>
+        <h1 className="form-title">Generate Vendor Code</h1>
+        <p className="form-description">Fill in the vendor details to generate a unique vendor code</p>
       </div>
 
-      <div className="w-full max-w-6xl mx-auto">
-        <FormCard className="rounded-2xl border-border bg-muted" style={{ padding: '24px 20px' }}>
-        <form onSubmit={handleSubmit} noValidate>
-          {/* Explicit rows with explicit spacing (match row1->row2 everywhere) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-            {/* Row 1 */}
-            <div className="flex flex-wrap items-start" style={{ gap: '16px 12px' }}>
-              {/* Basic Details */}
-            <Field 
-              label="VENDOR NAME" 
-              required 
-              error={errors.vendorName}
-              width="md"
-              className="flex-shrink-0"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="text"
-                id="vendorName"
-                name="vendorName"
-                value={formData.vendorName}
-                onChange={handleInputChange}
-                placeholder="Enter vendor name"
-                required
-                aria-invalid={!!errors.vendorName}
-              />
-            </Field>
+      <form className="vendor-form" onSubmit={handleSubmit}>
+        <div className="form-grid">
+          {/* Basic Details */}
+          <div className="form-group">
+            <label htmlFor="vendorName" className="form-label">
+              Vendor Name <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="vendorName"
+              name="vendorName"
+              value={formData.vendorName}
+              onChange={handleInputChange}
+              className={`form-input ${errors.vendorName ? 'error' : ''}`}
+              placeholder="Enter vendor name"
+            />
+            {errors.vendorName && <span className="error-message">{errors.vendorName}</span>}
+          </div>
 
-            <Field 
-              label="GST NUMBER" 
-              required 
-              error={errors.gst}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="text"
-                id="gst"
-                name="gst"
-                value={formData.gst}
-                onChange={handleInputChange}
-                placeholder="22AAAAA0000A1Z5"
-                maxLength={15}
-                required
-                aria-invalid={!!errors.gst}
-              />
-            </Field>
+          <div className="form-group">
+            <label htmlFor="gst" className="form-label">
+              GST Number <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="gst"
+              name="gst"
+              value={formData.gst}
+              onChange={handleInputChange}
+              className={`form-input ${errors.gst ? 'error' : ''}`}
+              placeholder="22AAAAA0000A1Z5"
+              maxLength={15}
+            />
+            {errors.gst && <span className="error-message">{errors.gst}</span>}
+          </div>
 
-            <Field 
-              label="ADDRESS" 
-              required 
-              error={errors.address}
-              width="lg"
-              className="md:col-span-2"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                placeholder="Enter complete vendor address"
-                required
-                aria-invalid={!!errors.address}
-              />
-            </Field>
-            </div>
+          <div className="form-group full-width">
+            <label htmlFor="address" className="form-label">
+              Address <span className="required">*</span>
+            </label>
+            <textarea
+              id="address"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              className={`form-textarea ${errors.address ? 'error' : ''}`}
+              placeholder="Enter complete vendor address"
+              rows={3}
+            />
+            {errors.address && <span className="error-message">{errors.address}</span>}
+          </div>
 
-            {/* Row 2 */}
-            <div className="flex flex-wrap items-start" style={{ gap: '16px 12px' }}>
-            {/* Banking Details */}
-            <Field 
-              label="BANK NAME" 
-              required 
-              error={errors.bankName}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="text"
-                id="bankName"
-                name="bankName"
-                value={formData.bankName}
-                onChange={handleInputChange}
-                placeholder="Enter bank name"
-                required
-                aria-invalid={!!errors.bankName}
-              />
-            </Field>
+          {/* Banking Details */}
+          <div className="form-group">
+            <label htmlFor="bankName" className="form-label">
+              Bank Name <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="bankName"
+              name="bankName"
+              value={formData.bankName}
+              onChange={handleInputChange}
+              className={`form-input ${errors.bankName ? 'error' : ''}`}
+              placeholder="Enter bank name"
+            />
+            {errors.bankName && <span className="error-message">{errors.bankName}</span>}
+          </div>
 
-            <Field 
-              label="ACCOUNT NUMBER" 
-              required 
-              error={errors.accNo}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="text"
-                id="accNo"
-                name="accNo"
-                value={formData.accNo}
-                onChange={handleInputChange}
-                placeholder="Enter account number"
-                required
-                aria-invalid={!!errors.accNo}
-              />
-            </Field>
+          <div className="form-group">
+            <label htmlFor="accNo" className="form-label">
+              Account Number <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="accNo"
+              name="accNo"
+              value={formData.accNo}
+              onChange={handleInputChange}
+              className={`form-input ${errors.accNo ? 'error' : ''}`}
+              placeholder="Enter account number"
+            />
+            {errors.accNo && <span className="error-message">{errors.accNo}</span>}
+          </div>
 
-            <Field 
-              label="IFSC CODE" 
-              required 
-              error={errors.ifscCode}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="text"
-                id="ifscCode"
-                name="ifscCode"
-                value={formData.ifscCode}
-                onChange={handleInputChange}
-                placeholder="SBIN0000123"
-                maxLength={11}
-                required
-                aria-invalid={!!errors.ifscCode}
-              />
-            </Field>
+          <div className="form-group">
+            <label htmlFor="ifscCode" className="form-label">
+              IFSC Code <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="ifscCode"
+              name="ifscCode"
+              value={formData.ifscCode}
+              onChange={handleInputChange}
+              className={`form-input ${errors.ifscCode ? 'error' : ''}`}
+              placeholder="SBIN0000123"
+              maxLength={11}
+            />
+            {errors.ifscCode && <span className="error-message">{errors.ifscCode}</span>}
+          </div>
 
-            {/* Job Work Categories - Premium Multi-Select */}
-            <Field 
-              label="JOB WORK CATEGORY" 
-              required 
+          {/* Job Work Categories */}
+          <div className="form-group">
+            <label className="form-label">
+              Job Work Category <span className="required">*</span>
+            </label>
+            <SearchableDropdown
+              options={jobWorkCategories}
+              value={formData.jobWorkCategory}
+              onChange={(value) => handleDropdownChange('jobWorkCategory', value)}
+              placeholder="Select or search category"
               error={errors.jobWorkCategory}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <PremiumMultiSelect
-                options={jobWorkCategories.filter(opt => opt !== 'categories')}
-                selectedValues={formData.jobWorkCategory}
-                onChange={(values) => handleDropdownChange('jobWorkCategory', values)}
-                placeholder="Select categories"
-                error={errors.jobWorkCategory}
-              />
-            </Field>
-            </div>
+            />
+            {errors.jobWorkCategory && <span className="error-message">{errors.jobWorkCategory}</span>}
+          </div>
 
-            {/* Row 3 */}
-            <div className="flex flex-wrap items-start" style={{ gap: '16px 12px' }}>
-            <Field 
-              label="JOB WORK SUB-CATEGORY" 
-              required 
+          <div className="form-group">
+            <label className="form-label">
+              Job Work Sub-Category <span className="required">*</span>
+            </label>
+            <SearchableDropdown
+              options={jobWorkSubCategories}
+              value={formData.jobWorkSubCategory}
+              onChange={(value) => handleDropdownChange('jobWorkSubCategory', value)}
+              placeholder="Select or search sub-category"
               error={errors.jobWorkSubCategory}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <PremiumMultiSelect
-                options={jobWorkSubCategories.filter(opt => opt !== 'subcategory')}
-                selectedValues={formData.jobWorkSubCategory}
-                onChange={(values) => handleDropdownChange('jobWorkSubCategory', values)}
-                placeholder="Select sub-categories"
-                error={errors.jobWorkSubCategory}
-              />
-            </Field>
-
-            {/* Contact Details */}
-            <Field 
-              label="CONTACT PERSON" 
-              required 
-              error={errors.contactPerson}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="text"
-                id="contactPerson"
-                name="contactPerson"
-                value={formData.contactPerson}
-                onChange={handleInputChange}
-                placeholder="Enter contact person name"
-                required
-                aria-invalid={!!errors.contactPerson}
-              />
-            </Field>
-
-            <Field 
-              label="EMAIL" 
-              required 
-              error={errors.email}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter email address"
-                required
-                aria-invalid={!!errors.email}
-              />
-            </Field>
-
-            <Field 
-              label="WHATSAPP NUMBER" 
-              required 
-              error={errors.whatsappNo}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="tel"
-                id="whatsappNo"
-                name="whatsappNo"
-                value={formData.whatsappNo}
-                onChange={handleInputChange}
-                placeholder="9876543210"
-                maxLength={10}
-                required
-                aria-invalid={!!errors.whatsappNo}
-              />
-            </Field>
-            </div>
-
-            {/* Row 4 */}
-            <div className="flex flex-wrap items-start" style={{ gap: '16px 12px' }}>
-            <Field 
-              label="ALTERNATIVE WHATSAPP NO."
-              error={errors.altWhatsappNo}
-              width="md"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="tel"
-                id="altWhatsappNo"
-                name="altWhatsappNo"
-                value={formData.altWhatsappNo}
-                onChange={handleInputChange}
-                placeholder="9876543210 (Optional)"
-                maxLength={10}
-                aria-invalid={!!errors.altWhatsappNo}
-              />
-            </Field>
-
-            <Field 
-              label="PAYMENT TERMS" 
-              required 
-              error={errors.paymentTerms}
-              width="lg"
-              className="md:col-span-2"
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                type="text"
-                id="paymentTerms"
-                name="paymentTerms"
-                value={formData.paymentTerms}
-                onChange={handleInputChange}
-                placeholder="Enter payment terms and conditions"
-                required
-                aria-invalid={!!errors.paymentTerms}
-              />
-            </Field>
-            </div>
+            />
+            {errors.jobWorkSubCategory && <span className="error-message">{errors.jobWorkSubCategory}</span>}
           </div>
 
-          <div className="flex justify-start" style={{ marginTop: '32px' }}>
-            <Button 
-              type="submit" 
-              disabled={isGenerating}
-              size="default"
-            >
-              {isGenerating ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin mr-2"></span>
-                  Generating Code...
-                </>
-              ) : (
-                'Generate Vendor Code'
-              )}
-            </Button>
+          {/* Contact Details */}
+          <div className="form-group">
+            <label htmlFor="contactPerson" className="form-label">
+              Contact Person <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="contactPerson"
+              name="contactPerson"
+              value={formData.contactPerson}
+              onChange={handleInputChange}
+              className={`form-input ${errors.contactPerson ? 'error' : ''}`}
+              placeholder="Enter contact person name"
+            />
+            {errors.contactPerson && <span className="error-message">{errors.contactPerson}</span>}
           </div>
-        </form>
-        </FormCard>
-      </div>
+
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">
+              Email <span className="required">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className={`form-input ${errors.email ? 'error' : ''}`}
+              placeholder="Enter email address"
+            />
+            {errors.email && <span className="error-message">{errors.email}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="whatsappNo" className="form-label">
+              WhatsApp Number <span className="required">*</span>
+            </label>
+            <input
+              type="tel"
+              id="whatsappNo"
+              name="whatsappNo"
+              value={formData.whatsappNo}
+              onChange={handleInputChange}
+              className={`form-input ${errors.whatsappNo ? 'error' : ''}`}
+              placeholder="9876543210"
+              maxLength={10}
+            />
+            {errors.whatsappNo && <span className="error-message">{errors.whatsappNo}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="altWhatsappNo" className="form-label">
+              Alternative WhatsApp Number
+            </label>
+            <input
+              type="tel"
+              id="altWhatsappNo"
+              name="altWhatsappNo"
+              value={formData.altWhatsappNo}
+              onChange={handleInputChange}
+              className={`form-input ${errors.altWhatsappNo ? 'error' : ''}`}
+              placeholder="9876543210 (Optional)"
+              maxLength={10}
+            />
+            {errors.altWhatsappNo && <span className="error-message">{errors.altWhatsappNo}</span>}
+          </div>
+
+          <div className="form-group full-width">
+            <label htmlFor="paymentTerms" className="form-label">
+              Payment Terms <span className="required">*</span>
+            </label>
+            <textarea
+              id="paymentTerms"
+              name="paymentTerms"
+              value={formData.paymentTerms}
+              onChange={handleInputChange}
+              className={`form-textarea ${errors.paymentTerms ? 'error' : ''}`}
+              placeholder="Enter payment terms and conditions"
+              rows={3}
+            />
+            {errors.paymentTerms && <span className="error-message">{errors.paymentTerms}</span>}
+          </div>
+        </div>
+
+        <div className="form-actions">
+          <button 
+            type="submit" 
+            className="generate-btn"
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <span className="spinner"></span>
+                Generating Code...
+              </>
+            ) : (
+              <>
+                 Generate Vendor Code
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
