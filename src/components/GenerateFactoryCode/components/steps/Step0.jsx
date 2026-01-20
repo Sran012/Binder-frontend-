@@ -115,7 +115,7 @@ const Step0 = ({
             {/* SKU Header */}
             {formData.skus.length > 1 && (
               <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 className="text-lg font-semibold text-gray-800">SKU #{skuIndex + 1}</h3>
+                <h3 className="text-lg font-semibold text-gray-800">SKU {skuIndex + 1}</h3>
                 {formData.skus.length > 1 && (
                   <button
                     type="button"
@@ -151,7 +151,7 @@ const Step0 = ({
               {/* SKU / ITEM NO */}
               <div className="flex flex-col">
                 <label className="text-sm font-semibold text-gray-700 mb-2">
-                  SKU / ITEM NO. <span className="text-red-600">*</span>
+                  BUYER SKU <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"

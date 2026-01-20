@@ -748,6 +748,19 @@ const Step2 = ({
                         )}
                       </div>
 
+                      {/* REF */}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-gray-700 mb-2">REF</label>
+                        <input
+                          type="text"
+                          value={material.stitchingThreadRef || ''}
+                          onChange={(e) => handleRawMaterialChange(actualIndex, 'stitchingThreadRef', e.target.value)}
+                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                          style={{ padding: '10px 14px', height: '44px' }}
+                          placeholder="Enter reference"
+                        />
+                      </div>
+
                       {/* TESTING REQUIREMENTS - SearchableDropdown with text key (same as fiber) */}
                       <div className="flex flex-col col-span-1 md:col-span-2 lg:col-span-3">
                         <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
@@ -1022,7 +1035,7 @@ const Step2 = ({
                           }
                         }}
                       >
-                        {material.showStitchingThreadAdvancedSpec ? '▼ ADVANCE DATA' : '▶ ADVANCE DATA'}
+                        {material.showStitchingThreadAdvancedSpec ? '▼ ADVANCE SPEC' : '▶ ADVANCE SPEC'}
                       </button>
                       {material.showStitchingThreadAdvancedSpec && (
                         <div style={{ marginTop: '20px', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
