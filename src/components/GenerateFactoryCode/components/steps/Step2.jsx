@@ -8977,7 +8977,7 @@ const Step2 = ({
                                 handleWorkOrderChange(actualIndex, woIndex, 'knittingRatioWeightCourses', e.target.value)
                               }
                               placeholder="e.g., 75"
-git                             />
+                            />
                           </Field>
 
                           {/* WASTAGE % */}
@@ -9376,98 +9376,62 @@ git                             />
                       {workOrder.workOrder === 'SEWING' && (
                         <>
                           {/* SPI */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">SPI</label>
-                          <input
-                            type="text"
+                          <Field label="SPI" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.spi || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'spi', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Numeric"
-                          />
-                        </div>
+                            />
+                          </Field>
 
                           {/* THREAD TYPE */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              THREAD TYPE
-                              {workOrder.sewingMachineType && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getSewingThreadType(workOrder.sewingMachineType)})
-                                </span>
-                              )}
-                            </label>
+                          <Field
+                            label="THREAD TYPE"
+                            width="sm"
+                            helper={workOrder.sewingMachineType ? getSewingThreadType(workOrder.sewingMachineType) : undefined}
+                          >
                             <SearchableDropdown
                               value={workOrder.threadType || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'threadType', selectedValue)}
                               options={SEWING_THREAD_TYPE_OPTIONS}
                               placeholder="Select or type Thread Type"
-                              style={{ width: '220px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* WASTAGE % */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                            <input
-                              type="text"
+                          <Field
+                            label="WASTAGE %"
+                            width="sm"
+                            error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
+                          >
+                            <PercentInput
                               value={workOrder.wastage || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
-                              className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                  ? 'border-red-600' 
-                                  : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                              }`}
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                              onFocus={(e) => {
-                                if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                }
-                                
-                              }}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                              placeholder="%AGE"
+                              placeholder="e.g., 2"
+                              error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
                             />
-                            {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                              <span className="text-red-600 text-xs mt-1 font-medium">
-                                {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                              </span>
-                            )}
-                          </div>
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-                          <SearchableDropdown
+                          <Field label="APPROVAL" width="sm">
+                            <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={SEWING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                          />
-                        </div>
+                            />
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Text"
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
 
@@ -10227,226 +10191,160 @@ git                             />
                       {workOrder.workOrder === 'CARPET' && (
                         <>
                           {/* GSM */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-                                  <input
-                                type="text"
+                          <Field label="GSM" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.gsm || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'gsm', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter GSM"
-                              />
-                            </div>
+                            />
+                          </Field>
 
                           {/* PILE HEIGHT (mm) */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">PILE HEIGHT (mm)</label>
-                                  <input
-                                    type="text"
+                          <Field label="PILE HEIGHT (MM)" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.pileHeight || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pileHeight', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter pile height"
-                                  />
-                              </div>
-                            
+                            />
+                          </Field>
+
                           {/* TPI / KPSI */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TPI / KPSI</label>
-                                  <input
-                                    type="text"
+                          <Field label="TPI / KPSI" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.tpiKpsi || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'tpiKpsi', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter TPI/KPSI"
-                                  />
-                              </div>
+                            />
+                          </Field>
 
                           {/* KNOT TYPE */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">KNOT TYPE</label>
-                            <select
+                          <Field label="KNOT TYPE" width="sm">
+                            <SearchableDropdown
                               value={workOrder.knotType || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knotType', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                            >
-                              <option value="">Select Knot Type</option>
-                              {KNOT_TYPE_OPTIONS.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
-                              ))}
-                            </select>
-                            </div>
-                            
+                              onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'knotType', selectedValue)}
+                              options={KNOT_TYPE_OPTIONS}
+                              placeholder="Select or type Knot Type"
+                            />
+                          </Field>
+
                           {/* PITCH/ROWS */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">PITCH/ROWS</label>
-                                  <input
-                                type="text"
+                          <Field label="PITCH/ROWS" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.pitchRows || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pitchRows', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter pitch/rows"
-                                  />
-                                </div>
+                            />
+                          </Field>
 
                           {/* APPROVAL */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={CARPET_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* DESIGN REF (Upload) */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                                  <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`carpet-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`carpet-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                                </label>
-                              </div>
-                            </div>
-                            
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`carpet-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`carpet-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
+
                           {/* REMARKS */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                                  <input
-                                    type="text"
+                          <Field label="REMARKS" width="lg">
+                            <Input
+                              type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter remarks"
-                                  />
-                                </div>
+                            />
+                          </Field>
                         </>
                       )}
 
                       {/* Advanced Filter for CARPET - Button right after REMARKS */}
                       {workOrder.workOrder === 'CARPET' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showCarpetAdvancedFilter', !workOrder.showCarpetAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showCarpetAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showCarpetAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showCarpetAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showCarpetAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showCarpetAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showCarpetAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showCarpetAdvancedFilter',
+                                  !workOrder.showCarpetAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
-                              </div>
-                          
+                              Advance Spec
+                            </Button>
+                          </div>
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showCarpetAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* VARIANTS - Dropdown */}
-                      <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                        <select
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                onFocus={(e) => {
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.machineType ? getCarpetVariants(workOrder.machineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                            </div>
-                            
-                                {/* DESIGN - Dropdown */}
-                              <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
-                                    value={workOrder.carpetDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'carpetDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getCarpetVariants(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Variant" : "Select Machine Type First"}
                                     disabled={!workOrder.machineType}
-                                  onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.machineType ? getCarpetDesigns(workOrder.machineType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
+                                  />
+                                </Field>
+
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.carpetDesign || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'carpetDesign', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getCarpetDesigns(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Design" : "Select Machine Type First"}
+                                    disabled={!workOrder.machineType}
+                                  />
+                                </Field>
                               </div>
                             </div>
-                          </div>
                           )}
                         </div>
                       )}
@@ -10455,163 +10353,107 @@ git                             />
                       {workOrder.workOrder === 'CUTTING' && (
                         <>
                           {/* VARIANTS - Dropdown */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">VARIANTS</label>
-                            <select
+                          <Field label="VARIANTS" width="sm">
+                            <SearchableDropdown
                               value={workOrder.variants || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                        >
-                              <option value="">Select Variant</option>
-                              {workOrder.machineType ? getCuttingVariants(workOrder.machineType).map(variant => (
-                                <option key={variant} value={variant}>{variant}</option>
-                              )) : <option value="">Select Machine Type First</option>}
-                        </select>
-                          </div>
+                              onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)}
+                              options={workOrder.machineType ? getCuttingVariants(workOrder.machineType) : []}
+                              placeholder={workOrder.machineType ? "Select or type Variant" : "Select Machine Type First"}
+                              disabled={!workOrder.machineType}
+                            />
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={CUTTING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter remarks"
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
 
                       {/* Advanced Filter for CUTTING - Button right after REMARKS */}
                       {workOrder.workOrder === 'CUTTING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showCuttingAdvancedFilter', !workOrder.showCuttingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showCuttingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showCuttingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showCuttingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showCuttingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showCuttingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showCuttingAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showCuttingAdvancedFilter',
+                                  !workOrder.showCuttingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
-                            </div>
-                          
+                              Advance Spec
+                            </Button>
+                          </div>
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showCuttingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* CUT TYPE - Dropdown */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    CUT TYPE
-                                  </label>
-                            <select
-                              value={workOrder.cutType || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'cutType', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="CUT TYPE" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.cutType || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'cutType', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getCuttingCutTypes(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Cut Type" : "Select Machine Type First"}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Cut Type</option>
-                                    {workOrder.machineType ? getCuttingCutTypes(workOrder.machineType).map(cutType => (
-                                      <option key={cutType} value={cutType}>{cutType}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                            </div>
-                            
-                                {/* LAYERS - Text Input */}
-                              <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    LAYERS
-                                  </label>
-                              <input
-                                type="text"
+                                  />
+                                </Field>
+
+                                <Field label="LAYERS" width="sm">
+                                  <Input
+                                    type="text"
                                     value={workOrder.layers || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'layers', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder="Enter layers"
                                   />
-                              </div>
-                                
-                                {/* NESTING - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    NESTING
-                                  </label>
-                                  <select
+                                </Field>
+
+                                <Field label="NESTING" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.nesting || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'nesting', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Nesting</option>
-                                    {NESTING_OPTIONS.map(opt => (
-                                      <option key={opt} value={opt}>{opt}</option>
-                                    ))}
-                                  </select>
-                            </div>
-                          </div>
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'nesting', selectedValue)
+                                    }
+                                    options={NESTING_OPTIONS}
+                                    placeholder="Select or type Nesting"
+                                  />
+                                </Field>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -10988,48 +10830,42 @@ git                             />
                       {/* Advanced Filter for SEWING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'SEWING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showSewingAdvancedFilter', !workOrder.showSewingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showSewingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showSewingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showSewingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showSewingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showSewingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showSewingAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showSewingAdvancedFilter',
+                                  !workOrder.showSewingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
-                          
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showSewingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* MACHINE TYPE - Dropdown */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    MACHINE TYPE
-                                  </label>
-                            <SearchableDropdown
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="MACHINE TYPE" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.sewingMachineType || ''}
                                     onChange={(selectedValue) => {
                                       const selectedType = selectedValue;
@@ -11042,82 +10878,47 @@ git                             />
                                     }}
                                     options={getAllSewingMachineTypes()}
                                     placeholder="Select or type Machine Type"
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                   />
-                          </div>
-                                
-                                {/* STITCH TYPE */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    STITCH TYPE
-                                  </label>
-                            <input
-                              type="text"
+                                </Field>
+
+                                <Field
+                                  label="STITCH TYPE"
+                                  width="sm"
+                                  helper={workOrder.sewingMachineType ? getSewingStitchType(workOrder.sewingMachineType) : undefined}
+                                >
+                                  <Input
+                                    type="text"
                                     value={workOrder.stitchType || getSewingStitchType(workOrder.sewingMachineType) || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'stitchType', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.sewingMachineType ? getSewingStitchType(workOrder.sewingMachineType) : 'Enter stitch type'}
+                                    placeholder={
+                                      workOrder.sewingMachineType
+                                        ? getSewingStitchType(workOrder.sewingMachineType)
+                                        : 'Enter stitch type'
+                                    }
                                     disabled={!workOrder.sewingMachineType}
-                            />
-                          </div>
+                                  />
+                                </Field>
 
-                                {/* VARIANTS - Dropdown */}
-                      <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                        <select
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.sewingMachineType ? getSewingVariants(workOrder.sewingMachineType) : []}
+                                    placeholder={workOrder.sewingMachineType ? "Select or type Variant" : "Select Machine Type First"}
                                     disabled={!workOrder.sewingMachineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.sewingMachineType ? getSewingVariants(workOrder.sewingMachineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                        </select>
-                      </div>
+                                  />
+                                </Field>
 
-                                {/* NEEDLE SIZE */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    NEEDLE SIZE
-                                  </label>
-                                  <input
+                                <Field label="NEEDLE SIZE" width="sm">
+                                  <Input
                                     type="text"
                                     value={workOrder.needleSize || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'needleSize', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder="TEXT"
                                   />
-                                </div>
+                                </Field>
                               </div>
                             </div>
                           )}
