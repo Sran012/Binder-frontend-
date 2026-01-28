@@ -9439,73 +9439,54 @@ const Step2 = ({
                       {workOrder.workOrder === 'FRINGE/TASSELS' && (
                         <>
                           {/* TYPE */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TYPE</label>
+                          <Field label="TYPE" width="sm">
                             <SearchableDropdown
                               value={workOrder.fringeType || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeType', selectedValue)}
                               options={['Cut Fringe', 'Chainette', 'Tassel (individual)', 'Ball Fringe', 'Brush Fringe', 'Bullion', 'Loop Fringe']}
                               placeholder="Select or type"
-                              style={{ width: '180px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* MATERIAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">MATERIAL</label>
+                          <Field label="MATERIAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.fringeMaterial || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeMaterial', selectedValue)}
                               options={['Rayon (shiny)', 'Polyester', 'Cotton', 'Silk', 'Metallic', 'Wool', 'Jute']}
                               placeholder="Select or type"
-                              style={{ width: '180px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* DROP LENGTH */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DROP LENGTH</label>
+                          <Field label="DROP LENGTH" width="sm">
                             <SearchableDropdown
                               value={workOrder.dropLength || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'dropLength', selectedValue)}
                               options={['2cm', '5cm', '10cm', '15cm', '20cm']}
                               placeholder="Select or type"
-                              style={{ width: '160px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* TAPE/HEADER WIDTH */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TAPE/HEADER WIDTH</label>
+                          <Field label="TAPE/HEADER WIDTH" width="sm">
                             <SearchableDropdown
                               value={workOrder.tapeHeaderWidth || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'tapeHeaderWidth', selectedValue)}
                               options={['10mm', '15mm', '20mm']}
                               placeholder="Select or type"
-                              style={{ width: '160px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* COLOUR */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">COLOUR</label>
+                          <Field label="COLOUR" width="lg">
                             <div className="flex items-center gap-2">
                               <SearchableDropdown
                                 value={workOrder.fringeColour || ''}
                                 onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeColour', selectedValue)}
                                 options={['DTM', 'Multi-Coloured', 'Iridescent', 'Ombre']}
                                 placeholder="Select or type"
-                                style={{ width: '160px' }}
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
+                                className="flex-1"
                               />
                               <input
                                 type="file"
@@ -9513,32 +9494,29 @@ const Step2 = ({
                                 className="hidden"
                                 id={`fringe-colour-ref-${materialIndex + 1}-${woIndex}`}
                               />
-                              <label
-                                htmlFor={`fringe-colour-ref-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-11 flex-shrink-0"
+                                onClick={() =>
+                                  document.getElementById(`fringe-colour-ref-${materialIndex + 1}-${woIndex}`)?.click()
+                                }
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.fringeColourRefImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}</span>
-                              </label>
+                                {workOrder.fringeColourRefImage ? 'UPLOADED' : 'UPLOAD REF'}
+                              </Button>
                             </div>
-                          </div>
+                          </Field>
 
                           {/* PLACEMENT */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">PLACEMENT</label>
+                          <Field label="PLACEMENT" width="lg">
                             <div className="flex items-center gap-2">
-                              <input
+                              <Input
                                 type="text"
                                 value={workOrder.fringePlacement || ''}
                                 onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringePlacement', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', width: '160px', height: '44px' }}
                                 placeholder="Enter placement"
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
+                                className="flex-1"
                               />
                               <input
                                 type="file"
@@ -9546,162 +9524,97 @@ const Step2 = ({
                                 className="hidden"
                                 id={`fringe-placement-ref-${materialIndex + 1}-${woIndex}`}
                               />
-                              <label
-                                htmlFor={`fringe-placement-ref-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-11 flex-shrink-0"
+                                onClick={() =>
+                                  document.getElementById(`fringe-placement-ref-${materialIndex + 1}-${woIndex}`)?.click()
+                                }
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.fringePlacementRefImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}</span>
-                              </label>
+                                {workOrder.fringePlacementRefImage ? 'UPLOADED' : 'UPLOAD REF'}
+                              </Button>
                             </div>
-                          </div>
-
+                          </Field>
 
                           {/* QTY - Type Selection (PCS/LENGTH) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">QTY</label>
+                          <Field label="QTY" width="sm">
                             <SearchableDropdown
                               value={workOrder.fringeQtyType || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeQtyType', selectedValue)}
                               options={['PCS', 'LENGTH']}
                               placeholder="Select type"
-                              style={{ width: '140px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* Conditional QTY Fields */}
                           {workOrder.fringeQtyType === 'PCS' && (
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">PIECES</label>
-                              <input
+                            <Field label="PIECES" width="sm">
+                              <Input
                                 type="text"
                                 value={workOrder.fringeQtyPcs || ''}
                                 onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeQtyPcs', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', width: '140px', height: '44px' }}
                                 placeholder="Enter pieces"
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
                               />
-                            </div>
+                            </Field>
                           )}
 
                           {workOrder.fringeQtyType === 'LENGTH' && (
-                            <>
-                              <div className="flex flex-col">
-                                <label className="text-sm font-semibold text-gray-700 mb-2">CNS/PC</label>
-                                <input
-                                  type="text"
-                                  value={workOrder.fringeQtyCnsPerPc || ''}
-                                  onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeQtyCnsPerPc', e.target.value)}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                  style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                  placeholder="Enter CNS/PC"
-                                  onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                  onBlur={(e) => e.target.style.boxShadow = ''}
-                                />
-                              </div>
-                            </>
+                            <Field label="CNS/PC" width="sm">
+                              <Input
+                                type="text"
+                                value={workOrder.fringeQtyCnsPerPc || ''}
+                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeQtyCnsPerPc', e.target.value)}
+                                placeholder="Enter CNS/PC"
+                              />
+                            </Field>
                           )}
 
-                          {/* TESTING REQUIREMENTS - Multiselect with Upload */}
-                          <div className="flex flex-col" style={{ width: '100%' }}>
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                            <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                              <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                                <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                  {['Colour Fastness (light/UV)', 'Wash Resistance', 'Flammability'].map((option) => {
-                                    const currentValues = Array.isArray(workOrder.fringeTestingRequirements) 
-                                      ? workOrder.fringeTestingRequirements 
-                                      : (workOrder.fringeTestingRequirements ? (typeof workOrder.fringeTestingRequirements === 'string' ? workOrder.fringeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                    const isChecked = currentValues.includes(option);
-                                    return (
-                                      <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={isChecked}
-                                          onChange={(e) => {
-                                            const currentValues = Array.isArray(workOrder.fringeTestingRequirements) 
-                                              ? workOrder.fringeTestingRequirements 
-                                              : (workOrder.fringeTestingRequirements ? (typeof workOrder.fringeTestingRequirements === 'string' ? workOrder.fringeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                            let newValues;
-                                            if (e.target.checked) {
-                                              newValues = [...currentValues, option];
-                                            } else {
-                                              newValues = currentValues.filter(v => v !== option);
-                                            }
-                                            handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirements', newValues);
-                                          }}
-                                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                        />
-                                        <span className="text-sm text-gray-900">{option}</span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                                {workOrder.fringeTestingRequirements && Array.isArray(workOrder.fringeTestingRequirements) && workOrder.fringeTestingRequirements.length > 0 && (
-                                  <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                    <strong>Selected:</strong> {workOrder.fringeTestingRequirements.join(', ')}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                                <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                                <input
-                                  type="file"
-                                  onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirementsUpload', e.target.files[0])}
-                                  className="hidden"
-                                  id={`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`}
+                          {/* TESTING REQUIREMENTS */}
+                          <Field label="TESTING REQ." width="lg">
+                            <div className="flex items-center" style={{ gap: '0.75rem' }}>
+                              <div className="flex-1">
+                                <TestingRequirementsInput
+                                  value={Array.isArray(workOrder.fringeTestingRequirements) 
+                                    ? workOrder.fringeTestingRequirements 
+                                    : (workOrder.fringeTestingRequirements ? (typeof workOrder.fringeTestingRequirements === 'string' ? workOrder.fringeTestingRequirements.split(',').filter(v => v.trim()) : []) : [])}
+                                  onChange={(values) => handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirements', values)}
+                                  options={['Colour Fastness (light/UV)', 'Wash Resistance', 'Flammability']}
+                                  placeholder="Type to search or select testing requirements..."
                                 />
-                                <label
-                                  htmlFor={`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                  style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                  </svg>
-                                  <span className="truncate">{workOrder.fringeTestingRequirementsUpload ? 'UPLOADED' : 'UPLOAD'}</span>
-                                </label>
                               </div>
+                              <input
+                                type="file"
+                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirementsUpload', e.target.files[0])}
+                                className="hidden"
+                                id={`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`}
+                                accept="image/*"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-11 flex-shrink-0"
+                                onClick={() => document.getElementById(`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`)?.click()}
+                              >
+                                {workOrder.fringeTestingRequirementsUpload ? 'UPLOADED' : 'UPLOAD'}
+                              </Button>
                             </div>
-                          </div>
+                          </Field>
 
                           {/* SURPLUS % */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
-                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '140px' }}>
-                              <input
-                                type="text"
-                                value={workOrder.fringeSurplus || ''}
-                                onChange={(e) => {
-                                  // Store only numeric value (remove % and non-numeric chars except decimal point)
-                                  const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                                  handleWorkOrderChange(actualIndex, woIndex, 'fringeSurplus', numericValue);
-                                }}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 32px 10px 14px', width: '100%', height: '44px' }}
-                                placeholder="%age"
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => {
-                                  e.target.style.boxShadow = '';
-                                }}
-                              />
-                              {workOrder.fringeSurplus && (
-                                <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-                              )}
-                            </div>
-                          </div>
+                          <Field label="SURPLUS %" width="sm">
+                            <PercentInput
+                              value={workOrder.fringeSurplus || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeSurplus', e.target.value)}
+                              placeholder="e.g., 5"
+                            />
+                          </Field>
 
                           {/* WASTAGE % - With dropdown options */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '180px' }}>
+                          <Field label="WASTAGE %" width="sm">
+                            <div className="relative">
                               <SearchableDropdown
                                 value={workOrder.fringeWastage || ''}
                                 onChange={(selectedValue) => {
@@ -9718,126 +9631,102 @@ const Step2 = ({
                                 options={['Hem', 'Pillow Edge', 'Curtain Edge', 'Trim']}
                                 placeholder="Select or type %age"
                                 strictMode={false}
-                                style={{ width: '100%', paddingRight: '32px' }}
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => {
-                                  e.target.style.boxShadow = '';
-                                }}
+                                className={workOrder.fringeWastage && !['Hem', 'Pillow Edge', 'Curtain Edge', 'Trim'].includes(workOrder.fringeWastage) ? 'pr-10' : ''}
                               />
                               {workOrder.fringeWastage && !['Hem', 'Pillow Edge', 'Curtain Edge', 'Trim'].includes(workOrder.fringeWastage) && (
-                                <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
+                                <span style={{ position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
                               )}
                             </div>
-                          </div>
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.fringeApproval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeApproval', selectedValue)}
                               options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
                               placeholder="Select or type"
-                              style={{ width: '180px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.fringeRemarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeRemarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
                               placeholder="Text"
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* Advance Spec Section for FRINGE/TASSELS */}
                           <div className="w-full" style={{ marginTop: '20px' }}>
-                            {/* Show/Hide Advance Filter Button */}
-                            <div style={{ marginBottom: '20px', width: '100%' }}>
-                              <button
+                            {/* Advance Spec Button */}
+                            <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                              <Button
                                 type="button"
-                                onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showFringeAdvancedSpec', !workOrder.showFringeAdvancedSpec)}
-                                className="border-2 rounded-lg text-sm font-medium transition-all"
-                                style={{
-                                  padding: '10px 20px',
-                                  height: '44px',
-                                  backgroundColor: workOrder.showFringeAdvancedSpec ? '#667eea' : '#ffffff',
-                                  borderColor: workOrder.showFringeAdvancedSpec ? '#667eea' : '#e5e7eb',
-                                  color: workOrder.showFringeAdvancedSpec ? '#ffffff' : '#374151'
-                                }}
-                                onMouseEnter={(e) => {
-                                  if (!workOrder.showFringeAdvancedSpec) {
-                                    e.currentTarget.style.backgroundColor = '#f9fafb';
-                                    e.currentTarget.style.borderColor = '#d1d5db';
-                                  }
-                                }}
-                                onMouseLeave={(e) => {
-                                  if (!workOrder.showFringeAdvancedSpec) {
-                                    e.currentTarget.style.backgroundColor = '#ffffff';
-                                    e.currentTarget.style.borderColor = '#e5e7eb';
-                                  }
-                                }}
+                                variant={workOrder.showFringeAdvancedSpec ? "default" : "outline"}
+                                size="sm"
+                                onClick={() =>
+                                  handleWorkOrderChange(
+                                    actualIndex,
+                                    woIndex,
+                                    'showFringeAdvancedSpec',
+                                    !workOrder.showFringeAdvancedSpec
+                                  )
+                                }
                               >
                                 Advance Spec
-                              </button>
+                              </Button>
                             </div>
 
                             {/* Advanced Spec UI Table */}
                             {workOrder.showFringeAdvancedSpec && (
-                              <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                                <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
+                              <div
+                                style={{
+                                  marginTop: '1.5rem',
+                                  padding: '1.5rem',
+                                  backgroundColor: 'var(--muted)',
+                                  borderRadius: '0.75rem',
+                                  border: '1px solid var(--border)',
+                                  width: '100%',
+                                }}
+                              >
+                                <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                  {/* FINISH */}
-                                  <div className="flex flex-col">
-                                    <label className="text-sm font-semibold text-gray-700 mb-2">FINISH</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" style={{ gap: '16px 12px' }}>
+                                  <Field label="FINISH" width="sm">
                                     <SearchableDropdown
                                       value={workOrder.fringeFinish || ''}
-                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeFinish', selectedValue)}
+                                      onChange={(selectedValue) =>
+                                        handleWorkOrderChange(actualIndex, woIndex, 'fringeFinish', selectedValue)
+                                      }
                                       options={['High Sheen', 'Matte', 'Twisted', 'Braided Header']}
                                       placeholder="Select or type"
-                                      style={{ width: '100%' }}
-                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                      onBlur={(e) => e.target.style.boxShadow = ''}
                                     />
-                                  </div>
+                                  </Field>
 
-                                  {/* ATTACHMENT */}
-                                  <div className="flex flex-col">
-                                    <label className="text-sm font-semibold text-gray-700 mb-2">ATTACHMENT</label>
+                                  <Field label="ATTACHMENT" width="sm">
                                     <SearchableDropdown
                                       value={workOrder.fringeAttachment || ''}
-                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeAttachment', selectedValue)}
+                                      onChange={(selectedValue) =>
+                                        handleWorkOrderChange(actualIndex, woIndex, 'fringeAttachment', selectedValue)
+                                      }
                                       options={['Sew-On Header', 'Adhesive Back', 'Loop for Hanging']}
                                       placeholder="Select or type"
-                                      style={{ width: '100%' }}
-                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                      onBlur={(e) => e.target.style.boxShadow = ''}
                                     />
-                                  </div>
+                                  </Field>
 
-                                  {/* CONSTRUCTION */}
-                                  <div className="flex flex-col">
-                                    <label className="text-sm font-semibold text-gray-700 mb-2">CONSTRUCTION</label>
+                                  <Field label="CONSTRUCTION" width="sm">
                                     <SearchableDropdown
                                       value={workOrder.fringeConstruction || ''}
-                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeConstruction', selectedValue)}
+                                      onChange={(selectedValue) =>
+                                        handleWorkOrderChange(actualIndex, woIndex, 'fringeConstruction', selectedValue)
+                                      }
                                       options={['Knot Density', 'Fiber Count', 'Threads per inch']}
                                       placeholder="Select or type"
-                                      style={{ width: '100%' }}
-                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                      onBlur={(e) => e.target.style.boxShadow = ''}
                                     />
-                                  </div>
+                                  </Field>
                                 </div>
                               </div>
                             )}
@@ -11133,21 +11022,6 @@ const Step2 = ({
                         </div>
                       )}
 
-                      {/* Remarks - Hidden for BRAIDING, CARPET, CUTTING, DYEING, EMBROIDERY, KNITTING, PRINTING, QUILTING, SEWING, TUFTING, and WEAVING (they have their own REMARKS fields) */}
-                      {workOrder.workOrder !== 'BRAIDING' && workOrder.workOrder !== 'CARPET' && workOrder.workOrder !== 'CUTTING' && workOrder.workOrder !== 'DYEING' && workOrder.workOrder !== 'EMBROIDERY' && workOrder.workOrder !== 'KNITTING' && workOrder.workOrder !== 'PRINTING' && workOrder.workOrder !== 'QUILTING' && workOrder.workOrder !== 'SEWING' && workOrder.workOrder !== 'TUFTING' && workOrder.workOrder !== 'WEAVING' && (
-                      <div className="w-full flex flex-col mt-8">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                        <textarea
-                          value={workOrder.remarks || ''}
-                          onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '12px 16px', width: '100%' }}
-                          onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                          onBlur={(e) => e.target.style.boxShadow = ''}
-                          rows="2"
-                        ></textarea>
-                      </div>
-                      )}
 
                       {/* Advanced Filter for DYEING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'DYEING' && (
