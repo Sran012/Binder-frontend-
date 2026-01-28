@@ -4,10 +4,11 @@ import GenerateVendorCode from './GenerateVendorCode';
 import GeneratePOCode from './GeneratePOCode';
 import GenerateFactoryCode from './GenerateFactoryCode';
 import VendorMasterSheet from './VendorMasterSheet';
+import BuyerMasterSheet from './BuyerMasterSheet';
 import CompanyEssentials from './CompanyEssentials';
 import InternalPurchaseOrder from './InternalPurchaseOrder/InternalPurchaseOrder';
 
-const DepartmentContent = () => {
+const DepartmentContent = ({ resetKey }) => {
   const [hoveredDeptItem, setHoveredDeptItem] = useState(null);
   const [selectedSubMenuItem, setSelectedSubMenuItem] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -16,6 +17,7 @@ const DepartmentContent = () => {
   const [showGeneratePOCode, setShowGeneratePOCode] = useState(false);
   const [showGenerateFactoryCode, setShowGenerateFactoryCode] = useState(false);
   const [showVendorMasterSheet, setShowVendorMasterSheet] = useState(false);
+  const [showBuyerMasterSheet, setShowBuyerMasterSheet] = useState(false);
   const [showCompanyEssentials, setShowCompanyEssentials] = useState(false);
   const [showInternalPurchaseOrder, setShowInternalPurchaseOrder] = useState(false);
   
@@ -35,6 +37,13 @@ const DepartmentContent = () => {
       setShowInternalPurchaseOrder(true);
     }
   }, [selectedSubMenuItem, showInternalPurchaseOrder]);
+
+  // Reset department view when resetKey changes (e.g., sidebar Departments clicked)
+  useEffect(() => {
+    if (resetKey !== undefined) {
+      handleBackToDepartments();
+    }
+  }, [resetKey]);
 
   const departmentItems = [
     { id: 'chd-code', label: 'CODE CREATION', hasSubMenu: true },
@@ -417,6 +426,7 @@ const DepartmentContent = () => {
     setShowGeneratePOCode(false);
     setShowGenerateFactoryCode(false);
     setShowVendorMasterSheet(false);
+    setShowBuyerMasterSheet(false);
     setShowCompanyEssentials(false);
     setShowInternalPurchaseOrder(false);
   };
@@ -526,7 +536,10 @@ const DepartmentContent = () => {
             <span className="button-subtitle">Create new buyer codes for procurement</span>
           </div>
         </button>
-        <button className="fullscreen-action-button secondary">
+        <button 
+          className="fullscreen-action-button secondary"
+          onClick={() => setShowBuyerMasterSheet(true)}
+        >
           <div className="button-content">
             <span className="button-title">BUYER MASTER SHEET</span>
             <span className="button-subtitle">View and manage buyer master data</span>
@@ -780,6 +793,14 @@ const DepartmentContent = () => {
       );
     }
 
+    if (showBuyerMasterSheet) {
+      return (
+        <BuyerMasterSheet 
+          onBack={() => setShowBuyerMasterSheet(false)} 
+        />
+      );
+    }
+
     if (showCompanyEssentials) {
       return (
         <CompanyEssentials 
@@ -838,7 +859,7 @@ const DepartmentContent = () => {
   };
 
   // If a submenu item is selected, show fullscreen content
-  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showGenerateFactoryCode || showVendorMasterSheet || showCompanyEssentials || showInternalPurchaseOrder) {
+  if (selectedSubMenuItem || showGenerateBuyerCode || showGenerateVendorCode || showGeneratePOCode || showGenerateFactoryCode || showVendorMasterSheet || showBuyerMasterSheet || showCompanyEssentials || showInternalPurchaseOrder) {
     return renderDepartmentMainContent();
   }
 
