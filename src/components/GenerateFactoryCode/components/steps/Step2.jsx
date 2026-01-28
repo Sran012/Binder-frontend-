@@ -10414,129 +10414,85 @@ const Step2 = ({
                       {workOrder.workOrder === 'TUFTING' && (
                         <>
                           {/* DESIGN REF (Upload) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`tufting-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`tufting-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
-                            </div>
-                          </div>
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`tufting-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`tufting-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* GSM */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-                                <input
+                          <Field label="GSM" width="sm">
+                            <Input
                               type="text"
                               value={workOrder.gsm || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'gsm', e.target.value)}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                  onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                  onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter GSM"
-                                />
-                            </div>
+                            />
+                          </Field>
 
                           {/* PILE HEIGHT (mm) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">PILE HEIGHT (mm)</label>
-                                <input
+                          <Field label="PILE HEIGHT (MM)" width="sm">
+                            <Input
                               type="text"
                               value={workOrder.pileHeight || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pileHeight', e.target.value)}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                                  onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                  onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter pile height (mm)"
-                                />
-                            </div>
+                            />
+                          </Field>
 
                           {/* TPI (TUFT PER INCH) */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TPI (TUFT PER INCH)</label>
-                              <input
-                                type="text"
+                          <Field label="TPI (TUFT PER INCH)" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.tpi || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'tpi', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter TPI"
-                              />
-                            </div>
+                            />
+                          </Field>
 
                           {/* WASTAGE % */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                              <input
-                                type="text"
-                                value={workOrder.wastage || ''}
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                  errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                    ? 'border-red-600' 
-                                    : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                                }`}
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                onFocus={(e) => {
-                                  if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                  }
-                                }}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
-                                placeholder="%AGE"
-                              />
-                              {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                                <span className="text-red-600 text-xs mt-1 font-medium">
-                                  {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                                </span>
-                              )}
-                            </div>
+                          <Field label="WASTAGE %" width="sm" error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}>
+                            <PercentInput
+                              value={workOrder.wastage || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
+                              placeholder="e.g., 2"
+                              error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
+                            />
+                          </Field>
 
                           {/* APPROVAL */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={TUFTING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                              <input
-                                type="text"
+                          <Field label="REMARKS" width="lg">
+                            <Input
+                              type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Text"
-                              />
-                            </div>
+                            />
+                          </Field>
                         </>
                       )}
 
@@ -11733,143 +11689,95 @@ const Step2 = ({
                       {/* Advanced Filter for TUFTING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'TUFTING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Show/Hide Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showTuftingAdvancedFilter', !workOrder.showTuftingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showTuftingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showTuftingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showTuftingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showTuftingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showTuftingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showTuftingAdvancedFilter ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showTuftingAdvancedFilter',
+                                  !workOrder.showTuftingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
                           
                           {/* Advanced Filter UI Table */}
                           {workOrder.showTuftingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* DESIGN - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-4">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+                                {/* DESIGN */}
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.tuftingDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'tuftingDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'tuftingDesign', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getTuftingDesigns(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? 'Select or type' : 'Select Machine Type First'}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.machineType ? getTuftingDesigns(workOrder.machineType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
-                                {/* VARIANTS - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                                  <select
+                                  />
+                                </Field>
+
+                                {/* VARIANTS */}
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)}
+                                    options={workOrder.machineType ? getTuftingVariants(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? 'Select or type' : 'Select Machine Type First'}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.machineType ? getTuftingVariants(workOrder.machineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
+                                  />
+                                </Field>
+
                                 {/* MACHINE GAUGE */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    MACHINE GAUGE
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getTuftingMachineGauge(workOrder.machineType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
+                                <Field
+                                  label="MACHINE GAUGE"
+                                  width="sm"
+                                  helper={workOrder.machineType ? getTuftingMachineGauge(workOrder.machineType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.machineGauge || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'machineGauge', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.machineType ? getTuftingMachineGauge(workOrder.machineType) : 'Enter machine gauge'}
+                                    placeholder={
+                                      workOrder.machineType ? getTuftingMachineGauge(workOrder.machineType) : 'Enter machine gauge'
+                                    }
                                   />
-                                </div>
-                                
+                                </Field>
+
                                 {/* STITCH RATE */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    STITCH RATE
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getTuftingStitchRate(workOrder.machineType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
+                                <Field
+                                  label="STITCH RATE"
+                                  width="sm"
+                                  helper={workOrder.machineType ? getTuftingStitchRate(workOrder.machineType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.stitchRate || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'stitchRate', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.machineType ? getTuftingStitchRate(workOrder.machineType) : 'Enter stitch rate'}
+                                    placeholder={
+                                      workOrder.machineType ? getTuftingStitchRate(workOrder.machineType) : 'Enter stitch rate'
+                                    }
                                   />
-                                </div>
+                                </Field>
                               </div>
                             </div>
                           )}
