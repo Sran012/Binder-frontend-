@@ -57,6 +57,13 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, error }) =>
     }
   };
 
+  const handleClear = (e) => {
+    e.stopPropagation();
+    onChange('');
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
   return (
     <div className={`searchable-dropdown ${error ? 'error' : ''}`} ref={dropdownRef}>
       <div 
@@ -66,9 +73,21 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, error }) =>
         <span className={`selected-value ${!value ? 'placeholder' : ''}`}>
           {value || placeholder}
         </span>
-        <span className={`dropdown-arrow ${isOpen ? 'up' : 'down'}`}>
-          {isOpen ? '▲' : '▼'}
-        </span>
+        <div className="dropdown-actions">
+          {value && (
+            <button
+              type="button"
+              className="dropdown-clear"
+              onClick={handleClear}
+              aria-label="Clear selection"
+            >
+              ✕
+            </button>
+          )}
+          <span className={`dropdown-arrow ${isOpen ? 'up' : 'down'}`}>
+            {isOpen ? '▲' : '▼'}
+          </span>
+        </div>
       </div>
       
       {isOpen && (

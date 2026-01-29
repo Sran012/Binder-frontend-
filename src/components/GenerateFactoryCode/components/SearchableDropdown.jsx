@@ -136,6 +136,15 @@ const SearchableDropdown = ({
   // Show search term when typing, otherwise show value
   const displayValue = isOpen ? searchTerm : (value || '');
 
+  const handleClear = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange('');
+    setSearchTerm('');
+    previousValidValueRef.current = '';
+    inputRef.current?.focus();
+  };
+
   return (
     <div
       ref={containerRef}
@@ -156,16 +165,27 @@ const SearchableDropdown = ({
           'border-input h-11 w-full min-w-0 rounded-md border bg-white text-sm shadow-xs transition-[color,box-shadow]',
           'outline-none disabled:cursor-not-allowed disabled:opacity-50',
           'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+          value && 'pr-9',
           disabled && 'opacity-60',
           className
         )}
         style={{
           paddingLeft: '1.25rem',
-          paddingRight: '0.75rem',
+          paddingRight: value ? '2.25rem' : '0.75rem',
           ...style,
         }}
         aria-invalid={false}
       />
+      {value && !disabled && (
+        <button
+          type="button"
+          onClick={handleClear}
+          aria-label="Clear selection"
+          className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded border-0 bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer text-sm"
+        >
+          ✕
+        </button>
+      )}
       {isOpen && !disabled && filteredOptions.length > 0 && (
         <div
           className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-popover text-popover-foreground shadow-md"
