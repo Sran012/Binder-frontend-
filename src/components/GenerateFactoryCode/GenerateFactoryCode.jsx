@@ -19,6 +19,10 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const [selectedSku, setSelectedSku] = useState('product_0'); // Format: 'product_0' or 'subproduct_0_1'
   const [showIPCPopup, setShowIPCPopup] = useState(false);
   const [generatedIPCCodes, setGeneratedIPCCodes] = useState([]);
+  const [step2ComponentErrorsDialog, setStep2ComponentErrorsDialog] = useState({
+    open: false,
+    componentErrors: [] // Array of { componentName, errorCount, errors: [{ fieldKey, message }] }
+  });
   const [formData, setFormData] = useState({
     // Internal Purchase Order fields (if provided)
     orderType: initialFormData.orderType || '',
@@ -3232,138 +3236,294 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     });
   };
 
+  // Validate a single field in real-time
+  const validateField = (fieldKey, value, materialIndex, woIndex = null, workOrder = null) => {
+    // Use functional update to prevent stale state - always work with latest errors
+    let isValid = false;
+    setErrors(prevErrors => {
+      const newErrors = { ...prevErrors };
+      
+      // Material fields
+      if (fieldKey.includes('materialType')) {
+        if (!value?.trim()) {
+          newErrors[fieldKey] = 'Material Type is required';
+        } else {
+          delete newErrors[fieldKey]; // Clear error if valid
+        }
+      } else if (fieldKey.includes('materialDescription')) {
+        if (!value?.trim()) {
+          newErrors[fieldKey] = 'Material Description is required';
+        } else {
+          delete newErrors[fieldKey];
+        }
+      } else if (fieldKey.includes('netConsumption')) {
+        if (!value?.trim()) {
+          newErrors[fieldKey] = 'Net Consumption per Pc is required';
+        } else {
+          delete newErrors[fieldKey];
+        }
+      } else if (fieldKey.includes('unit')) {
+        // Handle both string and non-string values
+        const unitValue = value?.toString().trim();
+        if (!unitValue || unitValue === '') {
+          newErrors[fieldKey] = 'Unit is required';
+        } else {
+          delete newErrors[fieldKey];
+        }
+      } 
+      // Work order fields
+      else if (fieldKey.includes('workOrder') && fieldKey.endsWith('_workOrder')) {
+        if (!value?.trim()) {
+          newErrors[fieldKey] = 'Work Order is required';
+        } else {
+          delete newErrors[fieldKey];
+        }
+      } else if (fieldKey.includes('wastage') && woIndex !== null && workOrder) {
+        const workOrdersWithOwnWastage = ['KNITTING', 'PRINTING', 'QUILTING', 'SEWING', 'TUFTING', 'WEAVING', 'FRINGE/TASSELS'];
+        if (!workOrdersWithOwnWastage.includes(workOrder.workOrder)) {
+          // Required for other work orders
+          const isEmpty = value === null || value === undefined || value === '' || 
+                         (typeof value === 'string' && value.trim() === '') ||
+                         (typeof value === 'number' && isNaN(value));
+          if (isEmpty) {
+            newErrors[fieldKey] = 'Wastage is required';
+          } else {
+            delete newErrors[fieldKey];
+          }
+        } else {
+          // For SEWING and similar - wastage is OPTIONAL, NEVER show error if empty
+          // Only validate format if a value was actually entered
+          const wastageStr = value?.toString().trim();
+          if (wastageStr && wastageStr !== '') {
+            const numValue = parseFloat(wastageStr);
+            if (isNaN(numValue) || numValue < 0) {
+              newErrors[fieldKey] = 'Wastage must be a valid positive number';
+            } else {
+              delete newErrors[fieldKey]; // Valid number entered
+            }
+          } else {
+            // Empty is perfectly fine - ALWAYS clear error for optional fields
+            delete newErrors[fieldKey];
+          }
+        }
+      } else if (fieldKey.includes('machineType') && workOrder?.workOrder === 'WEAVING') {
+        if (!value?.trim()) {
+          newErrors[fieldKey] = 'Machine Type is required';
+        } else {
+          delete newErrors[fieldKey];
+        }
+      } else {
+        // For unknown fields, clear error if value exists
+        if (value && value.toString().trim()) {
+          delete newErrors[fieldKey];
+        }
+      }
+      
+      isValid = !newErrors[fieldKey];
+      return newErrors;
+    });
+    
+    return isValid;
+  };
+
   const validateStep2 = () => {
     const newErrors = {};
 
     const stepData = getSelectedSkuStepData();
     const materials = (stepData && stepData.rawMaterials) || [];
-    let hasFilledMaterial = false;
 
-    console.log('Validating Step2 - Materials:', materials);
-    console.log('Materials count:', materials.length);
+    const getAllComponentsForStep2 = () => {
+      const comps = [];
+      (stepData?.products || []).forEach((product) => {
+        (product?.components || []).forEach((component) => {
+          if (component?.productComforter) comps.push(component.productComforter);
+        });
+      });
+      return [...new Set(comps)];
+    };
 
+    const isMaterialComplete = (m) => {
+      const unitValue = m?.unit?.toString().trim();
+      return Boolean(
+        m?.materialType?.toString().trim() &&
+          m?.materialDescription?.toString().trim() &&
+          m?.netConsumption?.toString().trim() &&
+          unitValue
+      );
+    };
+
+    // Validate each material - only required fields
     materials.forEach((material, materialIndex) => {
-      if (!material || !isRawMaterialFilled(material)) {
-        console.log(`Skipping material ${materialIndex} - not filled:`, material);
-        return;
-      }
-      hasFilledMaterial = true;
-      console.log(`Validating filled material ${materialIndex}:`, material);
+      if (!material) return;
+      const keyIndex = materialIndex;
       
       // Validate materialType
-      if (!material.materialType?.trim()) {
-        newErrors[`rawMaterial_${materialIndex}_materialType`] = 'Material Type is required';
+      if (!material.materialType?.toString().trim()) {
+        newErrors[`rawMaterial_${keyIndex}_materialType`] = 'Material Type is required';
       }
       
-      if (!material.materialDescription?.trim()) {
-        newErrors[`rawMaterial_${materialIndex}_materialDescription`] = 'Material Description is required';
+      if (!material.materialDescription?.toString().trim()) {
+        newErrors[`rawMaterial_${keyIndex}_materialDescription`] = 'Material Description is required';
       }
-      if (!material.netConsumption?.trim()) {
-        newErrors[`rawMaterial_${materialIndex}_netConsumption`] = 'Net Consumption per Pc is required';
+      if (!material.netConsumption?.toString().trim()) {
+        newErrors[`rawMaterial_${keyIndex}_netConsumption`] = 'Net Consumption per Pc is required';
       }
-      if (!material.unit?.trim()) {
-        newErrors[`rawMaterial_${materialIndex}_unit`] = 'Unit is required';
-      }
-      
-      // Validate work orders
-      if (material.workOrders && material.workOrders.length > 0) {
-      material.workOrders.forEach((workOrder, woIndex) => {
-        // Only validate if workOrder type is selected
-        if (!workOrder.workOrder?.trim()) {
-          // Skip validation for empty work orders
-          return;
-        }
-        if (!workOrder.wastage?.trim()) {
-          newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_wastage`] = 'Wastage is required';
-        }
-        // FOR field is not required - removed by user request
-        
-        // Validate conditional fields for DYEING
-        if (workOrder.workOrder === 'DYEING') {
-          // SHRINKAGE IS NOW COMPLETELY OPTIONAL - We don't require shrinkage to be selected at all
-          // Only validate shrinkage fields if they are actually selected by the user
-          
-          // If shrinkageWidth checkbox is selected, validate its required fields
-          if (workOrder.shrinkageWidth) {
-            if (!workOrder.shrinkageWidthPercent?.trim()) {
-              newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_shrinkageWidthPercent`] = 'Shrinkage Width Percentage is required';
-            }
-            if (!workOrder.ratioWidth?.trim()) {
-              newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_ratioWidth`] = 'Ratio Width is required when WIDTH is selected';
-            }
-          }
-          
-          // If shrinkageLength checkbox is selected, validate its required fields
-          if (workOrder.shrinkageLength) {
-            if (!workOrder.shrinkageLengthPercent?.trim()) {
-              newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_shrinkageLengthPercent`] = 'Shrinkage Length Percentage is required';
-            }
-            if (!workOrder.ratioLength?.trim()) {
-              newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_ratioLength`] = 'Ratio Length is required when LENGTH is selected';
-            }
-          }
-          
-          // No validation error if neither shrinkageWidth nor shrinkageLength is selected
-          // Shrinkage is completely optional for DYEING work orders
-        }
-        
-        // Validate conditional fields for WEAVING
-        if (workOrder.workOrder === 'WEAVING') {
-            if (!workOrder.machineType?.trim()) {
-              newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_machineType`] = 'Machine Type is required';
-            }
-            // WARP/WEFT checkboxes removed - they're in the weaving advance table
-        }
-        
-        // Validate conditional fields for KNITTING
-        if (workOrder.workOrder === 'KNITTING') {
-          // Check if at least one of wales or courses is selected
-          if (!workOrder.wales && !workOrder.courses) {
-            newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_walesCourses`] = 'At least one of WALES or COURSES must be selected';
-          }
-          // If wales is selected, ratioWales is required
-          if (workOrder.wales && !workOrder.ratioWales?.trim()) {
-            newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_ratioWales`] = 'Ratio Wales is required when WALES is selected';
-          }
-          // If courses is selected, ratioCourses is required
-          if (workOrder.courses && !workOrder.ratioCourses?.trim()) {
-            newErrors[`rawMaterial_${materialIndex}_workOrder_${woIndex}_ratioCourses`] = 'Ratio Courses is required when COURSES is selected';
-          }
-        }
-      });
+      const unitValue = material.unit?.toString().trim();
+      if (!unitValue || unitValue === '') {
+        newErrors[`rawMaterial_${keyIndex}_unit`] = 'Unit is required';
       }
     });
     
-    // REMOVE SHRINKAGE ERRORS - Shrinkage is completely optional, remove any shrinkage-related errors
-    Object.keys(newErrors).forEach(errorKey => {
-      if (errorKey.includes('shrinkage') && !errorKey.includes('shrinkageWidthPercent') && !errorKey.includes('shrinkageLengthPercent') && !errorKey.includes('ratioWidth') && !errorKey.includes('ratioLength')) {
-        delete newErrors[errorKey];
-        console.log(`Removed shrinkage requirement error: ${errorKey}`);
+    // Step-level requirement: every component must have at least one COMPLETE raw material.
+    const allComponents = getAllComponentsForStep2();
+    allComponents.forEach((componentName) => {
+      const materialsForComponent = materials.filter(m => m?.componentName === componentName);
+      if (materialsForComponent.length === 0) {
+        // Component has no materials at all
+        const safe = componentName.replace(/[^a-zA-Z0-9]+/g, '_');
+        newErrors[`component_${safe}_missing`] = `Please add at least one raw material for "${componentName}"`;
+      } else {
+        // Component has materials, but check if at least one is complete
+        const hasCompleteForComponent = materialsForComponent.some(isMaterialComplete);
+        if (!hasCompleteForComponent) {
+          const safe = componentName.replace(/[^a-zA-Z0-9]+/g, '_');
+          newErrors[`component_${safe}_incomplete`] = `Please fill all required fields for at least one material in "${componentName}"`;
+        }
       }
     });
-    
+
+    // CRITICAL: if no materials at all, also block
+    if (materials.length === 0) {
+      newErrors['no_materials'] = 'Please add at least one raw material';
+    }
+
     setErrors(newErrors);
 
-    console.log('Step2 Validation Results:');
-    console.log('- Has filled material:', hasFilledMaterial);
-    console.log('- Errors:', newErrors);
-    console.log('- Error count:', Object.keys(newErrors).length);
-    console.log('- Error keys:', Object.keys(newErrors));
+    const isValid = Object.keys(newErrors).length === 0;
+    return { isValid, errors: newErrors };
+  };
 
-    if (!hasFilledMaterial) {
-      console.log('No filled materials - allowing to proceed');
-      return true;
+  // Validate materials for a specific component only
+  const validateComponentMaterials = (componentName) => {
+    const newErrors = {};
+
+    const stepData = getSelectedSkuStepData();
+    const allMaterials = (stepData && stepData.rawMaterials) || [];
+    
+    // Filter materials for this component only
+    const materials = allMaterials.filter(m => m?.componentName === componentName);
+
+    const isMaterialComplete = (m) => {
+      const unitValue = m?.unit?.toString().trim();
+      return Boolean(
+        m?.materialType?.toString().trim() &&
+          m?.materialDescription?.toString().trim() &&
+          m?.netConsumption?.toString().trim() &&
+          unitValue
+      );
+    };
+
+    // Validate each material for this component - only required fields
+    materials.forEach((material) => {
+      if (!material) return;
+      
+      // Find the actual index in the full rawMaterials array
+      const materialIndex = allMaterials.findIndex(m => m === material);
+      if (materialIndex === -1) {
+        return;
+      }
+      
+      const keyIndex = materialIndex;
+      
+      // Validate materialType
+      if (!material.materialType?.toString().trim()) {
+        newErrors[`rawMaterial_${keyIndex}_materialType`] = 'Material Type is required';
+      }
+      
+      if (!material.materialDescription?.toString().trim()) {
+        newErrors[`rawMaterial_${keyIndex}_materialDescription`] = 'Material Description is required';
+      }
+      if (!material.netConsumption?.toString().trim()) {
+        newErrors[`rawMaterial_${keyIndex}_netConsumption`] = 'Net Consumption per Pc is required';
+      }
+      const unitValue = material.unit?.toString().trim();
+      if (!unitValue || unitValue === '') {
+        newErrors[`rawMaterial_${keyIndex}_unit`] = 'Unit is required';
+      }
+    });
+    
+    // Component-level requirement: must have at least one COMPLETE raw material
+    if (materials.length === 0) {
+      const safe = componentName.replace(/[^a-zA-Z0-9]+/g, '_');
+      newErrors[`component_${safe}_missing`] = `Please add at least one raw material for "${componentName}"`;
+    } else {
+      const hasComplete = materials.some(isMaterialComplete);
+      if (!hasComplete) {
+        const safe = componentName.replace(/[^a-zA-Z0-9]+/g, '_');
+        newErrors[`component_${safe}_incomplete`] = `Please fill all required fields for at least one material in "${componentName}"`;
+      }
     }
+
+    // Set errors in state so UI can show red borders
+    setErrors(prev => ({ ...prev, ...newErrors }));
 
     const isValid = Object.keys(newErrors).length === 0;
-    console.log('Validation result:', isValid);
-    if (!isValid) {
-      console.log('Validation failed. Please check the following fields:');
-      Object.keys(newErrors).forEach(errorKey => {
-        console.log(`- ${errorKey}: ${newErrors[errorKey]}`);
-      });
-    }
-    return isValid;
+    
+    return { isValid, errors: newErrors };
+  };
+
+  // Helper function to group validation errors by component name
+  const groupErrorsByComponent = (errors) => {
+    const stepData = getSelectedSkuStepData();
+    const allMaterials = (stepData && stepData.rawMaterials) || [];
+    const componentMap = new Map();
+
+    Object.entries(errors).forEach(([errorKey, message]) => {
+      // Check if it's a component-level error
+      if (errorKey.startsWith('component_')) {
+        // Extract component name from error key (e.g., "component_Shell_missing" -> "Shell")
+        const match = errorKey.match(/^component_(.+?)_(missing|incomplete)$/);
+        if (match) {
+          const componentSafeName = match[1];
+          // Try to find the actual component name by matching materials
+          const componentName = allMaterials.find(m => {
+            const safe = m?.componentName?.replace(/[^a-zA-Z0-9]+/g, '_');
+            return safe === componentSafeName;
+          })?.componentName || componentSafeName.replace(/_/g, ' ');
+
+          if (!componentMap.has(componentName)) {
+            componentMap.set(componentName, { componentName, errorCount: 0, errors: [] });
+          }
+          componentMap.get(componentName).errorCount++;
+          componentMap.get(componentName).errors.push({ fieldKey: errorKey, message });
+        }
+      } else if (errorKey.startsWith('rawMaterial_')) {
+        // Extract material index from error key (e.g., "rawMaterial_5_materialType" -> 5)
+        const match = errorKey.match(/^rawMaterial_(\d+)_/);
+        if (match) {
+          const materialIndex = parseInt(match[1]);
+          const material = allMaterials[materialIndex];
+          if (material?.componentName) {
+            const componentName = material.componentName;
+            if (!componentMap.has(componentName)) {
+              componentMap.set(componentName, { componentName, errorCount: 0, errors: [] });
+            }
+            componentMap.get(componentName).errorCount++;
+            componentMap.get(componentName).errors.push({ fieldKey: errorKey, message });
+          }
+        }
+      } else if (errorKey === 'no_materials') {
+        // This is a general error, add to all components or create a special entry
+        const componentName = 'All Components';
+        if (!componentMap.has(componentName)) {
+          componentMap.set(componentName, { componentName, errorCount: 0, errors: [] });
+        }
+        componentMap.get(componentName).errorCount++;
+        componentMap.get(componentName).errors.push({ fieldKey: errorKey, message });
+      }
+    });
+
+    return Array.from(componentMap.values());
   };
 
   // Reset selected SKU when going back to step 0
@@ -3394,27 +3554,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       }
       // Don't auto-initialize raw materials - user will select component first
     } else if (currentStep === 2) {
-      console.log('handleNext - Step 2 - Validating...');
-      console.log('handleNext - Step 2 - Current formData:', formData);
-      console.log('handleNext - Step 2 - Selected SKU:', selectedSku);
-      const isValid = validateStep2();
-      console.log('handleNext - Step 2 - Validation result:', isValid);
-      if (!isValid) {
-        console.log('handleNext - Step 2 - Validation failed, not proceeding');
-        console.log('handleNext - Step 2 - Current errors:', errors);
-        // Scroll to first error
-        setTimeout(() => {
-          const firstErrorKey = Object.keys(errors)[0];
-          if (firstErrorKey) {
-            const errorElement = document.querySelector(`[data-error-key="${firstErrorKey}"]`);
-            if (errorElement) {
-              errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }
-        }, 100);
-        return;
-      }
-      console.log('handleNext - Step 2 - Validation passed, proceeding to next step');
+      // Step 2 validation happens only on Save, not on Next
     } else if (currentStep === 3) {
       if (!validateStep4()) {
         return;
@@ -3572,6 +3712,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               addRawMaterialWithType={addRawMaterialWithType}
               handleSave={handleSaveStep2}
               removeRawMaterial={removeRawMaterial}
+              validateField={validateField}
+              validateStep2={validateStep2}
+              validateComponentMaterials={validateComponentMaterials}
             />
           );
         case 3:

@@ -154,7 +154,10 @@ const Step2 = ({
   removeWorkOrder,
   addRawMaterialWithType,
   handleSave,
-  removeRawMaterial
+  removeRawMaterial,
+  validateField,
+  validateStep2,
+  validateComponentMaterials
 }) => {
   const prevWorkOrdersLengthRef = useRef({});
   const isInitialMountRef = useRef(true);
@@ -163,6 +166,7 @@ const Step2 = ({
   const [savedComponents, setSavedComponents] = useState(new Set()); // Track which components are saved/done
   const [lastAddedMaterialIndex, setLastAddedMaterialIndex] = useState(null);
   const [scrollToMaterialIndex, setScrollToMaterialIndex] = useState(null); // Index to scroll to after removal
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'success' | 'error'
 
   // Get all components for dropdown with done status
   const getAllComponents = () => {
@@ -188,21 +192,60 @@ const Step2 = ({
     return formData.rawMaterials?.filter(m => m.componentName === selectedComponent) || [];
   };
 
+  // Reset save status when switching components
+  useEffect(() => {
+    setSaveStatus('idle');
+  }, [selectedComponent]);
+
+
   // Handle bottom SAVE button - marks component as done
   const handleBottomSave = () => {
     if (!selectedComponent) {
-      alert('Please select a component first');
       return;
     }
-    // Mark component as saved
-    setSavedComponents(prev => new Set([...prev, selectedComponent]));
-    // Save the data
-    handleSave(); // Call the parent save function
     
-    // Clear selected component to hide the form
-    setSelectedComponent('');
+    // Validate component materials - this will set errors in state
+    if (!validateComponentMaterials) {
+      return;
+    }
     
-    // Scroll to top smoothly
+    const result = validateComponentMaterials(selectedComponent);
+
+    if (!result || !result.isValid) {
+      setSaveStatus('error');
+      // Validation failed - errors are already set in state by validateComponentMaterials
+      // Scroll to first error
+      setTimeout(() => {
+        const firstErrorKey = Object.keys(result?.errors || {})[0];
+        if (firstErrorKey) {
+          const selectors = [
+            `[data-error-key="${firstErrorKey}"]`,
+            `[name="${firstErrorKey}"]`,
+            `#${firstErrorKey}`,
+          ];
+          
+          let errorElement = null;
+          for (const selector of selectors) {
+            errorElement = document.querySelector(selector);
+            if (errorElement) break;
+          }
+          
+          if (errorElement) {
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (errorElement.tagName === 'INPUT' || errorElement.tagName === 'SELECT' || errorElement.tagName === 'TEXTAREA') {
+              errorElement.focus();
+            }
+          }
+        }
+      }, 100);
+      return;
+    }
+
+    // Validation passed - save the component
+    setSaveStatus('success');
+    setSavedComponents((prev) => new Set([...prev, selectedComponent]));
+    handleSave();
+
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
@@ -319,7 +362,7 @@ const Step2 = ({
         <h2 className="text-2xl font-bold text-gray-900 mb-2">PART-2 RAW MATERIAL SOURCING</h2>
         <p className="text-sm text-gray-600">Bill of material & work order</p>
       </div>
-      
+
       {/* Component Selection - OUTSIDE form border */}
       <div style={{ marginBottom: '24px', padding: '20px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
         <div style={{ maxWidth: '300px' }}>
@@ -402,11 +445,21 @@ const Step2 = ({
                 }
               }
               
-              // Safety check: if still not found, log warning but continue
+              // Safety check: if still not found, use proper calculation
               if (actualIndex === -1) {
-                console.warn('Could not find material index:', material, 'in rawMaterials:', formData.rawMaterials);
-                // Use materialIndex as fallback (not ideal but prevents crashes)
-                actualIndex = materialIndex;
+                console.warn('Could not find material index, recalculating:', material);
+                // Don't use materialIndex as fallback - it's the filtered array index
+                // Instead, recalculate using the filtered list approach
+                const allMaterialsForComponent = formData.rawMaterials
+                  .map((m, idx) => ({ m, idx }))
+                  .filter(({ m }) => m.componentName === selectedComponent);
+                
+                if (materialIndex < allMaterialsForComponent.length) {
+                  actualIndex = allMaterialsForComponent[materialIndex].idx;
+                } else {
+                  console.error('Cannot find material index even after recalculation. Skipping render.');
+                  return null; // Skip rendering this material to prevent errors
+                }
               }
               
               // Use a more stable key that includes component and position
@@ -419,8 +472,10 @@ const Step2 = ({
                     <div className="flex items-center justify-between" style={{ marginBottom: '24px' }}>
                       <h4 className="text-sm font-bold text-gray-700">MATERIAL {materialNumber}</h4>
                       {materialsForComponent.length > 0 && (
-                        <button
+                        <Button
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => {
                             if (window.confirm('Are you sure you want to remove this material?')) {
                               // Store which material index to scroll to after removal
@@ -435,30 +490,20 @@ const Step2 = ({
                               removeRawMaterial(actualIndex);
                             }
                           }}
-                          className="border rounded-md cursor-pointer text-xs font-medium transition-all hover:-translate-x-0.5"
-                          style={{
-                            backgroundColor: '#f3f4f6',
-                            borderColor: '#d1d5db',
-                            color: '#374151',
-                            padding: '4px 10px',
-                            height: '28px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#e5e7eb';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                          }}
+                          className="text-xs text-destructive hover:text-destructive"
                         >
                           Remove
-                        </button>
+                        </Button>
                       )}
               </div>
               
               {/* Material Details */}
               <div className="flex flex-wrap items-start gap-6">
-                <div className='flex flex-col'>
-                  <label className="text-sm font-semibold text-gray-700 mb-2">MATERIAL TYPE</label>
+                <Field
+                  label="MATERIAL TYPE"
+                  width="sm"
+                  error={errors[`rawMaterial_${actualIndex}_materialType`]}
+                >
                   <SearchableDropdown
                     value={material.materialType || ''}
                     onChange={(selectedMaterialType) => {
@@ -470,27 +515,9 @@ const Step2 = ({
                     }}
                     options={['Fabric', 'Yarn', 'Trim & Accessory', 'Foam', 'Fiber']}
                     placeholder="select material"
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`rawMaterial_${actualIndex}_materialType`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`rawMaterial_${actualIndex}_materialType`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                      }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
-                    }}
+                    className={errors[`rawMaterial_${actualIndex}_materialType`] ? 'border-destructive' : ''}
                   />
-                  {errors[`rawMaterial_${actualIndex}_materialType`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`rawMaterial_${actualIndex}_materialType`]}
-                    </span>
-                  )}
-                </div>
+                </Field>
 
                 {/* SUB-MATERIAL field - only show when materialType is Yarn */}
                 {material.materialType === "Yarn" && (
@@ -522,107 +549,72 @@ const Step2 = ({
                   </div>
                 )}
 
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                    MATERIAL DESC <span className="text-red-600">*</span>
-                  </label>
-                  <input
+                <Field
+                  label={
+                    <>
+                      MATERIAL DESC <span className="text-red-600">*</span>
+                    </>
+                  }
+                  width="sm"
+                  error={errors[`rawMaterial_${actualIndex}_materialDescription`]}
+                >
+                  <Input
                     type="text"
                     value={material.materialDescription}
-                    onChange={(e) => handleRawMaterialChange(actualIndex, 'materialDescription', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`rawMaterial_${actualIndex}_materialDescription`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`rawMaterial_${actualIndex}_materialDescription`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                      }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
+                    onChange={(e) => {
+                      handleRawMaterialChange(actualIndex, 'materialDescription', e.target.value);
                     }}
                     placeholder="e.g., Cotton 200TC"
                     required
                   />
-                  {errors[`rawMaterial_${actualIndex}_materialDescription`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`rawMaterial_${actualIndex}_materialDescription`]}
-                    </span>
-                  )}
-                </div>
+                </Field>
                 
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                    NET CNS/PC <span className="text-red-600">*</span>
-                  </label>
-                  <input
+                <Field
+                  label={
+                    <>
+                      NET CNS/PC <span className="text-red-600">*</span>
+                    </>
+                  }
+                  width="sm"
+                  error={errors[`rawMaterial_${actualIndex}_netConsumption`]}
+                >
+                  <Input
                     type="number"
                     step="0.001"
                     value={material.netConsumption}
-                    onChange={(e) => handleRawMaterialChange(actualIndex, 'netConsumption', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`rawMaterial_${actualIndex}_netConsumption`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '120px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`rawMaterial_${actualIndex}_netConsumption`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                    onChange={(e) => {
+                      handleRawMaterialChange(actualIndex, 'netConsumption', e.target.value);
+                      // Clear error when typing
+                      if (errors[`rawMaterial_${actualIndex}_netConsumption`] && e.target.value.trim()) {
+                        const newErrors = { ...errors };
+                        delete newErrors[`rawMaterial_${actualIndex}_netConsumption`];
                       }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
                     }}
                     placeholder="0.000"
                     required
                   />
-                  {errors[`rawMaterial_${actualIndex}_netConsumption`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`rawMaterial_${actualIndex}_netConsumption`]}
-                    </span>
-                  )}
-                </div>
+                </Field>
                 
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                    UNIT <span className="text-red-600">*</span>
-                  </label>
-                  <select
-                    value={material.unit}
-                    onChange={(e) => handleRawMaterialChange(actualIndex, 'unit', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`rawMaterial_${actualIndex}_unit`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '130px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`rawMaterial_${actualIndex}_unit`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                      }
+                <Field
+                  label={
+                    <>
+                      UNIT <span className="text-red-600">*</span>
+                    </>
+                  }
+                  width="sm"
+                  error={errors[`rawMaterial_${actualIndex}_unit`]}
+                >
+                  <SearchableDropdown
+                    value={material.unit || ''}
+                    onChange={(selectedValue) => {
+                      handleRawMaterialChange(actualIndex, 'unit', selectedValue);
                     }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
-                    }}
+                    options={['R METERS', 'CM', 'Inches', 'Meter', 'KGS']}
+                    placeholder="Select unit"
+                    className={errors[`rawMaterial_${actualIndex}_unit`] ? 'border-destructive' : ''}
                     required
-                  >
-                    <option value="">Select</option>
-                    <option value="R METERS">R METERS</option>
-                    <option value="CM">CM</option>
-                    <option value="Inches">Inches</option>
-                    <option value="Meter">Meter</option>
-                    <option value="KGS">KGS</option>
-                  </select>
-                  {errors[`rawMaterial_${actualIndex}_unit`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`rawMaterial_${actualIndex}_unit`]}
-                    </span>
-                  )}
-                </div>
+                  />
+                </Field>
               </div>
               
               {/* Stitching Thread Section - only show when subMaterial is "Stitching Thread" */}
@@ -8653,8 +8645,10 @@ const Step2 = ({
                       WORK ORDER {woIndex + 1}
                     </h4>
                     {material.workOrders.length > 1 && (
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => {
                           // Find previous work order to scroll to
                           const currentWorkOrders = material.workOrders || [];
@@ -8679,23 +8673,10 @@ const Step2 = ({
                             }, 100);
                           }
                         }}
-                        className="border rounded-md cursor-pointer text-xs font-medium transition-all hover:-translate-x-0.5"
-                        style={{
-                          backgroundColor: '#f3f4f6',
-                          borderColor: '#d1d5db',
-                          color: '#374151',
-                          padding: '4px 10px',
-                          height: '28px'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#e5e7eb';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f3f4f6';
-                        }}
+                        className="text-xs text-destructive hover:text-destructive"
                       >
                         Remove
-                      </button>
+                      </Button>
                     )}
                   </div>
                   
@@ -8749,7 +8730,9 @@ const Step2 = ({
                         >
                           <PercentInput
                             value={workOrder.wastage || ''}
-                            onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
+                            onChange={(e) => {
+                              handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value);
+                            }}
                             placeholder="e.g., 2"
                             error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
                             required
@@ -9399,7 +9382,7 @@ const Step2 = ({
                             />
                           </Field>
 
-                          {/* WASTAGE % */}
+                          {/* WASTAGE % - OPTIONAL for SEWING */}
                           <Field
                             label="WASTAGE %"
                             width="sm"
@@ -9407,8 +9390,10 @@ const Step2 = ({
                           >
                             <PercentInput
                               value={workOrder.wastage || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
-                              placeholder="e.g., 2"
+                              onChange={(e) => {
+                                handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value);
+                              }}
+                              placeholder="e.g., 2 (optional)"
                               error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
                             />
                           </Field>
@@ -11083,9 +11068,10 @@ const Step2 = ({
               
               {/* Add Work Order Button at Bottom - Only show if at least one work order exists */}
               {material.workOrders && material.workOrders.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-200" style={{ marginTop: '24px', paddingTop: '24px' }}>
-                <button
+              <div className="mt-6 pt-6" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => {
                       const currentLength = material.workOrders?.length || 0;
                       addWorkOrder(actualIndex);
@@ -11103,28 +11089,9 @@ const Step2 = ({
                     };
                     attemptScroll();
                   }}
-                  style={{
-                      background: '#f3f4f6',
-                      border: '1px solid #d1d5db',
-                    color: '#374151',
-                    padding: '10px 16px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e5e7eb';
-                      e.currentTarget.style.transform = 'translateX(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6';
-                      e.currentTarget.style.transform = 'translateX(0)';
-                  }}
                 >
                   + Add Work Order
-                </button>
+                </Button>
               </div>
               )}
             </div>
@@ -11135,58 +11102,34 @@ const Step2 = ({
 
           {/* Bottom Save and Add Raw Material Buttons - Only show when materials exist */}
           {materialsForComponent.length > 0 && (
-            <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <button
-              type="button"
-              onClick={handleBottomSave}
-              style={{
-                background: '#f3f4f6',
-                border: '1px solid #d1d5db',
-                color: '#374151',
-                padding: '10px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#e5e7eb';
-                e.currentTarget.style.transform = 'translateX(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }}
-            >
-              Save
-            </button>
-            <div style={{ position: 'relative' }}>
-              <button
+            <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <Button
                 type="button"
+                variant="outline"
+                onClick={handleBottomSave}
+                className={cn(
+                  'min-w-[90px]',
+                  saveStatus === 'error'
+                    ? 'text-red-600 border-red-500 hover:text-red-700'
+                    : isComponentDone(selectedComponent)
+                      ? 'text-green-600 hover:text-green-700'
+                      : ''
+                )}
+              >
+                {saveStatus === 'error'
+                  ? 'Not Saved'
+                  : isComponentDone(selectedComponent)
+                    ? 'Saved'
+                    : 'Save'}
+              </Button>
+            <div style={{ position: 'relative' }}>
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setShowMaterialTypeModal(!showMaterialTypeModal)}
-                style={{
-                  background: '#f3f4f6',
-                  border: '1px solid #d1d5db',
-                  color: '#374151',
-                  padding: '10px 16px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e5e7eb';
-                  e.currentTarget.style.transform = 'translateX(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  e.currentTarget.style.transform = 'translateX(0)';
-                }}
               >
                 Add Raw Material
-              </button>
+              </Button>
               {showMaterialTypeModal && (
                 <div
                   style={{
@@ -11194,10 +11137,10 @@ const Step2 = ({
                     top: '100%',
                     left: 0,
                     marginTop: '8px',
-                    background: 'white',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    padding: '8px',
+                    background: 'var(--background)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    padding: '0.5rem',
                     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                     zIndex: 1000,
                     minWidth: '200px'
