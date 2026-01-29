@@ -30,6 +30,19 @@ const Step3 = ({
     prevMaterialsLengthRef.current = currentMaterialsLength;
   }, [formData.consumptionMaterials?.length]);
 
+  // Get list of component names from Step 1 products/components
+  const getComponentOptions = () => {
+    const names = [];
+    (formData.products || []).forEach((product) => {
+      (product.components || []).forEach((component) => {
+        if (component?.productComforter) {
+          names.push(component.productComforter);
+        }
+      });
+    });
+    return [...new Set(names)];
+  };
+
   return (
 <div className="w-full">
       {/* Header with proper spacing */}
@@ -75,13 +88,16 @@ const Step3 = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-5" style={{ marginBottom: '24px' }}>
               <div className="flex flex-col">
                 <label className="text-sm font-semibold text-gray-700 mb-2">COMPONENTS</label>
-                <input
-                  type="text"
+                <SearchableDropdown
                   value={material.components || ''}
-                  onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'components', e.target.value)}
+                  onChange={(selectedValue) => {
+                    handleConsumptionMaterialChange(materialIndex, 'components', selectedValue || '');
+                  }}
+                  options={getComponentOptions()}
+                  placeholder="Select component"
+                  strictMode={false}
                   className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                   style={{ padding: '10px 14px', height: '44px' }}
-                  placeholder="e.g., COMFORTER +"
                 />
               </div>
               
@@ -112,14 +128,14 @@ const Step3 = ({
               
               <div className="flex flex-col">
                 <label className="text-sm font-semibold text-gray-700 mb-2">UNIT</label>
-                                        <SearchableDropdown
-                          value={material.unit || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unit', selectedValue)}
-                          options={['Kgs', 'Pcs', 'Meters', 'Yards', 'Sets', 'Rolls', 'Gross']}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
+                <SearchableDropdown
+                  value={material.unit || ''}
+                  onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unit', selectedValue)}
+                  options={['KGS', 'CM']}
+                  placeholder="Select or type"
+                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                  style={{ padding: '10px 14px', height: '44px' }}
+                />
               </div>
             </div>
 

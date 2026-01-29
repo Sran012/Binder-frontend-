@@ -202,6 +202,19 @@ const Step4 = ({
     prevMaterialsLengthRef.current = currentMaterialsLength;
   }, [formData.artworkMaterials?.length]);
 
+  // Get list of component names from Step 1 products/components
+  const getComponentOptions = () => {
+    const names = [];
+    (formData.products || []).forEach((product) => {
+      (product.components || []).forEach((component) => {
+        if (component?.productComforter) {
+          names.push(component.productComforter);
+        }
+      });
+    });
+    return [...new Set(names)];
+  };
+
   return (
 <div className="w-full">
       {/* Header with proper spacing */}
@@ -250,27 +263,23 @@ const Step4 = ({
                   <label className="text-sm font-semibold text-gray-700 mb-2">
                     COMPONENTS <span className="text-red-600">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={material.components || ''}
-                    onChange={(e) => handleArtworkMaterialChange(materialIndex, 'components', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`artworkMaterial_${materialIndex}_components`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`artworkMaterial_${materialIndex}_components`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                  <div style={{ width: '180px', height: '44px' }}>
+                    <SearchableDropdown
+                      value={material.components || ''}
+                      onChange={(selectedValue) =>
+                        handleArtworkMaterialChange(materialIndex, 'components', selectedValue || '')
                       }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
-                    }}
-                    placeholder="e.g., COMFORTER"
-                    required
-                  />
+                      options={getComponentOptions()}
+                      placeholder="Select or type component"
+                      strictMode={false}
+                      className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
+                        errors[`artworkMaterial_${materialIndex}_components`]
+                          ? 'border-red-600'
+                          : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
+                      }`}
+                      style={{ padding: '10px 14px', height: '44px' }}
+                    />
+                  </div>
                   {errors[`artworkMaterial_${materialIndex}_components`] && (
                     <span className="text-red-600 text-xs mt-1 font-medium">
                       {errors[`artworkMaterial_${materialIndex}_components`]}
@@ -350,7 +359,7 @@ const Step4 = ({
                   <SearchableDropdown
                     value={material.unit || ''}
                     onChange={(selectedValue) => handleArtworkMaterialChange(materialIndex, 'unit', selectedValue)}
-                    options={['R METERS', 'CM', 'Inches', 'Meter', 'KGS']}
+                    options={['KGS', 'CM']}
                     placeholder="Select or type Unit"
                     className={errors[`artworkMaterial_${materialIndex}_unit`] 
                       ? 'border-red-600' 
@@ -483,7 +492,7 @@ const Step4 = ({
                     <SearchableDropdown
                       value={material.sizeUnit || ''}
                       onChange={(selectedValue) => handleArtworkMaterialChange(materialIndex, 'sizeUnit', selectedValue)}
-                      options={['CMS', 'INCHES', 'MM', 'CM']}
+                      options={['KGS', 'CM']}
                       placeholder="Select or type Unit"
                       style={{ width: '130px' }}
                     />

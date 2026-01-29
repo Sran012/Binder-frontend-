@@ -154,7 +154,10 @@ const Step2 = ({
   removeWorkOrder,
   addRawMaterialWithType,
   handleSave,
-  removeRawMaterial
+  removeRawMaterial,
+  validateField,
+  validateStep2,
+  validateComponentMaterials
 }) => {
   const prevWorkOrdersLengthRef = useRef({});
   const isInitialMountRef = useRef(true);
@@ -163,6 +166,7 @@ const Step2 = ({
   const [savedComponents, setSavedComponents] = useState(new Set()); // Track which components are saved/done
   const [lastAddedMaterialIndex, setLastAddedMaterialIndex] = useState(null);
   const [scrollToMaterialIndex, setScrollToMaterialIndex] = useState(null); // Index to scroll to after removal
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'success' | 'error'
 
   // Get all components for dropdown with done status
   const getAllComponents = () => {
@@ -188,21 +192,62 @@ const Step2 = ({
     return formData.rawMaterials?.filter(m => m.componentName === selectedComponent) || [];
   };
 
+  // Reset save status when switching components
+  useEffect(() => {
+    setSaveStatus('idle');
+  }, [selectedComponent]);
+
+
   // Handle bottom SAVE button - marks component as done
   const handleBottomSave = () => {
     if (!selectedComponent) {
-      alert('Please select a component first');
       return;
     }
-    // Mark component as saved
-    setSavedComponents(prev => new Set([...prev, selectedComponent]));
-    // Save the data
-    handleSave(); // Call the parent save function
     
-    // Clear selected component to hide the form
-    setSelectedComponent('');
+    // Validate component materials - this will set errors in state
+    if (!validateComponentMaterials) {
+      return;
+    }
     
-    // Scroll to top smoothly
+    const result = validateComponentMaterials(selectedComponent);
+
+    if (!result || !result.isValid) {
+      setSaveStatus('error');
+      // Validation failed - errors are already set in state by validateComponentMaterials
+      // Scroll to first error
+      setTimeout(() => {
+        const firstErrorKey = Object.keys(result?.errors || {})[0];
+        if (firstErrorKey) {
+          const selectors = [
+            `[data-error-key="${firstErrorKey}"]`,
+            `[name="${firstErrorKey}"]`,
+            `#${firstErrorKey}`,
+          ];
+          
+          let errorElement = null;
+          for (const selector of selectors) {
+            errorElement = document.querySelector(selector);
+            if (errorElement) break;
+          }
+          
+          if (errorElement) {
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (errorElement.tagName === 'INPUT' || errorElement.tagName === 'SELECT' || errorElement.tagName === 'TEXTAREA') {
+              errorElement.focus();
+            }
+          }
+        }
+      }, 100);
+      return;
+    }
+
+    // Validation passed - save the component
+    setSaveStatus('success');
+    setSavedComponents((prev) => new Set([...prev, selectedComponent]));
+    if (handleSave) {
+      handleSave(selectedComponent);
+    }
+
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
@@ -319,7 +364,7 @@ const Step2 = ({
         <h2 className="text-2xl font-bold text-gray-900 mb-2">PART-2 RAW MATERIAL SOURCING</h2>
         <p className="text-sm text-gray-600">Bill of material & work order</p>
       </div>
-      
+
       {/* Component Selection - OUTSIDE form border */}
       <div style={{ marginBottom: '24px', padding: '20px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
         <div style={{ maxWidth: '300px' }}>
@@ -402,11 +447,21 @@ const Step2 = ({
                 }
               }
               
-              // Safety check: if still not found, log warning but continue
+              // Safety check: if still not found, use proper calculation
               if (actualIndex === -1) {
-                console.warn('Could not find material index:', material, 'in rawMaterials:', formData.rawMaterials);
-                // Use materialIndex as fallback (not ideal but prevents crashes)
-                actualIndex = materialIndex;
+                console.warn('Could not find material index, recalculating:', material);
+                // Don't use materialIndex as fallback - it's the filtered array index
+                // Instead, recalculate using the filtered list approach
+                const allMaterialsForComponent = formData.rawMaterials
+                  .map((m, idx) => ({ m, idx }))
+                  .filter(({ m }) => m.componentName === selectedComponent);
+                
+                if (materialIndex < allMaterialsForComponent.length) {
+                  actualIndex = allMaterialsForComponent[materialIndex].idx;
+                } else {
+                  console.error('Cannot find material index even after recalculation. Skipping render.');
+                  return null; // Skip rendering this material to prevent errors
+                }
               }
               
               // Use a more stable key that includes component and position
@@ -419,8 +474,10 @@ const Step2 = ({
                     <div className="flex items-center justify-between" style={{ marginBottom: '24px' }}>
                       <h4 className="text-sm font-bold text-gray-700">MATERIAL {materialNumber}</h4>
                       {materialsForComponent.length > 0 && (
-                        <button
+                        <Button
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => {
                             if (window.confirm('Are you sure you want to remove this material?')) {
                               // Store which material index to scroll to after removal
@@ -435,30 +492,20 @@ const Step2 = ({
                               removeRawMaterial(actualIndex);
                             }
                           }}
-                          className="border rounded-md cursor-pointer text-xs font-medium transition-all hover:-translate-x-0.5"
-                          style={{
-                            backgroundColor: '#f3f4f6',
-                            borderColor: '#d1d5db',
-                            color: '#374151',
-                            padding: '4px 10px',
-                            height: '28px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#e5e7eb';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                          }}
+                          className="text-xs text-destructive hover:text-destructive"
                         >
                           Remove
-                        </button>
+                        </Button>
                       )}
               </div>
               
               {/* Material Details */}
               <div className="flex flex-wrap items-start gap-6">
-                <div className='flex flex-col'>
-                  <label className="text-sm font-semibold text-gray-700 mb-2">MATERIAL TYPE</label>
+                <Field
+                  label="MATERIAL TYPE"
+                  width="sm"
+                  error={errors[`rawMaterial_${actualIndex}_materialType`]}
+                >
                   <SearchableDropdown
                     value={material.materialType || ''}
                     onChange={(selectedMaterialType) => {
@@ -470,27 +517,9 @@ const Step2 = ({
                     }}
                     options={['Fabric', 'Yarn', 'Trim & Accessory', 'Foam', 'Fiber']}
                     placeholder="select material"
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`rawMaterial_${actualIndex}_materialType`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`rawMaterial_${actualIndex}_materialType`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                      }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
-                    }}
+                    className={errors[`rawMaterial_${actualIndex}_materialType`] ? 'border-destructive' : ''}
                   />
-                  {errors[`rawMaterial_${actualIndex}_materialType`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`rawMaterial_${actualIndex}_materialType`]}
-                    </span>
-                  )}
-                </div>
+                </Field>
 
                 {/* SUB-MATERIAL field - only show when materialType is Yarn */}
                 {material.materialType === "Yarn" && (
@@ -522,107 +551,72 @@ const Step2 = ({
                   </div>
                 )}
 
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                    MATERIAL DESC <span className="text-red-600">*</span>
-                  </label>
-                  <input
+                <Field
+                  label={
+                    <>
+                      MATERIAL DESC <span className="text-red-600">*</span>
+                    </>
+                  }
+                  width="sm"
+                  error={errors[`rawMaterial_${actualIndex}_materialDescription`]}
+                >
+                  <Input
                     type="text"
                     value={material.materialDescription}
-                    onChange={(e) => handleRawMaterialChange(actualIndex, 'materialDescription', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`rawMaterial_${actualIndex}_materialDescription`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`rawMaterial_${actualIndex}_materialDescription`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                      }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
+                    onChange={(e) => {
+                      handleRawMaterialChange(actualIndex, 'materialDescription', e.target.value);
                     }}
                     placeholder="e.g., Cotton 200TC"
                     required
                   />
-                  {errors[`rawMaterial_${actualIndex}_materialDescription`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`rawMaterial_${actualIndex}_materialDescription`]}
-                    </span>
-                  )}
-                </div>
+                </Field>
                 
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                    NET CNS/PC <span className="text-red-600">*</span>
-                  </label>
-                  <input
+                <Field
+                  label={
+                    <>
+                      NET CNS/PC <span className="text-red-600">*</span>
+                    </>
+                  }
+                  width="sm"
+                  error={errors[`rawMaterial_${actualIndex}_netConsumption`]}
+                >
+                  <Input
                     type="number"
                     step="0.001"
                     value={material.netConsumption}
-                    onChange={(e) => handleRawMaterialChange(actualIndex, 'netConsumption', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`rawMaterial_${actualIndex}_netConsumption`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '120px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`rawMaterial_${actualIndex}_netConsumption`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                    onChange={(e) => {
+                      handleRawMaterialChange(actualIndex, 'netConsumption', e.target.value);
+                      // Clear error when typing
+                      if (errors[`rawMaterial_${actualIndex}_netConsumption`] && e.target.value.trim()) {
+                        const newErrors = { ...errors };
+                        delete newErrors[`rawMaterial_${actualIndex}_netConsumption`];
                       }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
                     }}
                     placeholder="0.000"
                     required
                   />
-                  {errors[`rawMaterial_${actualIndex}_netConsumption`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`rawMaterial_${actualIndex}_netConsumption`]}
-                    </span>
-                  )}
-                </div>
+                </Field>
                 
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                    UNIT <span className="text-red-600">*</span>
-                  </label>
-                  <select
-                    value={material.unit}
-                    onChange={(e) => handleRawMaterialChange(actualIndex, 'unit', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                      errors[`rawMaterial_${actualIndex}_unit`] 
-                        ? 'border-red-600' 
-                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '130px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`rawMaterial_${actualIndex}_unit`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                      }
+                <Field
+                  label={
+                    <>
+                      UNIT <span className="text-red-600">*</span>
+                    </>
+                  }
+                  width="sm"
+                  error={errors[`rawMaterial_${actualIndex}_unit`]}
+                >
+                  <SearchableDropdown
+                    value={material.unit || ''}
+                    onChange={(selectedValue) => {
+                      handleRawMaterialChange(actualIndex, 'unit', selectedValue);
                     }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
-                    }}
+                    options={['KGS', 'CM']}
+                    placeholder="Select unit"
+                    className={errors[`rawMaterial_${actualIndex}_unit`] ? 'border-destructive' : ''}
                     required
-                  >
-                    <option value="">Select</option>
-                    <option value="R METERS">R METERS</option>
-                    <option value="CM">CM</option>
-                    <option value="Inches">Inches</option>
-                    <option value="Meter">Meter</option>
-                    <option value="KGS">KGS</option>
-                  </select>
-                  {errors[`rawMaterial_${actualIndex}_unit`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`rawMaterial_${actualIndex}_unit`]}
-                    </span>
-                  )}
-                </div>
+                  />
+                </Field>
               </div>
               
               {/* Stitching Thread Section - only show when subMaterial is "Stitching Thread" */}
@@ -2178,380 +2172,183 @@ const Step2 = ({
 
 {/* pe-epe Table */}
 {material.foamTableType === 'pe-epe' && (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
     {/* FOAM TYPE */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">FOAM TYPE</label>
+    <Field label="FOAM TYPE" width="sm">
       <SearchableDropdown
         value={material.foamPeEpeType || ''}
         onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeType', selectedValue)}
         options={['PE Foam', 'EPE Foam (Expanded Polyethylene)']}
         placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
       />
-    </div>
+    </Field>
 
     {/* SUBTYPE */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">SUBTYPE</label>
+    <Field label="SUBTYPE" width="sm">
       <SearchableDropdown
         value={material.foamPeEpeSubtype || ''}
         onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeSubtype', selectedValue)}
         options={['Virgin PE', 'Recycled PE', 'Cross-Linked PE (XLPE)']}
         placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
       />
-    </div>
+    </Field>
 
     {/* COLOUR */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">COLOUR</label>
+    <Field label="COLOUR" width="sm">
       <SearchableDropdown
         value={material.foamPeEpeColour || ''}
         onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeColour', selectedValue)}
         options={['White (standard)', 'Black', 'Pink (anti-static)', 'Blue', 'Custom']}
         placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
       />
-    </div>
+    </Field>
 
     {/* THICKNESS */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">THICKNESS</label>
-      <input
+    <Field label="THICKNESS" width="sm">
+      <Input
         type="text"
         value={material.foamPeEpeThickness || ''}
         onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeThickness', e.target.value)}
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
         placeholder="MM (e.g., 0.5mm, 1mm, 2mm, 3mm, 5mm, 10mm, 20mm, 50mm)"
       />
-    </div>
+    </Field>
 
-    {/* SHAPE with UPLOAD REF IMAGE */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-      <div className="flex flex-col flex-1">
-        <label className="text-sm font-semibold text-gray-700 mb-2">SHAPE</label>
-        <input
-          type="text"
-          value={material.foamPeEpeShape || ''}
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeShape', e.target.value)}
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 14px', height: '44px' }}
-          placeholder="TEXT"
-        />
-      </div>
-      <div className="flex flex-col">
-        <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-        <input
-          type="file"
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeShapeRefImage', e.target.files[0])}
-          className="hidden"
-          id={`upload-pe-epe-foam-shape-${actualIndex}`}
-          accept="image/*"
-        />
-        <label
-          htmlFor={`upload-pe-epe-foam-shape-${actualIndex}`}
-          className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-          style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px' }}
-        >
-          {material.foamPeEpeShapeRefImage ? 'UPLOADED' : 'UPLOAD REF IMAGE'}
-        </label>
-      </div>
-    </div>
+    {/* SHAPE */}
+    <Field label="SHAPE" width="sm">
+      <Input
+        type="text"
+        value={material.foamPeEpeShape || ''}
+        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeShape', e.target.value)}
+        placeholder="TEXT"
+      />
+    </Field>
+
+    {/* UPLOAD REF IMAGE */}
+    <Field label="UPLOAD REF IMAGE" width="sm">
+      <input
+        type="file"
+        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeShapeRefImage', e.target.files[0])}
+        className="hidden"
+        id={`upload-pe-epe-foam-shape-${actualIndex}`}
+        accept="image/*"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-11 w-full"
+        onClick={() => document.getElementById(`upload-pe-epe-foam-shape-${actualIndex}`)?.click()}
+      >
+        {material.foamPeEpeShapeRefImage ? 'UPLOADED' : 'UPLOAD REF IMAGE'}
+      </Button>
+    </Field>
 
     {/* SIZE SPEC */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4" style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
-      <label className="text-sm font-bold text-gray-800 mb-4 block">SIZE SPEC</label>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">SHEET/PCS</label>
-          <input
+    <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+      <h4 className="text-sm font-semibold text-foreground/90 mb-4">SIZE SPEC</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+        <Field label="SHEET/PCS" width="sm">
+          <Input
             type="text"
             value={material.foamPeEpeSheetPcs || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeSheetPcs', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-          <input
+        </Field>
+        <Field label="GSM" width="sm">
+          <Input
             type="text"
             value={material.foamPeEpeGsm || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeGsm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">LENGTH (CM)</label>
-          <input
+        </Field>
+        <Field label="LENGTH (CM)" width="sm">
+          <Input
             type="text"
             value={material.foamPeEpeLengthCm || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeLengthCm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">WIDTH (CM)</label>
-          <input
+        </Field>
+        <Field label="WIDTH (CM)" width="sm">
+          <Input
             type="text"
             value={material.foamPeEpeWidthCm || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeWidthCm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
+        </Field>
       </div>
     </div>
 
     {/* QTY - KGS and YARDAGE */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4" style={{ marginTop: '20px' }}>
-      <label className="text-sm font-bold text-gray-800 mb-4 block">QTY</label>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">KGS (CNS)</label>
-          <input
+    <div style={{ marginTop: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+      <h4 className="text-sm font-semibold text-foreground/90 mb-4">QTY</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+        <Field label="KGS (CNS)" width="sm">
+          <Input
             type="text"
             value={material.foamPeEpeKgsCns || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeKgsCns', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">YARDAGE (CNS)</label>
-          <input
+        </Field>
+        <Field label="YARDAGE (CNS)" width="sm">
+          <Input
             type="text"
             value={material.foamPeEpeYardageCns || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeYardageCns', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
+        </Field>
       </div>
     </div>
 
-    {/* TESTING REQUIREMENTS - Multi-select with chips (FIXED VERSION) */}
-    <div className="flex flex-col col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
-      <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-      <div style={{ position: 'relative' }}>
-        <div
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
-          style={{ 
-            padding: '8px 12px',
-            minHeight: '44px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            alignItems: 'center',
-            cursor: 'text'
-          }}
-        >
-          {/* Selected chips */}
-          {(Array.isArray(material.foamPeEpeTestingRequirements) ? material.foamPeEpeTestingRequirements : []).map((req, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
-              style={{
-                backgroundColor: '#e0e7ff',
-                color: '#4338ca',
-                border: '1px solid #c7d2fe'
-              }}
-            >
-              {req}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const current = Array.isArray(material.foamPeEpeTestingRequirements) ? material.foamPeEpeTestingRequirements : [];
-                  const updated = current.filter((_, i) => i !== index);
-                  handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirements', updated);
-                }}
-                style={{
-                  marginLeft: '4px',
-                  cursor: 'pointer',
-                  background: 'none',
-                  border: 'none',
-                  color: '#4338ca',
-                  fontWeight: 'bold',
-                  fontSize: '14px',
-                  lineHeight: '1',
-                  padding: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '16px',
-                  height: '16px'
-                }}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          
-      
-          {/* Dropdown for selecting new options */}
-          <div 
-            id={`pe-epe-testing-wrapper-${actualIndex}`}
-            style={{ flex: 1, minWidth: '200px' }}
-          >
-            <SearchableDropdown
-              value=""
-              strictMode={false}
-              onChange={(selectedValue) => {
-                // Only add if it's an exact match from options (meaning it was selected from dropdown)
-                const options = ['Density', 'Compression', 'Water Absorption', 'Thermal Conductivity'];
-                if (selectedValue && options.includes(selectedValue)) {
-                  // It's a selection from dropdown, add it
-                  const current = Array.isArray(material.foamPeEpeTestingRequirements) ? material.foamPeEpeTestingRequirements : [];
-                  if (!current.includes(selectedValue)) {
-                    const updated = [...current, selectedValue];
-                    handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirements', updated);
-                  }
-                }
-                // If it's not in options, it's typing - ignore it (will be added on Enter/blur)
-              }}
+    {/* TESTING / SURPLUS / WASTAGE / APPROVAL / REMARKS */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 col-span-1 md:col-span-2 lg:col-span-5" style={{ gap: '16px 12px', marginTop: '1.25rem' }}>
+      {/* TESTING REQ. */}
+      <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+        <div className="flex items-center" style={{ gap: '0.75rem' }}>
+          <div className="flex-1">
+            <TestingRequirementsInput
+              value={material.foamPeEpeTestingRequirements || []}
+              onChange={(values) => handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirements', values)}
               options={['Density', 'Compression', 'Water Absorption', 'Thermal Conductivity']}
-              placeholder={(Array.isArray(material.foamPeEpeTestingRequirements) && material.foamPeEpeTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
-              className="border-0 outline-none"
-              style={{ 
-                padding: '4px 0', 
-                height: 'auto', 
-                minHeight: '32px',
-                backgroundColor: 'transparent', 
-                boxShadow: 'none',
-                border: 'none',
-                borderWidth: '0',
-                outline: 'none'
-              }}
-              onFocus={(e) => {
-                const input = e.target;
-                input.style.border = 'none';
-                input.style.borderWidth = '0';
-                input.style.outline = 'none';
-                input.style.boxShadow = 'none';
-                const container = input.closest('[class*="border-2"]');
-                if (container) {
-                  container.style.borderColor = '#667eea';
-                  container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                }
-                // Add keydown listener to the input when it gets focus
-                const handleKeyDown = (keyEvent) => {
-                  if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
-                    keyEvent.preventDefault();
-                    keyEvent.stopPropagation();
-                    const newValue = input.value.trim();
-                    const current = Array.isArray(material.foamPeEpeTestingRequirements) ? material.foamPeEpeTestingRequirements : [];
-                    const options = ['Density', 'Compression', 'Water Absorption', 'Thermal Conductivity'];
-                    // Add if it's not already in the list
-                    if (!current.includes(newValue)) {
-                      // If it's custom text (not in options), add it
-                      if (!options.includes(newValue)) {
-                        const updated = [...current, newValue];
-                        handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirements', updated);
-                      }
-                      // Clear the input
-                      input.value = '';
-                      input.blur();
-                    }
-                  }
-                };
-                input.addEventListener('keydown', handleKeyDown);
-                // Store the handler so we can remove it later
-                input._enterHandler = handleKeyDown;
-              }}
-              onBlur={(e) => {
-                const input = e.target;
-                // Remove the keydown listener
-                if (input._enterHandler) {
-                  input.removeEventListener('keydown', input._enterHandler);
-                  input._enterHandler = null;
-                }
-                input.style.border = 'none';
-                input.style.borderWidth = '0';
-                input.style.outline = 'none';
-                input.style.boxShadow = 'none';
-                const container = input.closest('[class*="border-2"]');
-                if (container) {
-                  container.style.borderColor = '#e5e7eb';
-                  container.style.boxShadow = 'none';
-                }
-                // On blur, if there's a typed value that's not in options, add it as custom text
-                if (input.value && input.value.trim()) {
-                  const typedValue = input.value.trim();
-                  const options = ['Density', 'Compression', 'Water Absorption', 'Thermal Conductivity'];
-                  // Only add if it's custom text (not in options)
-                  if (!options.includes(typedValue)) {
-                    const current = Array.isArray(material.foamPeEpeTestingRequirements) ? material.foamPeEpeTestingRequirements : [];
-                    if (!current.includes(typedValue)) {
-                      const updated = [...current, typedValue];
-                      handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirements', updated);
-                    }
-                  }
-                  // Clear the input
-                  input.value = '';
-                }
-              }}
+              placeholder="Type to search or select testing requirements..."
             />
           </div>
+          <input
+            type="file"
+            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirementsFile', e.target.files[0])}
+            className="hidden"
+            id={`upload-pe-epe-testing-${actualIndex}`}
+            accept="image/*"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-11"
+            onClick={() => document.getElementById(`upload-pe-epe-testing-${actualIndex}`)?.click()}
+          >
+            {material.foamPeEpeTestingRequirementsFile ? 'UPLOADED' : 'UPLOAD'}
+          </Button>
         </div>
-      </div>
-      {/* UPLOAD button for testing requirements */}
-      <div className="flex flex-col" style={{ marginTop: '12px' }}>
-        <input
-          type="file"
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirementsFile', e.target.files[0])}
-          className="hidden"
-          id={`upload-pe-epe-testing-${actualIndex}`}
-          accept="image/*"
-        />
-        <label
-          htmlFor={`upload-pe-epe-testing-${actualIndex}`}
-          className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-          style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
-        >
-          {material.foamPeEpeTestingRequirementsFile ? 'UPLOADED' : 'UPLOAD'}
-        </label>
-      </div>
-    </div>
+      </Field>
 
     {/* SURPLUS % */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <input
-          type="text"
-          value={material.foamPeEpeSurplus || ''}
-          onChange={(e) => {
-            const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-            handleRawMaterialChange(actualIndex, 'foamPeEpeSurplus', numericValue);
-          }}
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
-          placeholder="%age (e.g., 5-10%)"
-        />
-        {material.foamPeEpeSurplus && (
-          <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-        )}
-      </div>
-    </div>
+    <Field label="SURPLUS %" width="sm">
+      <PercentInput
+        value={material.foamPeEpeSurplus || ''}
+        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeSurplus', e.target.value)}
+        placeholder="e.g., 3-5"
+      />
+    </Field>
 
     {/* WASTAGE % */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+    <Field label="WASTAGE %" width="sm">
+      <div className="relative">
         <SearchableDropdown
           value={material.foamPeEpeWastage || ''}
           onChange={(selectedValue) => {
@@ -2564,191 +2361,141 @@ const Step2 = ({
             }
           }}
           options={['Packaging', 'Insulation', 'Protective Wrap', 'Underlayment']}
-          placeholder="Select or type"
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
+          placeholder="Select or type %"
+          className={
+            material.foamPeEpeWastage &&
+            !['Packaging', 'Insulation', 'Protective Wrap', 'Underlayment'].includes(material.foamPeEpeWastage)
+              ? 'pr-10'
+              : ''
+          }
         />
-        {material.foamPeEpeWastage && !['Packaging', 'Insulation', 'Protective Wrap', 'Underlayment'].includes(material.foamPeEpeWastage) && (
-          <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
-        )}
+        {material.foamPeEpeWastage &&
+          !['Packaging', 'Insulation', 'Protective Wrap', 'Underlayment'].includes(material.foamPeEpeWastage) && (
+            <span style={{ position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
+          )}
       </div>
+    </Field>
+
+      {/* APPROVAL */}
+      <Field label="APPROVAL" width="sm">
+        <SearchableDropdown
+          value={material.foamPeEpeApproval || ''}
+          onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeApproval', selectedValue)}
+          options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+          placeholder="Select or type"
+        />
+      </Field>
+
+      {/* REMARKS */}
+      <Field label="REMARKS" width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+        <Input
+          type="text"
+          value={material.foamPeEpeRemarks || ''}
+          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeRemarks', e.target.value)}
+          placeholder="Typically closed-cell, lightweight, flexible. Applications: packaging, insulation."
+        />
+      </Field>
     </div>
 
-    {/* APPROVAL */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-      <SearchableDropdown
-        value={material.foamPeEpeApproval || ''}
-        onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeApproval', selectedValue)}
-        options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
-        placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-      />
-    </div>
-
-    {/* REMARKS */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-      <textarea
-        value={material.foamPeEpeRemarks || ''}
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeRemarks', e.target.value)}
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', minHeight: '44px' }}
-        rows="1"
-        placeholder="Pink-anti-static for electronics, XLPE for heavy-duty, Good for cold chain packaging"
-      />
-    </div>
-
-    {/* PE-EPE FOAM - Advance Spec Button and Fields */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full" style={{ marginTop: '20px' }}>
-      <button
+    {/* Advance Spec Button */}
+    <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+      <Button
         type="button"
+        variant={material.showFoamPeEpeAdvancedSpec ? "default" : "outline"}
+        size="sm"
         onClick={() => handleRawMaterialChange(actualIndex, 'showFoamPeEpeAdvancedSpec', !material.showFoamPeEpeAdvancedSpec)}
-        style={{
-          backgroundColor: material.showFoamPeEpeAdvancedSpec ? '#667eea' : '#ffffff',
-          borderColor: material.showFoamPeEpeAdvancedSpec ? '#667eea' : '#e5e7eb',
-          color: material.showFoamPeEpeAdvancedSpec ? '#ffffff' : '#374151',
-          border: '2px solid',
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          width: '100%',
-          transition: 'all 0.2s',
-          boxShadow: material.showFoamPeEpeAdvancedSpec ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none'
-        }}
-        onMouseEnter={(e) => {
-          if (!material.showFoamPeEpeAdvancedSpec) {
-            e.target.style.backgroundColor = '#f9fafb';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!material.showFoamPeEpeAdvancedSpec) {
-            e.target.style.backgroundColor = '#ffffff';
-          }
-        }}
       >
-        {material.showFoamPeEpeAdvancedSpec ? '▼ ADVANCE SPEC' : '▶ ADVANCE SPEC'}
-      </button>
-      {material.showFoamPeEpeAdvancedSpec && (
-        <div style={{ marginTop: '20px', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">CELL STRUCTURE</label>
-              <SearchableDropdown
-                value={material.foamPeEpeCellStructure || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeCellStructure', selectedValue)}
-                options={['Closed Cell (standard for PE foam)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">LAMINATION</label>
-              <SearchableDropdown
-                value={material.foamPeEpeLamination || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeLamination', selectedValue)}
-                options={['None', 'PE Film Laminated', 'Foil Laminated', 'Fabric Laminated']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">CROSS-LINKED</label>
-              <SearchableDropdown
-                value={material.foamPeEpeCrossLinked || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeCrossLinked', selectedValue)}
-                options={['Non Cross-Linked (standard EPE)', 'Cross-Linked (XLPE - denser, stronger)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">ANTI-STATIC</label>
-              <SearchableDropdown
-                value={material.foamPeEpeAntiStatic || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeAntiStatic', selectedValue)}
-                options={['Standard', 'Anti-Static (Pink ESD foam)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">WATER RESISTANCE</label>
-              <SearchableDropdown
-                value={material.foamPeEpeWaterResistance || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeWaterResistance', selectedValue)}
-                options={['Excellent (closed cell)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">CUSHIONING</label>
-              <SearchableDropdown
-                value={material.foamPeEpeCushioning || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeCushioning', selectedValue)}
-                options={['Good shock absorption', 'Low compression set']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">FIRE RETARDANT</label>
-              <SearchableDropdown
-                value={material.foamPeEpeFireRetardant || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeFireRetardant', selectedValue)}
-                options={['Standard', 'FR Treated (HF-1, UL94)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">THERMAL INSULATION</label>
-              <SearchableDropdown
-                value={material.foamPeEpeThermalInsulation || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeThermalInsulation', selectedValue)}
-                options={['Good thermal insulation (R-value)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">CERTIFICATION</label>
-              <SearchableDropdown
-                value={material.foamPeEpeCertification || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeCertification', selectedValue)}
-                options={['REACH Compliant', 'RoHS Compliant', 'OEKO-TEX']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">DENSITY</label>
-              <SearchableDropdown
-                value={material.foamPeEpeDensity || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeDensity', selectedValue)}
-                options={['18 kg/m³', '20 kg/m³', '25 kg/m³', '30 kg/m³', '35 kg/m³', '45 kg/m³']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+        Advance Spec
+      </Button>
     </div>
+
+    {/* Advanced Filter UI Table */}
+    {material.showFoamPeEpeAdvancedSpec && (
+      <div style={{ marginTop: '1.5rem', padding: '1.5rem', backgroundColor: 'var(--muted)', borderRadius: '0.75rem', border: '1px solid var(--border)' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+          <Field label="CELL STRUCTURE" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeCellStructure || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeCellStructure', selectedValue)}
+              options={['Closed Cell (standard for PE foam)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="LAMINATION" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeLamination || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeLamination', selectedValue)}
+              options={['None', 'PE Film Laminated', 'Foil Laminated', 'Fabric Laminated']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="CROSS-LINKED" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeCrossLinked || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeCrossLinked', selectedValue)}
+              options={['Non Cross-Linked (standard EPE)', 'Cross-Linked (XLPE - denser, stronger)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="ANTI-STATIC" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeAntiStatic || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeAntiStatic', selectedValue)}
+              options={['Standard', 'Anti-Static (Pink ESD foam)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="WATER RESISTANCE" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeWaterResistance || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeWaterResistance', selectedValue)}
+              options={['Excellent (closed cell)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="CUSHIONING" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeCushioning || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeCushioning', selectedValue)}
+              options={['Good shock absorption', 'Low compression set']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="FIRE RETARDANT" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeFireRetardant || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeFireRetardant', selectedValue)}
+              options={['Standard', 'FR Treated (HF-1, UL94)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="THERMAL INSULATION" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeThermalInsulation || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeThermalInsulation', selectedValue)}
+              options={['Good thermal insulation (R-value)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="CERTIFICATION" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeCertification || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeCertification', selectedValue)}
+              options={['REACH Compliant', 'RoHS Compliant', 'OEKO-TEX']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="DENSITY" width="sm">
+            <SearchableDropdown
+              value={material.foamPeEpeDensity || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamPeEpeDensity', selectedValue)}
+              options={['18 kg/m³', '20 kg/m³', '25 kg/m³', '30 kg/m³', '35 kg/m³', '45 kg/m³']}
+              placeholder="Select or type"
+            />
+          </Field>
+        </div>
+      </div>
+    )}
   </div>
 )}
 
@@ -3527,7 +3274,10 @@ const Step2 = ({
     </Field>
 
     {/* SIZE SPEC */}
-    <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
+    <div
+      style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}
+      className="col-span-1 md:col-span-2 lg:col-span-5"
+    >
       <h4 className="text-sm font-semibold text-foreground/90 mb-4">SIZE SPEC</h4>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
         <Field label="SHEET/PCS" width="sm">
@@ -3566,7 +3316,7 @@ const Step2 = ({
     </div>
 
     {/* QTY - KGS and YARDAGE */}
-    <div style={{ marginTop: '1.25rem' }}>
+    <div style={{ marginTop: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
       <h4 className="text-sm font-semibold text-foreground/90 mb-4">QTY</h4>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
         <Field label="KGS (CNS)" width="sm">
@@ -3588,388 +3338,210 @@ const Step2 = ({
       </div>
     </div>
 
-    {/* TESTING REQUIREMENTS - Multi-select with chips (SAME AS REBONDED-FOAM) */}
-    <div className="flex flex-col col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
-      <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-      <div style={{ position: 'relative' }}>
-        <div
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
-          style={{ 
-            padding: '8px 12px',
-            minHeight: '44px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            alignItems: 'center',
-            cursor: 'text'
-          }}
-        >
-          {/* Selected chips */}
-          {(Array.isArray(material.foamGelInfusedTestingRequirements) ? material.foamGelInfusedTestingRequirements : []).map((req, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
-              style={{
-                backgroundColor: '#e0e7ff',
-                color: '#4338ca',
-                border: '1px solid #c7d2fe'
-              }}
-            >
-              {req}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const current = Array.isArray(material.foamGelInfusedTestingRequirements) ? material.foamGelInfusedTestingRequirements : [];
-                  const updated = current.filter((_, i) => i !== index);
-                  handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirements', updated);
-                }}
-                style={{
-                  marginLeft: '4px',
-                  cursor: 'pointer',
-                  background: 'none',
-                  border: 'none',
-                  color: '#4338ca',
-                  fontWeight: 'bold',
-                  fontSize: '14px',
-                  lineHeight: '1',
-                  padding: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '16px',
-                  height: '16px'
-                }}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          {/* Dropdown for selecting new options */}
-          <div 
-            id={`gel-infused-foam-testing-wrapper-${actualIndex}`}
-            style={{ flex: 1, minWidth: '200px' }}
-          >
-            <SearchableDropdown
-              value=""
-              strictMode={false}
-              onChange={(selectedValue) => {
-                // Only add if it's an exact match from options (meaning it was selected from dropdown)
-                const options = ['Density', 'ILD', 'Temperature Differential Test', 'Compression Set'];
-                if (selectedValue && options.includes(selectedValue)) {
-                  // It's a selection from dropdown, add it
-                  const current = Array.isArray(material.foamGelInfusedTestingRequirements) ? material.foamGelInfusedTestingRequirements : [];
-                  if (!current.includes(selectedValue)) {
-                    const updated = [...current, selectedValue];
-                    handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirements', updated);
-                  }
-                }
-                // If it's not in options, it's typing - ignore it (will be added on Enter/blur)
-              }}
+    {/* TESTING / SURPLUS / WASTAGE / APPROVAL / REMARKS */}
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 col-span-1 md:col-span-2 lg:col-span-5"
+      style={{ gap: '16px 12px', marginTop: '1.25rem' }}
+    >
+      {/* TESTING REQ. */}
+      <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+        <div className="flex items-center" style={{ gap: '0.75rem' }}>
+          <div className="flex-1">
+            <TestingRequirementsInput
+              value={material.foamGelInfusedTestingRequirements || []}
+              onChange={(values) => handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirements', values)}
               options={['Density', 'ILD', 'Temperature Differential Test', 'Compression Set']}
-              placeholder={(Array.isArray(material.foamGelInfusedTestingRequirements) && material.foamGelInfusedTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
-              className="border-0 outline-none"
-              style={{ 
-                padding: '4px 0', 
-                height: 'auto', 
-                minHeight: '32px',
-                backgroundColor: 'transparent', 
-                boxShadow: 'none',
-                border: 'none',
-                borderWidth: '0',
-                outline: 'none'
-              }}
-              onFocus={(e) => {
-                const input = e.target;
-                input.style.border = 'none';
-                input.style.borderWidth = '0';
-                input.style.outline = 'none';
-                input.style.boxShadow = 'none';
-                const container = input.closest('[class*="border-2"]');
-                if (container) {
-                  container.style.borderColor = '#667eea';
-                  container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                }
-                // Add keydown listener to the input when it gets focus
-                const handleKeyDown = (keyEvent) => {
-                  if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
-                    keyEvent.preventDefault();
-                    keyEvent.stopPropagation();
-                    const newValue = input.value.trim();
-                    const current = Array.isArray(material.foamGelInfusedTestingRequirements) ? material.foamGelInfusedTestingRequirements : [];
-                    const options = ['Density', 'ILD', 'Temperature Differential Test', 'Compression Set'];
-                    // Add if it's not already in the list
-                    if (!current.includes(newValue)) {
-                      // If it's custom text (not in options), add it
-                      if (!options.includes(newValue)) {
-                        const updated = [...current, newValue];
-                        handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirements', updated);
-                      }
-                      // Clear the input
-                      input.value = '';
-                      input.blur();
-                    }
-                  }
-                };
-                input.addEventListener('keydown', handleKeyDown);
-                // Store the handler so we can remove it later
-                input._enterHandler = handleKeyDown;
-              }}
-              onBlur={(e) => {
-                const input = e.target;
-                // Remove the keydown listener
-                if (input._enterHandler) {
-                  input.removeEventListener('keydown', input._enterHandler);
-                  input._enterHandler = null;
-                }
-                input.style.border = 'none';
-                input.style.borderWidth = '0';
-                input.style.outline = 'none';
-                input.style.boxShadow = 'none';
-                const container = input.closest('[class*="border-2"]');
-                if (container) {
-                  container.style.borderColor = '#e5e7eb';
-                  container.style.boxShadow = 'none';
-                }
-                // On blur, if there's a typed value that's not in options, add it as custom text
-                if (input.value && input.value.trim()) {
-                  const typedValue = input.value.trim();
-                  const options = ['Density', 'ILD', 'Temperature Differential Test', 'Compression Set'];
-                  // Only add if it's custom text (not in options)
-                  if (!options.includes(typedValue)) {
-                    const current = Array.isArray(material.foamGelInfusedTestingRequirements) ? material.foamGelInfusedTestingRequirements : [];
-                    if (!current.includes(typedValue)) {
-                      const updated = [...current, typedValue];
-                      handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirements', updated);
-                    }
-                  }
-                  // Clear the input
-                  input.value = '';
-                }
-              }}
+              placeholder="Type to search or select testing requirements..."
             />
           </div>
+          <input
+            type="file"
+            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirementsFile', e.target.files[0])}
+            className="hidden"
+            id={`upload-gel-infused-testing-${actualIndex}`}
+            accept="image/*"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-11"
+            onClick={() => document.getElementById(`upload-gel-infused-testing-${actualIndex}`)?.click()}
+          >
+            {material.foamGelInfusedTestingRequirementsFile ? 'UPLOADED' : 'UPLOAD'}
+          </Button>
         </div>
-      </div>
-      {/* UPLOAD button for testing requirements */}
-      <div className="flex flex-col" style={{ marginTop: '12px' }}>
-        <input
-          type="file"
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirementsFile', e.target.files[0])}
-          className="hidden"
-          id={`upload-gel-infused-foam-testing-${actualIndex}`}
-          accept="image/*"
-        />
-        <label
-          htmlFor={`upload-gel-infused-foam-testing-${actualIndex}`}
-          className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-          style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
-        >
-          {material.foamGelInfusedTestingRequirementsFile ? 'UPLOADED' : 'UPLOAD'}
-        </label>
-      </div>
-    </div>
+      </Field>
 
-    {/* SURPLUS % */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <input
-          type="text"
+      {/* SURPLUS % */}
+      <Field label="SURPLUS %" width="sm">
+        <PercentInput
           value={material.foamGelInfusedSurplus || ''}
-          onChange={(e) => {
-            const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-            handleRawMaterialChange(actualIndex, 'foamGelInfusedSurplus', numericValue);
-          }}
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
-          placeholder="%age (e.g., 3-5%)"
+          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamGelInfusedSurplus', e.target.value)}
+          placeholder="e.g., 3-5"
         />
-        {material.foamGelInfusedSurplus && (
-          <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-        )}
-      </div>
-    </div>
+      </Field>
 
-    {/* WASTAGE % */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <SearchableDropdown
-          value={material.foamGelInfusedWastage || ''}
-          onChange={(selectedValue) => {
-            const predefinedOptions = ['Cooling Mattress Topper', 'Premium Pillows', 'Hot Sleeper Products'];
-            if (predefinedOptions.includes(selectedValue)) {
-              handleRawMaterialChange(actualIndex, 'foamGelInfusedWastage', selectedValue);
-            } else {
-              const numericValue = selectedValue.replace(/[^0-9.]/g, '');
-              handleRawMaterialChange(actualIndex, 'foamGelInfusedWastage', numericValue);
+      {/* WASTAGE % */}
+      <Field label="WASTAGE %" width="sm">
+        <div className="relative">
+          <SearchableDropdown
+            value={material.foamGelInfusedWastage || ''}
+            onChange={(selectedValue) => {
+              const predefinedOptions = ['Cooling Mattress Topper', 'Premium Pillows', 'Hot Sleeper Products'];
+              if (predefinedOptions.includes(selectedValue)) {
+                handleRawMaterialChange(actualIndex, 'foamGelInfusedWastage', selectedValue);
+              } else {
+                const numericValue = selectedValue.replace(/[^0-9.]/g, '');
+                handleRawMaterialChange(actualIndex, 'foamGelInfusedWastage', numericValue);
+              }
+            }}
+            options={['Cooling Mattress Topper', 'Premium Pillows', 'Hot Sleeper Products']}
+            placeholder="Select or type %"
+            className={
+              material.foamGelInfusedWastage &&
+              !['Cooling Mattress Topper', 'Premium Pillows', 'Hot Sleeper Products'].includes(material.foamGelInfusedWastage)
+                ? 'pr-10'
+                : ''
             }
-          }}
-          options={['Cooling Mattress Topper', 'Premium Pillows', 'Hot Sleeper Products']}
-          placeholder="Select or type"
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
-        />
-        {material.foamGelInfusedWastage && !['Cooling Mattress Topper', 'Premium Pillows', 'Hot Sleeper Products'].includes(material.foamGelInfusedWastage) && (
-          <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
-        )}
-      </div>
-    </div>
-
-    {/* APPROVAL */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-      <SearchableDropdown
-        value={material.foamGelInfusedApproval || ''}
-        onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedApproval', selectedValue)}
-        options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
-        placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-      />
-    </div>
-
-    {/* REMARKS */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-      <textarea
-        value={material.foamGelInfusedRemarks || ''}
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamGelInfusedRemarks', e.target.value)}
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', minHeight: '44px' }}
-        rows="1"
-        placeholder="Gel memory foam for hot sleepers, PCM for active temperature regulation"
-      />
-    </div>
-
-    {/* GEL INFUSED FOAM - Advance Spec Button and Fields */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full" style={{ marginTop: '20px' }}>
-      <button
-        type="button"
-        onClick={() => handleRawMaterialChange(actualIndex, 'showFoamGelInfusedAdvancedSpec', !material.showFoamGelInfusedAdvancedSpec)}
-        style={{
-          backgroundColor: material.showFoamGelInfusedAdvancedSpec ? '#667eea' : '#ffffff',
-          borderColor: material.showFoamGelInfusedAdvancedSpec ? '#667eea' : '#e5e7eb',
-          color: material.showFoamGelInfusedAdvancedSpec ? '#ffffff' : '#374151',
-          border: '2px solid',
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          width: '100%',
-          transition: 'all 0.2s',
-          boxShadow: material.showFoamGelInfusedAdvancedSpec ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none'
-        }}
-        onMouseEnter={(e) => {
-          if (!material.showFoamGelInfusedAdvancedSpec) {
-            e.target.style.backgroundColor = '#f9fafb';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!material.showFoamGelInfusedAdvancedSpec) {
-            e.target.style.backgroundColor = '#ffffff';
-          }
-        }}
-      >
-        {material.showFoamGelInfusedAdvancedSpec ? '▼ ADVANCE SPEC' : '▶ ADVANCE SPEC'}
-      </button>
-      {material.showFoamGelInfusedAdvancedSpec && (
-        <div style={{ marginTop: '20px', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">DENSITY</label>
-              <SearchableDropdown
-                value={material.foamGelInfusedDensity || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedDensity', selectedValue)}
-                options={['50 kg/m³', '60 kg/m³', '70 kg/m³', 'Base foam density + gel']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">ILD / IFD (Firmness)</label>
-              <SearchableDropdown
-                value={material.foamGelInfusedIld || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedIld', selectedValue)}
-                options={['ILD rating based on base foam']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">TEMPERATURE REGULATION</label>
-              <SearchableDropdown
-                value={material.foamGelInfusedTemperatureRegulation || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedTemperatureRegulation', selectedValue)}
-                options={['Absorbs and dissipates body heat']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">RESPONSE TIME</label>
-              <SearchableDropdown
-                value={material.foamGelInfusedResponseTime || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedResponseTime', selectedValue)}
-                options={['If memory foam base - response time specification']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">BREATHABILITY</label>
-              <SearchableDropdown
-                value={material.foamGelInfusedBreathability || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedBreathability', selectedValue)}
-                options={['Standard', 'Enhanced (ventilated)', 'Open Cell']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">FIRE RETARDANT</label>
-              <SearchableDropdown
-                value={material.foamGelInfusedFireRetardant || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedFireRetardant', selectedValue)}
-                options={['FR Treated (CFR 1633, TB 117)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">COOLING EFFECT</label>
-              <SearchableDropdown
-                value={material.foamGelInfusedCoolingEffect || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedCoolingEffect', selectedValue)}
-                options={['Standard Cooling', 'Advanced Cooling', 'Phase Change (PCM)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">CERTIFICATION</label>
-              <SearchableDropdown
-                value={material.foamGelInfusedCertification || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedCertification', selectedValue)}
-                options={['CertiPUR-US', 'OEKO-TEX', 'Greenguard']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-          </div>
+          />
+          {material.foamGelInfusedWastage &&
+            !['Cooling Mattress Topper', 'Premium Pillows', 'Hot Sleeper Products'].includes(material.foamGelInfusedWastage) && (
+              <span
+                style={{
+                  position: 'absolute',
+                  right: '0.875rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--muted-foreground)',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                  zIndex: 10,
+                }}
+              >
+                %
+              </span>
+            )}
         </div>
-      )}
+      </Field>
+
+      {/* APPROVAL */}
+      <Field label="APPROVAL" width="sm">
+        <SearchableDropdown
+          value={material.foamGelInfusedApproval || ''}
+          onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedApproval', selectedValue)}
+          options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+          placeholder="Select or type"
+        />
+      </Field>
+
+      {/* REMARKS */}
+      <Field label="REMARKS" width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+        <Input
+          type="text"
+          value={material.foamGelInfusedRemarks || ''}
+          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamGelInfusedRemarks', e.target.value)}
+          placeholder="Gel memory foam for hot sleepers, PCM for active temperature regulation"
+        />
+      </Field>
     </div>
+
+    {/* Advance Spec Button */}
+    <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+      <Button
+        type="button"
+        variant={material.showFoamGelInfusedAdvancedSpec ? 'default' : 'outline'}
+        size="sm"
+        onClick={() =>
+          handleRawMaterialChange(actualIndex, 'showFoamGelInfusedAdvancedSpec', !material.showFoamGelInfusedAdvancedSpec)
+        }
+      >
+        Advance Spec
+      </Button>
+    </div>
+
+    {/* Advanced Filter UI Table */}
+    {material.showFoamGelInfusedAdvancedSpec && (
+      <div
+        style={{
+          marginTop: '1.5rem',
+          padding: '1.5rem',
+          backgroundColor: 'var(--muted)',
+          borderRadius: '0.75rem',
+          border: '1px solid var(--border)',
+        }}
+        className="col-span-1 md:col-span-2 lg:col-span-5"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+          <Field label="DENSITY" width="sm">
+            <SearchableDropdown
+              value={material.foamGelInfusedDensity || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedDensity', selectedValue)}
+              options={['50 kg/m³', '60 kg/m³', '70 kg/m³', 'Base foam density + gel']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="ILD / IFD (FIRMNESS)" width="sm">
+            <SearchableDropdown
+              value={material.foamGelInfusedIld || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedIld', selectedValue)}
+              options={['ILD rating based on base foam']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="TEMPERATURE REGULATION" width="sm">
+            <SearchableDropdown
+              value={material.foamGelInfusedTemperatureRegulation || ''}
+              onChange={(selectedValue) =>
+                handleRawMaterialChange(actualIndex, 'foamGelInfusedTemperatureRegulation', selectedValue)
+              }
+              options={['Absorbs and dissipates body heat']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="RESPONSE TIME" width="sm">
+            <SearchableDropdown
+              value={material.foamGelInfusedResponseTime || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedResponseTime', selectedValue)}
+              options={['If memory foam base - response time specification']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="BREATHABILITY" width="sm">
+            <SearchableDropdown
+              value={material.foamGelInfusedBreathability || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedBreathability', selectedValue)}
+              options={['Standard', 'Enhanced (ventilated)', 'Open Cell']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="FIRE RETARDANT" width="sm">
+            <SearchableDropdown
+              value={material.foamGelInfusedFireRetardant || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedFireRetardant', selectedValue)}
+              options={['FR Treated (CFR 1633, TB 117)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="COOLING EFFECT" width="sm">
+            <SearchableDropdown
+              value={material.foamGelInfusedCoolingEffect || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedCoolingEffect', selectedValue)}
+              options={['Standard Cooling', 'Advanced Cooling', 'Phase Change (PCM)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="CERTIFICATION" width="sm">
+            <SearchableDropdown
+              value={material.foamGelInfusedCertification || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamGelInfusedCertification', selectedValue)}
+              options={['CertiPUR-US', 'OEKO-TEX', 'Greenguard']}
+              placeholder="Select or type"
+            />
+          </Field>
+        </div>
+      </div>
+    )}
   </div>
   </>
 )}
@@ -4083,500 +3655,290 @@ const Step2 = ({
     </Field>
 
     {/* SIZE SPEC */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4" style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
-      <label className="text-sm font-bold text-gray-800 mb-4 block">SIZE SPEC</label>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">SHEET/PCS</label>
-          <input
+    <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+      <h4 className="text-sm font-semibold text-foreground/90 mb-4">SIZE SPEC</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+        <Field label="SHEET/PCS" width="sm">
+          <Input
             type="text"
             value={material.foamLatexSheetPcs || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexSheetPcs', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-          <input
+        </Field>
+        <Field label="GSM" width="sm">
+          <Input
             type="text"
             value={material.foamLatexGsm || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexGsm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">LENGTH (CM)</label>
-          <input
+        </Field>
+        <Field label="LENGTH (CM)" width="sm">
+          <Input
             type="text"
             value={material.foamLatexLengthCm || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexLengthCm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">WIDTH (CM)</label>
-          <input
+        </Field>
+        <Field label="WIDTH (CM)" width="sm">
+          <Input
             type="text"
             value={material.foamLatexWidthCm || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexWidthCm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
+        </Field>
       </div>
     </div>
 
     {/* QTY - KGS and YARDAGE */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4" style={{ marginTop: '20px' }}>
-      <label className="text-sm font-bold text-gray-800 mb-4 block">QTY</label>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">KGS (CNS)</label>
-          <input
+    <div style={{ marginTop: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+      <h4 className="text-sm font-semibold text-foreground/90 mb-4">QTY</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+        <Field label="KGS (CNS)" width="sm">
+          <Input
             type="text"
             value={material.foamLatexKgsCns || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexKgsCns', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">YARDAGE (CNS)</label>
-          <input
+        </Field>
+        <Field label="YARDAGE (CNS)" width="sm">
+          <Input
             type="text"
             value={material.foamLatexYardageCns || ''}
             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexYardageCns', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
             placeholder="Enter value"
           />
-        </div>
+        </Field>
       </div>
     </div>
 
-    {/* TESTING REQUIREMENTS - Multi-select with chips (SAME AS GEL-INFUSED-FOAM) */}
-    <div className="flex flex-col col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
-      <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-      <div style={{ position: 'relative' }}>
-        <div
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
-          style={{ 
-            padding: '8px 12px',
-            minHeight: '44px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            alignItems: 'center',
-            cursor: 'text'
-          }}
-        >
-          {/* Selected chips */}
-          {(Array.isArray(material.foamLatexTestingRequirements) ? material.foamLatexTestingRequirements : []).map((req, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
-              style={{
-                backgroundColor: '#e0e7ff',
-                color: '#4338ca',
-                border: '1px solid #c7d2fe'
-              }}
-            >
-              {req}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const current = Array.isArray(material.foamLatexTestingRequirements) ? material.foamLatexTestingRequirements : [];
-                  const updated = current.filter((_, i) => i !== index);
-                  handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirements', updated);
-                }}
-                style={{
-                  marginLeft: '4px',
-                  cursor: 'pointer',
-                  background: 'none',
-                  border: 'none',
-                  color: '#4338ca',
-                  fontWeight: 'bold',
-                  fontSize: '14px',
-                  lineHeight: '1',
-                  padding: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '16px',
-                  height: '16px'
-                }}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          {/* Dropdown for selecting new options */}
-          <div 
-            id={`latex-foam-testing-wrapper-${actualIndex}`}
-            style={{ flex: 1, minWidth: '200px' }}
-          >
-            <SearchableDropdown
-              value=""
-              strictMode={false}
-              onChange={(selectedValue) => {
-                // Only add if it's an exact match from options (meaning it was selected from dropdown)
-                const options = ['Density', 'ILD', 'Resilience', 'Natural Content %', 'GOLS Certification'];
-                if (selectedValue && options.includes(selectedValue)) {
-                  // It's a selection from dropdown, add it
-                  const current = Array.isArray(material.foamLatexTestingRequirements) ? material.foamLatexTestingRequirements : [];
-                  if (!current.includes(selectedValue)) {
-                    const updated = [...current, selectedValue];
-                    handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirements', updated);
-                  }
-                }
-                // If it's not in options, it's typing - ignore it (will be added on Enter/blur)
-              }}
+    {/* TESTING / SURPLUS / WASTAGE / APPROVAL / REMARKS */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 col-span-1 md:col-span-2 lg:col-span-5" style={{ gap: '16px 12px', marginTop: '1.25rem' }}>
+      {/* TESTING REQ. */}
+      <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+        <div className="flex items-center" style={{ gap: '0.75rem' }}>
+          <div className="flex-1">
+            <TestingRequirementsInput
+              value={material.foamLatexTestingRequirements || []}
+              onChange={(values) => handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirements', values)}
               options={['Density', 'ILD', 'Resilience', 'Natural Content %', 'GOLS Certification']}
-              placeholder={(Array.isArray(material.foamLatexTestingRequirements) && material.foamLatexTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
-              className="border-0 outline-none"
-              style={{ 
-                padding: '4px 0', 
-                height: 'auto', 
-                minHeight: '32px',
-                backgroundColor: 'transparent', 
-                boxShadow: 'none',
-                border: 'none',
-                borderWidth: '0',
-                outline: 'none'
-              }}
-              onFocus={(e) => {
-                const input = e.target;
-                input.style.border = 'none';
-                input.style.borderWidth = '0';
-                input.style.outline = 'none';
-                input.style.boxShadow = 'none';
-                const container = input.closest('[class*="border-2"]');
-                if (container) {
-                  container.style.borderColor = '#667eea';
-                  container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                }
-                // Add keydown listener to the input when it gets focus
-                const handleKeyDown = (keyEvent) => {
-                  if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
-                    keyEvent.preventDefault();
-                    keyEvent.stopPropagation();
-                    const newValue = input.value.trim();
-                    const current = Array.isArray(material.foamLatexTestingRequirements) ? material.foamLatexTestingRequirements : [];
-                    const options = ['Density', 'ILD', 'Resilience', 'Natural Content %', 'GOLS Certification'];
-                    // Add if it's not already in the list
-                    if (!current.includes(newValue)) {
-                      // If it's custom text (not in options), add it
-                      if (!options.includes(newValue)) {
-                        const updated = [...current, newValue];
-                        handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirements', updated);
-                      }
-                      // Clear the input
-                      input.value = '';
-                      input.blur();
-                    }
-                  }
-                };
-                input.addEventListener('keydown', handleKeyDown);
-                // Store the handler so we can remove it later
-                input._enterHandler = handleKeyDown;
-              }}
-              onBlur={(e) => {
-                const input = e.target;
-                // Remove the keydown listener
-                if (input._enterHandler) {
-                  input.removeEventListener('keydown', input._enterHandler);
-                  input._enterHandler = null;
-                }
-                input.style.border = 'none';
-                input.style.borderWidth = '0';
-                input.style.outline = 'none';
-                input.style.boxShadow = 'none';
-                const container = input.closest('[class*="border-2"]');
-                if (container) {
-                  container.style.borderColor = '#e5e7eb';
-                  container.style.boxShadow = 'none';
-                }
-                // On blur, if there's a typed value that's not in options, add it as custom text
-                if (input.value && input.value.trim()) {
-                  const typedValue = input.value.trim();
-                  const options = ['Density', 'ILD', 'Resilience', 'Natural Content %', 'GOLS Certification'];
-                  // Only add if it's custom text (not in options)
-                  if (!options.includes(typedValue)) {
-                    const current = Array.isArray(material.foamLatexTestingRequirements) ? material.foamLatexTestingRequirements : [];
-                    if (!current.includes(typedValue)) {
-                      const updated = [...current, typedValue];
-                      handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirements', updated);
-                    }
-                  }
-                  // Clear the input
-                  input.value = '';
-                }
-              }}
+              placeholder="Type to search or select testing requirements..."
             />
           </div>
+          <input
+            type="file"
+            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirementsFile', e.target.files[0])}
+            className="hidden"
+            id={`upload-latex-testing-${actualIndex}`}
+            accept="image/*"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-11"
+            onClick={() => document.getElementById(`upload-latex-testing-${actualIndex}`)?.click()}
+          >
+            {material.foamLatexTestingRequirementsFile ? 'UPLOADED' : 'UPLOAD'}
+          </Button>
         </div>
-      </div>
-      {/* UPLOAD button for testing requirements */}
-      <div className="flex flex-col" style={{ marginTop: '12px' }}>
-        <input
-          type="file"
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirementsFile', e.target.files[0])}
-          className="hidden"
-          id={`upload-latex-foam-testing-${actualIndex}`}
-          accept="image/*"
-        />
-        <label
-          htmlFor={`upload-latex-foam-testing-${actualIndex}`}
-          className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-          style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
-        >
-          {material.foamLatexTestingRequirementsFile ? 'UPLOADED' : 'UPLOAD'}
-        </label>
-      </div>
-    </div>
+      </Field>
 
-    {/* SURPLUS % */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <input
-          type="text"
+      {/* SURPLUS % */}
+      <Field label="SURPLUS %" width="sm">
+        <PercentInput
           value={material.foamLatexSurplus || ''}
           onChange={(e) => {
             const numericValue = e.target.value.replace(/[^0-9.]/g, '');
             handleRawMaterialChange(actualIndex, 'foamLatexSurplus', numericValue);
           }}
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
-          placeholder="%age (e.g., 2-5%)"
+          placeholder="e.g., 2-5"
         />
-        {material.foamLatexSurplus && (
-          <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-        )}
-      </div>
-    </div>
+      </Field>
 
-    {/* WASTAGE % */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <SearchableDropdown
-          value={material.foamLatexWastage || ''}
-          onChange={(selectedValue) => {
-            const predefinedOptions = ['Luxury Mattress', 'Organic Bedding', 'Premium Pillows'];
-            if (predefinedOptions.includes(selectedValue)) {
-              handleRawMaterialChange(actualIndex, 'foamLatexWastage', selectedValue);
-            } else {
-              const numericValue = selectedValue.replace(/[^0-9.]/g, '');
-              handleRawMaterialChange(actualIndex, 'foamLatexWastage', numericValue);
+      {/* WASTAGE % */}
+      <Field label="WASTAGE %" width="sm">
+        <div className="relative">
+          <SearchableDropdown
+            value={material.foamLatexWastage || ''}
+            onChange={(selectedValue) => {
+              const predefinedOptions = ['Luxury Mattress', 'Organic Bedding', 'Premium Pillows'];
+              if (predefinedOptions.includes(selectedValue)) {
+                handleRawMaterialChange(actualIndex, 'foamLatexWastage', selectedValue);
+              } else {
+                const numericValue = selectedValue.replace(/[^0-9.]/g, '');
+                handleRawMaterialChange(actualIndex, 'foamLatexWastage', numericValue);
+              }
+            }}
+            options={['Luxury Mattress', 'Organic Bedding', 'Premium Pillows']}
+            placeholder="Select or type %"
+            className={
+              material.foamLatexWastage && !['Luxury Mattress', 'Organic Bedding', 'Premium Pillows'].includes(material.foamLatexWastage)
+                ? 'pr-10'
+                : ''
             }
-          }}
-          options={['Luxury Mattress', 'Organic Bedding', 'Premium Pillows']}
-          placeholder="Select or type"
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
-        />
-        {material.foamLatexWastage && !['Luxury Mattress', 'Organic Bedding', 'Premium Pillows'].includes(material.foamLatexWastage) && (
-          <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
-        )}
-      </div>
-    </div>
-
-    {/* APPROVAL */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-      <SearchableDropdown
-        value={material.foamLatexApproval || ''}
-        onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexApproval', selectedValue)}
-        options={["BUYER'S", 'INITIAL', 'PP SAMPLE', 'GOLS Certificate']}
-        placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-      />
-    </div>
-
-    {/* REMARKS */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-      <textarea
-        value={material.foamLatexRemarks || ''}
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexRemarks', e.target.value)}
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', minHeight: '44px' }}
-        rows="1"
-        placeholder="Dunlop=denser, Talalay=softer/consistent, GOLS for organic claims, 7-zone for ergonomic"
-      />
-    </div>
-
-    {/* LATEX FOAM - Advance Spec Button and Fields */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full" style={{ marginTop: '20px' }}>
-      <button
-        type="button"
-        onClick={() => handleRawMaterialChange(actualIndex, 'showFoamLatexAdvancedSpec', !material.showFoamLatexAdvancedSpec)}
-        style={{
-          backgroundColor: material.showFoamLatexAdvancedSpec ? '#667eea' : '#ffffff',
-          borderColor: material.showFoamLatexAdvancedSpec ? '#667eea' : '#e5e7eb',
-          color: material.showFoamLatexAdvancedSpec ? '#ffffff' : '#374151',
-          border: '2px solid',
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          width: '100%',
-          transition: 'all 0.2s',
-          boxShadow: material.showFoamLatexAdvancedSpec ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none'
-        }}
-        onMouseEnter={(e) => {
-          if (!material.showFoamLatexAdvancedSpec) {
-            e.target.style.backgroundColor = '#f9fafb';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!material.showFoamLatexAdvancedSpec) {
-            e.target.style.backgroundColor = '#ffffff';
-          }
-        }}
-      >
-        {material.showFoamLatexAdvancedSpec ? '▼ ADVANCE SPEC' : '▶ ADVANCE SPEC'}
-      </button>
-      {material.showFoamLatexAdvancedSpec && (
-        <div style={{ marginTop: '20px', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">ILD / IFD (Firmness)</label>
-              <SearchableDropdown
-                value={material.foamLatexIld || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexIld', selectedValue)}
-                options={['ILD rating (e.g., 14-19 Soft, 20-28 Medium, 29-36 Firm, 37+ Extra Firm)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">RESILIENCE</label>
-              <SearchableDropdown
-                value={material.foamLatexResilience || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexResilience', selectedValue)}
-                options={['Resilience % (typically 60-75% for latex)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">COMPRESSION SET</label>
-              <SearchableDropdown
-                value={material.foamLatexCompressionSet || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexCompressionSet', selectedValue)}
-                options={['Compression Set % (<3% for quality latex)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">PINCORE PATTERN</label>
-              <SearchableDropdown
-                value={material.foamLatexPincorePattern || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexPincorePattern', selectedValue)}
-                options={['Standard Pincore', 'Zoned (different firmness zones)', 'Solid']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">ZONE CONFIGURATION</label>
-              <SearchableDropdown
-                value={material.foamLatexZoneConfiguration || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexZoneConfiguration', selectedValue)}
-                options={['Single Zone', '3-Zone', '5-Zone', '7-Zone (varying firmness)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">BREATHABILITY</label>
-              <SearchableDropdown
-                value={material.foamLatexBreathability || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexBreathability', selectedValue)}
-                options={['Excellent (natural pincore holes)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">HYPOALLERGENIC</label>
-              <SearchableDropdown
-                value={material.foamLatexHypoallergenic || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexHypoallergenic', selectedValue)}
-                options={['Naturally Hypoallergenic', 'Anti-Dust Mite']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">ANTI-MICROBIAL</label>
-              <SearchableDropdown
-                value={material.foamLatexAntiMicrobial || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexAntiMicrobial', selectedValue)}
-                options={['Naturally Anti-Microbial (latex property)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">FIRE RETARDANT</label>
-              <SearchableDropdown
-                value={material.foamLatexFireRetardant || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexFireRetardant', selectedValue)}
-                options={['Natural (self-extinguishing)', 'FR Treated', 'Wrapped with FR Barrier']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">CERTIFICATION</label>
-              <SearchableDropdown
-                value={material.foamLatexCertification || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexCertification', selectedValue)}
-                options={['GOLS (Global Organic Latex Standard)', 'OEKO-TEX', 'Eco-Institut', 'GOTS (if organic cotton cover)']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">DENSITY</label>
-              <SearchableDropdown
-                value={material.foamLatexDensity || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexDensity', selectedValue)}
-                options={['60 kg/m³', '65 kg/m³', '70 kg/m³', '75 kg/m³', '85 kg/m³']}
-                placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
-              />
-            </div>
-          </div>
+          />
+          {material.foamLatexWastage &&
+            !['Luxury Mattress', 'Organic Bedding', 'Premium Pillows'].includes(material.foamLatexWastage) && (
+              <span
+                style={{
+                  position: 'absolute',
+                  right: '0.875rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--muted-foreground)',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                  zIndex: 10,
+                }}
+              >
+                %
+              </span>
+            )}
         </div>
-      )}
+      </Field>
+
+      {/* APPROVAL */}
+      <Field label="APPROVAL" width="sm">
+        <SearchableDropdown
+          value={material.foamLatexApproval || ''}
+          onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexApproval', selectedValue)}
+          options={["BUYER'S", 'INITIAL', 'PP SAMPLE', 'GOLS Certificate']}
+          placeholder="Select or type"
+        />
+      </Field>
+
+      {/* REMARKS */}
+      <Field label="REMARKS" width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+        <Input
+          type="text"
+          value={material.foamLatexRemarks || ''}
+          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexRemarks', e.target.value)}
+          placeholder="Dunlop=denser, Talalay=softer/consistent, GOLS for organic claims, 7-zone for ergonomic"
+        />
+      </Field>
     </div>
+
+    {/* Advance Spec Button */}
+    <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+      <Button
+        type="button"
+        variant={material.showFoamLatexAdvancedSpec ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => handleRawMaterialChange(actualIndex, 'showFoamLatexAdvancedSpec', !material.showFoamLatexAdvancedSpec)}
+      >
+        Advance Spec
+      </Button>
+    </div>
+
+    {/* Advanced Filter UI Table */}
+    {material.showFoamLatexAdvancedSpec && (
+      <div
+        style={{
+          marginTop: '1.5rem',
+          padding: '1.5rem',
+          backgroundColor: 'var(--muted)',
+          borderRadius: '0.75rem',
+          border: '1px solid var(--border)',
+        }}
+        className="col-span-1 md:col-span-2 lg:col-span-5"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+          <Field label="ILD / IFD (FIRMNESS)" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexIld || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexIld', selectedValue)}
+              options={['ILD rating (e.g., 14-19 Soft, 20-28 Medium, 29-36 Firm, 37+ Extra Firm)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="RESILIENCE" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexResilience || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexResilience', selectedValue)}
+              options={['Resilience % (typically 60-75% for latex)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="COMPRESSION SET" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexCompressionSet || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexCompressionSet', selectedValue)}
+              options={['Compression Set % (<3% for quality latex)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="PINCORE PATTERN" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexPincorePattern || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexPincorePattern', selectedValue)}
+              options={['Standard Pincore', 'Zoned (different firmness zones)', 'Solid']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="ZONE CONFIGURATION" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexZoneConfiguration || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexZoneConfiguration', selectedValue)}
+              options={['Single Zone', '3-Zone', '5-Zone', '7-Zone (varying firmness)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="BREATHABILITY" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexBreathability || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexBreathability', selectedValue)}
+              options={['Excellent (natural pincore holes)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="HYPOALLERGENIC" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexHypoallergenic || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexHypoallergenic', selectedValue)}
+              options={['Naturally Hypoallergenic', 'Anti-Dust Mite']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="ANTI-MICROBIAL" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexAntiMicrobial || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexAntiMicrobial', selectedValue)}
+              options={['Naturally Anti-Microbial (latex property)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="FIRE RETARDANT" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexFireRetardant || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexFireRetardant', selectedValue)}
+              options={['Natural (self-extinguishing)', 'FR Treated', 'Wrapped with FR Barrier']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="CERTIFICATION" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexCertification || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexCertification', selectedValue)}
+              options={['GOLS (Global Organic Latex Standard)', 'OEKO-TEX', 'Eco-Institut', 'GOTS (if organic cotton cover)']}
+              placeholder="Select or type"
+            />
+          </Field>
+          <Field label="DENSITY" width="sm">
+            <SearchableDropdown
+              value={material.foamLatexDensity || ''}
+              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamLatexDensity', selectedValue)}
+              options={['60 kg/m³', '65 kg/m³', '70 kg/m³', '75 kg/m³', '85 kg/m³']}
+              placeholder="Select or type"
+            />
+          </Field>
+        </div>
+      </div>
+    )}
   </div>
   </>
 )}                  
@@ -4586,87 +3948,70 @@ const Step2 = ({
 
 {/* memory-foam Table */}
 {material.foamTableType === 'memory-foam' && (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-    {/* FOAM TYPE */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">FOAM TYPE</label>
-      <SearchableDropdown
-        value={material.foamMemoryType || ''}
-        onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryType', selectedValue)}
-        options={['Memory Foam', 'Visco-Elastic Foam']}
-        placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-      />
-    </div>
+  <>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+      {/* FOAM TYPE */}
+      <Field label="FOAM TYPE" width="sm">
+        <SearchableDropdown
+          value={material.foamMemoryType || ''}
+          onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryType', selectedValue)}
+          options={['Memory Foam', 'Visco-Elastic Foam']}
+          placeholder="Select or type"
+        />
+      </Field>
 
-    {/* SUBTYPE */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">SUBTYPE</label>
-      <SearchableDropdown
-        value={material.foamMemorySubtype || ''}
-        onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemorySubtype', selectedValue)}
-        options={['Virgin', 'Blended', 'Plant-Based (Bio-Foam)']}
-        placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-      />
-    </div>
+      {/* SUBTYPE */}
+      <Field label="SUBTYPE" width="sm">
+        <SearchableDropdown
+          value={material.foamMemorySubtype || ''}
+          onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemorySubtype', selectedValue)}
+          options={['Virgin', 'Blended', 'Plant-Based (Bio-Foam)']}
+          placeholder="Select or type"
+        />
+      </Field>
 
-    {/* GRADE */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">GRADE</label>
-      <SearchableDropdown
-        value={material.foamMemoryGrade || ''}
-        onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryGrade', selectedValue)}
-        options={['Standard Memory', 'High Density Memory', 'Premium Memory']}
-        placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-      />
-    </div>
+      {/* GRADE */}
+      <Field label="GRADE" width="sm">
+        <SearchableDropdown
+          value={material.foamMemoryGrade || ''}
+          onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryGrade', selectedValue)}
+          options={['Standard Memory', 'High Density Memory', 'Premium Memory']}
+          placeholder="Select or type"
+        />
+      </Field>
 
-    {/* COLOUR */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">COLOUR</label>
-      <SearchableDropdown
-        value={material.foamMemoryColour || ''}
-        onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryColour', selectedValue)}
-        options={['White', 'Grey', 'Blue', 'Green (plant-based)', 'Charcoal']}
-        placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-      />
-    </div>
+      {/* COLOUR */}
+      <Field label="COLOUR" width="sm">
+        <SearchableDropdown
+          value={material.foamMemoryColour || ''}
+          onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryColour', selectedValue)}
+          options={['White', 'Grey', 'Blue', 'Green (plant-based)', 'Charcoal']}
+          placeholder="Select or type"
+        />
+      </Field>
 
-    {/* THICKNESS */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">THICKNESS</label>
-      <input
-        type="text"
-        value={material.foamMemoryThickness || ''}
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryThickness', e.target.value)}
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-        placeholder={["in MM","2", "3", "4", "5", "6"]}
-      />
-    </div>
+      {/* THICKNESS */}
+      <Field label="THICKNESS" width="sm">
+        <Input
+          type="text"
+          value={material.foamMemoryThickness || ''}
+          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryThickness', e.target.value)}
+          placeholder="in MM (e.g., 2, 3, 4, 5, 6)"
+        />
+      </Field>
 
-    {/* SHAPE with UPLOAD REF IMAGE */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-      <div className="flex flex-col flex-1">
-        <label className="text-sm font-semibold text-gray-700 mb-2">SHAPE</label>
-        <input
+      {/* SHAPE */}
+      <Field label="SHAPE" width="sm">
+        <Input
           type="text"
           value={material.foamMemoryShape || ''}
           onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryShape', e.target.value)}
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 14px', height: '44px' }}
           placeholder="TEXT"
         />
-      </div>
-      <div className="flex flex-col">
-        <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
+      </Field>
+
+      {/* UPLOAD REF IMAGE */}
+      <Field label="UPLOAD REF IMAGE" width="sm">
         <input
           type="file"
           onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryShapeRefImage', e.target.files[0])}
@@ -4674,534 +4019,319 @@ const Step2 = ({
           id={`upload-memory-foam-shape-${actualIndex}`}
           accept="image/*"
         />
-        <label
-          htmlFor={`upload-memory-foam-shape-${actualIndex}`}
-          className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-          style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px' }}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-11 w-full"
+          onClick={() => document.getElementById(`upload-memory-foam-shape-${actualIndex}`)?.click()}
         >
           {material.foamMemoryShapeRefImage ? 'UPLOADED' : 'UPLOAD REF IMAGE'}
-        </label>
-      </div>
-    </div>
+        </Button>
+      </Field>
 
-    {/* SIZE SPEC */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4" style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
-      <label className="text-sm font-bold text-gray-800 mb-4 block">SIZE SPEC</label>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">SHEET/PCS</label>
-          <input
-            type="text"
-            value={material.foamMemorySheetPcs || ''}
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemorySheetPcs', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
-            placeholder="Enter value"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-          <input
-            type="text"
-            value={material.foamMemoryGsm || ''}
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryGsm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
-            placeholder="Enter value"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">LENGTH (CM)</label>
-          <input
-            type="text"
-            value={material.foamMemoryLengthCm || ''}
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryLengthCm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
-            placeholder="Enter value"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">WIDTH (CM)</label>
-          <input
-            type="text"
-            value={material.foamMemoryWidthCm || ''}
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryWidthCm', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
-            placeholder="Enter value"
-          />
-        </div>
-      </div>
-    </div>
-
-    {/* QTY - KGS and YARDAGE */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4" style={{ marginTop: '20px' }}>
-      <label className="text-sm font-bold text-gray-800 mb-4 block">QTY</label>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">YARDAGE (CNS)</label>
-          <input
-            type="text"
-            value={material.foamMemoryYardageCns || ''}
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryYardageCns', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
-            placeholder="Enter value"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-700 mb-2">KGS (CNS)</label>
-          <input
-            type="text"
-            value={material.foamMemoryKgsCns || ''}
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryKgsCns', e.target.value)}
-            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-            style={{ padding: '10px 14px', height: '44px' }}
-            placeholder="Enter value"
-          />
-        </div>
-      </div>
-    </div>
-
-    {/* TESTING REQUIREMENTS - Multi-select with chips (SAME AS LATEX-FOAM) */}
-    <div className="flex flex-col col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
-      <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-      <div style={{ position: 'relative' }}>
-        <div
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
-          style={{ 
-            padding: '8px 12px',
-            minHeight: '44px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            alignItems: 'center',
-            cursor: 'text'
-          }}
-        >
-          {/* Selected chips */}
-          {(Array.isArray(material.foamMemoryTestingRequirements) ? material.foamMemoryTestingRequirements : []).map((req, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
-              style={{
-                backgroundColor: '#e0e7ff',
-                color: '#4338ca',
-                border: '1px solid #c7d2fe'
-              }}
-            >
-              {req}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const current = Array.isArray(material.foamMemoryTestingRequirements) ? material.foamMemoryTestingRequirements : [];
-                  const updated = current.filter((_, i) => i !== index);
-                  handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirements', updated);
-                }}
-                style={{
-                  marginLeft: '4px',
-                  cursor: 'pointer',
-                  background: 'none',
-                  border: 'none',
-                  color: '#4338ca',
-                  fontWeight: 'bold',
-                  fontSize: '14px',
-                  lineHeight: '1',
-                  padding: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '16px',
-                  height: '16px'
-                }}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          {/* Dropdown for selecting new options */}
-          <div 
-            id={`memory-foam-testing-wrapper-${actualIndex}`}
-            style={{ flex: 1, minWidth: '200px' }}
-          >
-            <SearchableDropdown
-              value=""
-              strictMode={false}
-              onChange={(selectedValue) => {
-                // Only add if it's an exact match from options (meaning it was selected from dropdown)
-                const options = ['Density', 'ILD', 'Response Time', 'Compression Set', 'VOC Emissions', 'Flammability'];
-                if (selectedValue && options.includes(selectedValue)) {
-                  // It's a selection from dropdown, add it
-                  const current = Array.isArray(material.foamMemoryTestingRequirements) ? material.foamMemoryTestingRequirements : [];
-                  if (!current.includes(selectedValue)) {
-                    const updated = [...current, selectedValue];
-                    handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirements', updated);
-                  }
-                }
-                // If it's not in options, it's typing - ignore it (will be added on Enter/blur)
-              }}
-              options={['Density', 'ILD', 'Response Time', 'Compression Set', 'VOC Emissions', 'Flammability']}
-              placeholder={(Array.isArray(material.foamMemoryTestingRequirements) && material.foamMemoryTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
-              className="border-0 outline-none"
-              style={{ 
-                padding: '4px 0', 
-                height: 'auto', 
-                minHeight: '32px',
-                backgroundColor: 'transparent', 
-                boxShadow: 'none',
-                border: 'none',
-                borderWidth: '0',
-                outline: 'none'
-              }}
-              onFocus={(e) => {
-                const input = e.target;
-                input.style.border = 'none';
-                input.style.borderWidth = '0';
-                input.style.outline = 'none';
-                input.style.boxShadow = 'none';
-                const container = input.closest('[class*="border-2"]');
-                if (container) {
-                  container.style.borderColor = '#667eea';
-                  container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                }
-                // Add keydown listener to the input when it gets focus
-                const handleKeyDown = (keyEvent) => {
-                  if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
-                    keyEvent.preventDefault();
-                    keyEvent.stopPropagation();
-                    const newValue = input.value.trim();
-                    const current = Array.isArray(material.foamMemoryTestingRequirements) ? material.foamMemoryTestingRequirements : [];
-                    const options = ['Density', 'ILD', 'Response Time', 'Compression Set', 'VOC Emissions', 'Flammability'];
-                    // Add if it's not already in the list
-                    if (!current.includes(newValue)) {
-                      // If it's custom text (not in options), add it
-                      if (!options.includes(newValue)) {
-                        const updated = [...current, newValue];
-                        handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirements', updated);
-                      }
-                      // Clear the input
-                      input.value = '';
-                      input.blur();
-                    }
-                  }
-                };
-                input.addEventListener('keydown', handleKeyDown);
-                // Store the handler so we can remove it later
-                input._enterHandler = handleKeyDown;
-              }}
-              onBlur={(e) => {
-                const input = e.target;
-                // Remove the keydown listener
-                if (input._enterHandler) {
-                  input.removeEventListener('keydown', input._enterHandler);
-                  input._enterHandler = null;
-                }
-                input.style.border = 'none';
-                input.style.borderWidth = '0';
-                input.style.outline = 'none';
-                input.style.boxShadow = 'none';
-                const container = input.closest('[class*="border-2"]');
-                if (container) {
-                  container.style.borderColor = '#e5e7eb';
-                  container.style.boxShadow = 'none';
-                }
-                // On blur, if there's a typed value that's not in options, add it as custom text
-                if (input.value && input.value.trim()) {
-                  const typedValue = input.value.trim();
-                  const options = ['Density', 'ILD', 'Response Time', 'Compression Set', 'VOC Emissions', 'Flammability'];
-                  // Only add if it's custom text (not in options)
-                  if (!options.includes(typedValue)) {
-                    const current = Array.isArray(material.foamMemoryTestingRequirements) ? material.foamMemoryTestingRequirements : [];
-                    if (!current.includes(typedValue)) {
-                      const updated = [...current, typedValue];
-                      handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirements', updated);
-                    }
-                  }
-                  // Clear the input
-                  input.value = '';
-                }
-              }}
+      {/* SIZE SPEC */}
+      <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+        <h4 className="text-sm font-semibold text-foreground/90 mb-4">SIZE SPEC</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+          <Field label="SHEET/PCS" width="sm">
+            <Input
+              type="text"
+              value={material.foamMemorySheetPcs || ''}
+              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemorySheetPcs', e.target.value)}
+              placeholder="Enter value"
             />
-          </div>
+          </Field>
+          <Field label="GSM" width="sm">
+            <Input
+              type="text"
+              value={material.foamMemoryGsm || ''}
+              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryGsm', e.target.value)}
+              placeholder="Enter value"
+            />
+          </Field>
+          <Field label="LENGTH (CM)" width="sm">
+            <Input
+              type="text"
+              value={material.foamMemoryLengthCm || ''}
+              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryLengthCm', e.target.value)}
+              placeholder="Enter value"
+            />
+          </Field>
+          <Field label="WIDTH (CM)" width="sm">
+            <Input
+              type="text"
+              value={material.foamMemoryWidthCm || ''}
+              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryWidthCm', e.target.value)}
+              placeholder="Enter value"
+            />
+          </Field>
         </div>
       </div>
-      {/* UPLOAD button for testing requirements */}
-      <div className="flex flex-col" style={{ marginTop: '12px' }}>
-        <input
-          type="file"
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirementsFile', e.target.files[0])}
-          className="hidden"
-          id={`upload-memory-foam-testing-${actualIndex}`}
-          accept="image/*"
-        />
-        <label
-          htmlFor={`upload-memory-foam-testing-${actualIndex}`}
-          className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-          style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px', width: 'fit-content' }}
+
+      {/* QTY - KGS and YARDAGE */}
+      <div style={{ marginTop: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+        <h4 className="text-sm font-semibold text-foreground/90 mb-4">QTY</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+          <Field label="KGS (CNS)" width="sm">
+            <Input
+              type="text"
+              value={material.foamMemoryKgsCns || ''}
+              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryKgsCns', e.target.value)}
+              placeholder="Enter value"
+            />
+          </Field>
+          <Field label="YARDAGE (CNS)" width="sm">
+            <Input
+              type="text"
+              value={material.foamMemoryYardageCns || ''}
+              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryYardageCns', e.target.value)}
+              placeholder="Enter value"
+            />
+          </Field>
+        </div>
+      </div>
+
+      {/* TESTING / SURPLUS / WASTAGE / APPROVAL / REMARKS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 col-span-1 md:col-span-2 lg:col-span-5" style={{ gap: '16px 12px', marginTop: '1.25rem' }}>
+        {/* TESTING REQ. */}
+        <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+          <div className="flex items-center" style={{ gap: '0.75rem' }}>
+            <div className="flex-1">
+              <TestingRequirementsInput
+                value={material.foamMemoryTestingRequirements || []}
+                onChange={(values) => handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirements', values)}
+                options={['Density', 'ILD', 'Response Time', 'Compression Set', 'VOC Emissions', 'Flammability']}
+                placeholder="Type to search or select testing requirements..."
+              />
+            </div>
+            <input
+              type="file"
+              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirementsFile', e.target.files[0])}
+              className="hidden"
+              id={`upload-memory-testing-${actualIndex}`}
+              accept="image/*"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-11"
+              onClick={() => document.getElementById(`upload-memory-testing-${actualIndex}`)?.click()}
+            >
+              {material.foamMemoryTestingRequirementsFile ? 'UPLOADED' : 'UPLOAD'}
+            </Button>
+          </div>
+        </Field>
+
+        {/* SURPLUS % */}
+        <Field label="SURPLUS %" width="sm">
+          <PercentInput
+            value={material.foamMemorySurplus || ''}
+            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemorySurplus', e.target.value)}
+            placeholder="e.g., 3-5"
+          />
+        </Field>
+
+        {/* WASTAGE % */}
+        <Field label="WASTAGE %" width="sm">
+          <div className="relative">
+            <SearchableDropdown
+              value={material.foamMemoryWastage || ''}
+              onChange={(selectedValue) => {
+                const predefinedOptions = ['Mattress Topper', 'Pillow Core', 'Mattress Layer', 'Cushion'];
+                if (predefinedOptions.includes(selectedValue)) {
+                  handleRawMaterialChange(actualIndex, 'foamMemoryWastage', selectedValue);
+                } else {
+                  const numericValue = selectedValue.replace(/[^0-9.]/g, '');
+                  handleRawMaterialChange(actualIndex, 'foamMemoryWastage', numericValue);
+                }
+              }}
+              options={['Mattress Topper', 'Pillow Core', 'Mattress Layer', 'Cushion']}
+              placeholder="Select or type %"
+              className={
+                material.foamMemoryWastage && !['Mattress Topper', 'Pillow Core', 'Mattress Layer', 'Cushion'].includes(material.foamMemoryWastage)
+                  ? 'pr-10'
+                  : ''
+              }
+            />
+            {material.foamMemoryWastage &&
+              !['Mattress Topper', 'Pillow Core', 'Mattress Layer', 'Cushion'].includes(material.foamMemoryWastage) && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    right: '0.875rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--muted-foreground)',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    zIndex: 10,
+                  }}
+                >
+                  %
+                </span>
+              )}
+          </div>
+        </Field>
+
+        {/* APPROVAL */}
+        <Field label="APPROVAL" width="sm">
+          <SearchableDropdown
+            value={material.foamMemoryApproval || ''}
+            onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryApproval', selectedValue)}
+            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+            placeholder="Select or type"
+          />
+        </Field>
+
+        {/* REMARKS */}
+        <Field label="REMARKS" width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+          <Input
+            type="text"
+            value={material.foamMemoryRemarks || ''}
+            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryRemarks', e.target.value)}
+            placeholder="50D+ for quality, Gel-infused for cooling, Low VOC for sensitive users"
+          />
+        </Field>
+      </div>
+
+      {/* Advance Spec Button */}
+      <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+        <Button
+          type="button"
+          variant={material.showFoamMemoryAdvancedSpec ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => handleRawMaterialChange(actualIndex, 'showFoamMemoryAdvancedSpec', !material.showFoamMemoryAdvancedSpec)}
         >
-          {material.foamMemoryTestingRequirementsFile ? 'UPLOADED' : 'UPLOAD'}
-        </label>
+          Advance Spec
+        </Button>
       </div>
-    </div>
 
-    {/* SURPLUS % */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <input
-          type="text"
-          value={material.foamMemorySurplus || ''}
-          onChange={(e) => {
-            const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-            handleRawMaterialChange(actualIndex, 'foamMemorySurplus', numericValue);
-          }}
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
-          placeholder="%age (e.g., 3-5%)"
-        />
-        {material.foamMemorySurplus && (
-          <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-        )}
-      </div>
-    </div>
-
-    {/* WASTAGE % */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <SearchableDropdown
-          value={material.foamMemoryWastage || ''}
-          onChange={(selectedValue) => {
-            const predefinedOptions = ['Mattress Topper', 'Pillow Core', 'Mattress Layer', 'Cushion'];
-            if (predefinedOptions.includes(selectedValue)) {
-              handleRawMaterialChange(actualIndex, 'foamMemoryWastage', selectedValue);
-            } else {
-              const numericValue = selectedValue.replace(/[^0-9.]/g, '');
-              handleRawMaterialChange(actualIndex, 'foamMemoryWastage', numericValue);
-            }
-          }}
-          options={['Mattress Topper', 'Pillow Core', 'Mattress Layer', 'Cushion']}
-          placeholder="Select or type"
-          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-          style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
-        />
-        {material.foamMemoryWastage && !['Mattress Topper', 'Pillow Core', 'Mattress Layer', 'Cushion'].includes(material.foamMemoryWastage) && (
-          <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
-        )}
-      </div>
-    </div>
-
-    {/* APPROVAL */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-      <SearchableDropdown
-        value={material.foamMemoryApproval || ''}
-        onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryApproval', selectedValue)}
-        options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
-        placeholder="Select or type"
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', height: '44px' }}
-      />
-    </div>
-
-    {/* REMARKS */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-      <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-      <textarea
-        value={material.foamMemoryRemarks || ''}
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryRemarks', e.target.value)}
-        className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-        style={{ padding: '10px 14px', minHeight: '44px' }}
-        rows="1"
-        placeholder="50D+ for quality, Gel-infused for cooling, Low VOC for sensitive users"
-      />
-    </div>
-
-    {/* MEMORY FOAM - Advance Spec Button and Fields */}
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full" style={{ marginTop: '20px' }}>
-      <button
-        type="button"
-        onClick={() => handleRawMaterialChange(actualIndex, 'showFoamMemoryAdvancedSpec', !material.showFoamMemoryAdvancedSpec)}
-        style={{
-          backgroundColor: material.showFoamMemoryAdvancedSpec ? '#667eea' : '#ffffff',
-          borderColor: material.showFoamMemoryAdvancedSpec ? '#667eea' : '#e5e7eb',
-          color: material.showFoamMemoryAdvancedSpec ? '#ffffff' : '#374151',
-          border: '2px solid',
-          borderRadius: '8px',
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          width: '100%',
-          transition: 'all 0.2s',
-          boxShadow: material.showFoamMemoryAdvancedSpec ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none'
-        }}
-        onMouseEnter={(e) => {
-          if (!material.showFoamMemoryAdvancedSpec) {
-            e.target.style.backgroundColor = '#f9fafb';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!material.showFoamMemoryAdvancedSpec) {
-            e.target.style.backgroundColor = '#ffffff';
-          }
-        }}
-      >
-        {material.showFoamMemoryAdvancedSpec ? '▼ ADVANCE SPEC' : '▶ ADVANCE SPEC'}
-      </button>
+      {/* Advanced Filter UI Table */}
       {material.showFoamMemoryAdvancedSpec && (
-        <div style={{ marginTop: '20px', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">ILD / IFD (Firmness)</label>
+        <div
+          style={{
+            marginTop: '1.5rem',
+            padding: '1.5rem',
+            backgroundColor: 'var(--muted)',
+            borderRadius: '0.75rem',
+            border: '1px solid var(--border)',
+          }}
+          className="col-span-1 md:col-span-2 lg:col-span-5"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+            <Field label="ILD / IFD (FIRMNESS)" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryIld || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryIld', selectedValue)}
                 options={['ILD rating (e.g., 8 Ultra-Soft, 10-12 Soft, 14 Medium, 18+ Firm)']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">RESPONSE TIME</label>
+            </Field>
+            <Field label="RESPONSE TIME" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryResponseTime || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryResponseTime', selectedValue)}
                 options={['Recovery Time (Slow: 5-10 sec, Medium: 3-5 sec, Fast: 1-3 sec)']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">TEMPERATURE SENSITIVITY</label>
+            </Field>
+            <Field label="TEMPERATURE SENSITIVITY" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryTemperatureSensitivity || ''}
-                onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryTemperatureSensitivity', selectedValue)}
+                onChange={(selectedValue) =>
+                  handleRawMaterialChange(actualIndex, 'foamMemoryTemperatureSensitivity', selectedValue)
+                }
                 options={['Standard (temp sensitive)', 'Low Temp Sensitive', 'Adaptive']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">ACTIVATION TEMPERATURE</label>
+            </Field>
+            <Field label="ACTIVATION TEMPERATURE" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryActivationTemperature || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryActivationTemperature', selectedValue)}
                 options={['Temperature at which foam softens (e.g., 20-25°C, 25-30°C)']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">COMPRESSION SET</label>
+            </Field>
+            <Field label="COMPRESSION SET" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryCompressionSet || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryCompressionSet', selectedValue)}
                 options={['Compression Set % (<5% for quality memory foam)']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">RESILIENCE</label>
+            </Field>
+            <Field label="RESILIENCE" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryResilience || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryResilience', selectedValue)}
                 options={['Low Resilience (10-30%) - characteristic of memory foam']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">BREATHABILITY</label>
+            </Field>
+            <Field label="BREATHABILITY" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryBreathability || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryBreathability', selectedValue)}
                 options={['Standard', 'Open Cell (breathable)', 'Ventilated (holes)']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">INFUSION</label>
+            </Field>
+            <Field label="INFUSION" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryInfusion || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryInfusion', selectedValue)}
                 options={['None', 'Gel-Infused', 'Copper-Infused', 'Charcoal-Infused', 'Green Tea', 'Lavender']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">COOLING TECHNOLOGY</label>
+            </Field>
+            <Field label="COOLING TECHNOLOGY" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryCoolingTechnology || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryCoolingTechnology', selectedValue)}
                 options={['Standard', 'Phase Change Material (PCM)', 'Gel Beads', 'Graphite']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">FIRE RETARDANT</label>
+            </Field>
+            <Field label="FIRE RETARDANT" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryFireRetardant || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryFireRetardant', selectedValue)}
                 options={['FR Treated (CFR 1633, TB 117-2013, BS 5852)']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">VOC EMISSIONS</label>
+            </Field>
+            <Field label="VOC EMISSIONS" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryVocEmissions || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryVocEmissions', selectedValue)}
                 options={['Low VOC', 'Ultra-Low VOC', 'CertiPUR-US Certified']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">DENSITY</label>
+            </Field>
+            <Field label="DENSITY" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryDensity || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryDensity', selectedValue)}
                 options={['40 kg/m³', '50 kg/m³', '60 kg/m³', '70 kg/m³', '80 kg/m³', '90 kg/m³']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">CERTIFICATION</label>
+            </Field>
+            <Field label="CERTIFICATION" width="sm">
               <SearchableDropdown
                 value={material.foamMemoryCertification || ''}
                 onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamMemoryCertification', selectedValue)}
                 options={['CertiPUR-US', 'OEKO-TEX', 'Greenguard Gold', 'REACH']}
                 placeholder="Select or type"
-                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                style={{ padding: '10px 14px', height: '44px' }}
               />
-            </div>
+            </Field>
           </div>
         </div>
       )}
     </div>
-  </div>
+  </>
 )}
                   
 
@@ -5209,583 +4339,311 @@ const Step2 = ({
                     
                     {/* HR-form Table */}
                     {material.foamTableType === 'HR-form' && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
                         {/* FOAM TYPE */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">FOAM TYPE</label>
+                        <Field label="FOAM TYPE" width="sm">
                           <SearchableDropdown
                             value={material.foamHrType || ''}
                             onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrType', selectedValue)}
                             options={['HR Foam (High Resilience)', 'High Resiliency Foam']}
                             placeholder="Select or type"
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
                           />
-                        </div>
+                        </Field>
 
-                         {/* SUBTYPE */}
-                         <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">SUBTYPE</label>
+                        {/* SUBTYPE */}
+                        <Field label="SUBTYPE" width="sm">
                           <SearchableDropdown
                             value={material.foamHrSubtype || ''}
                             onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrSubtype', selectedValue)}
                             options={['Virgin HR', 'Super HR', 'CME (Combustion Modified)']}
                             placeholder="Select or type"
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
                           />
-                        </div>
+                        </Field>
 
                         {/* GRADE */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">GRADE</label>
+                        <Field label="GRADE" width="sm">
                           <SearchableDropdown
                             value={material.foamHrGrade || ''}
                             onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrGrade', selectedValue)}
                             options={['HR 35', 'HR 40', 'HR 45', 'HR 50']}
                             placeholder="Select or type"
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
                           />
-                        </div>
+                        </Field>
 
                         {/* COLOUR */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">COLOUR</label>
+                        <Field label="COLOUR" width="sm">
                           <SearchableDropdown
                             value={material.foamHrColour || ''}
                             onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrColour', selectedValue)}
                             options={['White', 'Off-White', 'Pink', 'Blue', 'Grey']}
                             placeholder="Select or type"
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
                           />
-                        </div>
-                      
-                      {/* THICKNESS */}
-                      <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">THICKNESS</label>
-                          <input
+                        </Field>
+
+                        {/* THICKNESS */}
+                        <Field label="THICKNESS" width="sm">
+                          <Input
                             type="text"
                             value={material.foamHrThickness || ''}
                             onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrThickness', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
                             placeholder="MM"
                           />
-                        </div>
+                        </Field>
 
-                        {/* SHAPE with UPLOAD REF IMAGE */}
-                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-                          <div className="flex flex-col flex-1">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">SHAPE</label>
-                            <input
-                              type="text"
-                              value={material.foamHrShape || ''}
-                              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrShape', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', height: '44px' }}
-                              placeholder="TEXT"
-                            />
-                          </div>
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                            <input
-                              type="file"
-                              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrShapeRefImage', e.target.files[0])}
-                              className="hidden"
-                              id={`upload-hr-foam-shape-${actualIndex}`}
-                              accept="image/*"
-                            />
-                            <label
-                              htmlFor={`upload-hr-foam-shape-${actualIndex}`}
-                              className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-                              style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px' }}
-                            >
-                              {material.foamHrShapeRefImage ? 'UPLOADED' : 'UPLOAD REF IMAGE'}
-                            </label>
-                          </div>
-                        </div>
+                        {/* SHAPE */}
+                        <Field label="SHAPE" width="sm">
+                          <Input
+                            type="text"
+                            value={material.foamHrShape || ''}
+                            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrShape', e.target.value)}
+                            placeholder="TEXT"
+                          />
+                        </Field>
+
+                        {/* UPLOAD REF IMAGE */}
+                        <Field label="UPLOAD REF IMAGE" width="sm">
+                          <input
+                            type="file"
+                            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrShapeRefImage', e.target.files[0])}
+                            className="hidden"
+                            id={`upload-hr-foam-shape-${actualIndex}`}
+                            accept="image/*"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-11 w-full"
+                            onClick={() => document.getElementById(`upload-hr-foam-shape-${actualIndex}`)?.click()}
+                          >
+                            {material.foamHrShapeRefImage ? 'UPLOADED' : 'UPLOAD REF IMAGE'}
+                          </Button>
+                        </Field>
                         {/* SIZE SPEC */}
-                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4" style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
-                          <label className="text-sm font-bold text-gray-800 mb-4 block">SIZE SPEC</label>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">SHEET/PCS</label>
-                              <input
+                        <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <h4 className="text-sm font-semibold text-foreground/90 mb-4">SIZE SPEC</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+                            <Field label="SHEET/PCS" width="sm">
+                              <Input
                                 type="text"
                                 value={material.foamHrSheetPcs || ''}
                                 onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrSheetPcs', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', height: '44px' }}
                                 placeholder="Enter value"
                               />
-                            </div>
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-                              <input
+                            </Field>
+                            <Field label="GSM" width="sm">
+                              <Input
                                 type="text"
                                 value={material.foamHrGsm || ''}
                                 onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrGsm', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', height: '44px' }}
                                 placeholder="Enter value"
                               />
-                            </div>
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">LENGTH (CM)</label>
-                              <input
+                            </Field>
+                            <Field label="LENGTH (CM)" width="sm">
+                              <Input
                                 type="text"
                                 value={material.foamHrLengthCm || ''}
                                 onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrLengthCm', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', height: '44px' }}
                                 placeholder="Enter value"
                               />
-                            </div>
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">WIDTH (CM)</label>
-                              <input
+                            </Field>
+                            <Field label="WIDTH (CM)" width="sm">
+                              <Input
                                 type="text"
                                 value={material.foamHrWidthCm || ''}
                                 onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrWidthCm', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', height: '44px' }}
                                 placeholder="Enter value"
                               />
-                            </div>
+                            </Field>
                           </div>
                         </div>
+
                         {/* QTY - KGS and YARDAGE */}
-                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4" style={{ marginTop: '20px' }}>
-                          <label className="text-sm font-bold text-gray-800 mb-4 block">QTY</label>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">KGS (CNS)</label>
-                              <input
+                        <div style={{ marginTop: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <h4 className="text-sm font-semibold text-foreground/90 mb-4">QTY</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5" style={{ gap: '16px 12px' }}>
+                            <Field label="KGS (CNS)" width="sm">
+                              <Input
                                 type="text"
                                 value={material.foamHrKgsCns || ''}
                                 onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrKgsCns', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', height: '44px' }}
                                 placeholder="Enter value"
                               />
-                            </div>
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">YARDAGE (CNS)</label>
-                              <input
+                            </Field>
+                            <Field label="YARDAGE (CNS)" width="sm">
+                              <Input
                                 type="text"
                                 value={material.foamHrYardageCns || ''}
                                 onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrYardageCns', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', height: '44px' }}
                                 placeholder="Enter value"
                               />
-                            </div>
+                            </Field>
                           </div>
                         </div>
-                                                {/* TESTING REQUIREMENTS - Multi-select with chips (FIXED VERSION) */}
-                                                <div className="flex flex-col col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                          <div style={{ position: 'relative' }}>
-                            <div
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus-within:border-indigo-500 focus-within:outline-none"
-                              style={{ 
-                                padding: '8px 12px',
-                                minHeight: '44px',
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: '8px',
-                                alignItems: 'center',
-                                cursor: 'text'
-                              }}
-                              onKeyDown={(e) => {
-                                // Handle Enter key on the container
-                                if (e.key === 'Enter') {
-                                  const input = e.target.querySelector('input');
-                                  if (input && input.value && input.value.trim()) {
-                                    e.preventDefault();
-                                    const newValue = input.value.trim();
-                                    const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
-                                    if (!current.includes(newValue)) {
-                                      const updated = [...current, newValue];
-                                      handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
-                                    }
-                                    // Clear the input
-                                    if (input) {
-                                      input.value = '';
-                                      input.blur();
-                                    }
-                                  }
-                                }
-                              }}
-                            >
-                              {/* Selected chips */}
-                              {(Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : []).map((req, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium"
-                                  style={{
-                                    backgroundColor: '#e0e7ff',
-                                    color: '#4338ca',
-                                    border: '1px solid #c7d2fe'
-                                  }}
-                                >
-                                  {req}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
-                                      const updated = current.filter((_, i) => i !== index);
-                                      handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
-                                    }}
-                                    style={{
-                                      marginLeft: '4px',
-                                      cursor: 'pointer',
-                                      background: 'none',
-                                      border: 'none',
-                                      color: '#4338ca',
-                                      fontWeight: 'bold',
-                                      fontSize: '14px',
-                                      lineHeight: '1',
-                                      padding: 0,
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      width: '16px',
-                                      height: '16px'
-                                    }}
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              ))}
-                                                            {/* Dropdown for selecting new options */}
-                                                            <div 
-                                id={`hr-foam-testing-wrapper-${actualIndex}`}
-                                style={{ flex: 1, minWidth: '200px' }}
-                              >
-                                <SearchableDropdown
-                                  value=""
-                                  strictMode={false}
-                                  onChange={(selectedValue) => {
-                                    // Only add if it's an exact match from options (meaning it was selected from dropdown)
-                                    const options = ['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test'];
-                                    if (selectedValue && options.includes(selectedValue)) {
-                                      // It's a selection from dropdown, add it
-                                      const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
-                                      if (!current.includes(selectedValue)) {
-                                        const updated = [...current, selectedValue];
-                                        handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
-                                      }
-                                    }
-                                    // If it's not in options, it's typing - ignore it (will be added on Enter/blur)
-                                  }}
-                                  options={['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test']}
-                                  placeholder={(Array.isArray(material.foamHrTestingRequirements) && material.foamHrTestingRequirements.length === 0) ? "Select testing requirements" : "Add more..."}
-                                  className="border-0 outline-none"
-                                  style={{ 
-                                    padding: '4px 0', 
-                                    height: 'auto', 
-                                    minHeight: '32px',
-                                    backgroundColor: 'transparent', 
-                                    boxShadow: 'none',
-                                    border: 'none',
-                                    borderWidth: '0',
-                                    outline: 'none'
-                                  }}
-                                  onFocus={(e) => {
-                                    const input = e.target;
-                                    input.style.border = 'none';
-                                    input.style.borderWidth = '0';
-                                    input.style.outline = 'none';
-                                    input.style.boxShadow = 'none';
-                                    const container = input.closest('[class*="border-2"]');
-                                    if (container) {
-                                      container.style.borderColor = '#667eea';
-                                      container.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }
-                                    // Add keydown listener to the input when it gets focus
-                                    const handleKeyDown = (keyEvent) => {
-                                      if (keyEvent.key === 'Enter' && input.value && input.value.trim()) {
-                                        keyEvent.preventDefault();
-                                        keyEvent.stopPropagation();
-                                        const newValue = input.value.trim();
-                                        const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
-                                        const options = ['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test'];
-                                        // Add if it's not already in the list
-                                        if (!current.includes(newValue)) {
-                                          // If it's custom text (not in options), add it
-                                          if (!options.includes(newValue)) {
-                                            const updated = [...current, newValue];
-                                            handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
-                                          }
-                                          // Clear the input
-                                          input.value = '';
-                                          input.blur();
-                                        }
-                                      }
-                                    };
-                                    input.addEventListener('keydown', handleKeyDown);
-                                    // Store the handler so we can remove it later
-                                    input._enterHandler = handleKeyDown;
-                                  }}
-                                  onBlur={(e) => {
-                                    const input = e.target;
-                                    // Remove the keydown listener
-                                    if (input._enterHandler) {
-                                      input.removeEventListener('keydown', input._enterHandler);
-                                      input._enterHandler = null;
-                                    }
-                                    input.style.border = 'none';
-                                    input.style.borderWidth = '0';
-                                    input.style.outline = 'none';
-                                    input.style.boxShadow = 'none';
-                                    const container = input.closest('[class*="border-2"]');
-                                    if (container) {
-                                      container.style.borderColor = '#e5e7eb';
-                                      container.style.boxShadow = 'none';
-                                    }
-                                    // On blur, if there's a typed value that's not in options, add it as custom text
-                                    if (input.value && input.value.trim()) {
-                                      const typedValue = input.value.trim();
-                                      const options = ['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test'];
-                                      // Only add if it's custom text (not in options)
-                                      if (!options.includes(typedValue)) {
-                                        const current = Array.isArray(material.foamHrTestingRequirements) ? material.foamHrTestingRequirements : [];
-                                        if (!current.includes(typedValue)) {
-                                          const updated = [...current, typedValue];
-                                          handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', updated);
-                                        }
-                                      }
-                                      // Clear the input
-                                      input.value = '';
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        {/* SURPLUS % */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
-                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                            <input
-                              type="text"
+                        {/* TESTING / SURPLUS / WASTAGE / APPROVAL / REMARKS */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 col-span-1 md:col-span-2 lg:col-span-5" style={{ gap: '16px 12px', marginTop: '1.25rem' }}>
+                          {/* TESTING REQ. */}
+                          <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+                            <TestingRequirementsInput
+                              value={material.foamHrTestingRequirements || []}
+                              onChange={(values) => handleRawMaterialChange(actualIndex, 'foamHrTestingRequirements', values)}
+                              options={['Density', 'ILD', 'Support Factor', 'Resilience (>60%)', 'Fatigue Test']}
+                              placeholder="Type to search or select testing requirements..."
+                            />
+                          </Field>
+
+                          {/* SURPLUS % */}
+                          <Field label="SURPLUS %" width="sm">
+                            <PercentInput
                               value={material.foamHrSurplus || ''}
-                              onChange={(e) => {
-                                const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                                handleRawMaterialChange(actualIndex, 'foamHrSurplus', numericValue);
-                              }}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
-                              placeholder="%age"
+                              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrSurplus', e.target.value)}
+                              placeholder="e.g., 3-5"
                             />
-                            {material.foamHrSurplus && (
-                              <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-                            )}
-                          </div>
-                        </div>
-                        {/* WASTAGE % */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          </Field>
+
+                          {/* WASTAGE % */}
+                          <Field label="WASTAGE %" width="sm">
+                            <div className="relative">
+                              <SearchableDropdown
+                                value={material.foamHrWastage || ''}
+                                onChange={(selectedValue) => {
+                                  const predefinedOptions = ['Premium Mattress', 'Automotive Seating', 'High-End Cushions'];
+                                  if (predefinedOptions.includes(selectedValue)) {
+                                    handleRawMaterialChange(actualIndex, 'foamHrWastage', selectedValue);
+                                  } else {
+                                    const numericValue = selectedValue.replace(/[^0-9.]/g, '');
+                                    handleRawMaterialChange(actualIndex, 'foamHrWastage', numericValue);
+                                  }
+                                }}
+                                options={['Premium Mattress', 'Automotive Seating', 'High-End Cushions']}
+                                placeholder="Select or type %"
+                                className={material.foamHrWastage && !['Premium Mattress', 'Automotive Seating', 'High-End Cushions'].includes(material.foamHrWastage) ? 'pr-10' : ''}
+                              />
+                              {material.foamHrWastage && !['Premium Mattress', 'Automotive Seating', 'High-End Cushions'].includes(material.foamHrWastage) && (
+                                <span style={{ position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
+                              )}
+                            </div>
+                          </Field>
+
+                          {/* APPROVAL */}
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
-                              value={material.foamHrWastage || ''}
-                              onChange={(selectedValue) => {
-                                const predefinedOptions = ['Premium Mattress', 'Automotive Seating', 'High-End Cushions'];
-                                if (predefinedOptions.includes(selectedValue)) {
-                                  handleRawMaterialChange(actualIndex, 'foamHrWastage', selectedValue);
-                                } else {
-                                  const numericValue = selectedValue.replace(/[^0-9.]/g, '');
-                                  handleRawMaterialChange(actualIndex, 'foamHrWastage', numericValue);
-                                }
-                              }}
-                              options={['Premium Mattress', 'Automotive Seating', 'High-End Cushions']}
+                              value={material.foamHrApproval || ''}
+                              onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrApproval', selectedValue)}
+                              options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
                               placeholder="Select or type"
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 32px 10px 14px', height: '44px', width: '100%' }}
                             />
-                            {material.foamHrWastage && !['Premium Mattress', 'Automotive Seating', 'High-End Cushions'].includes(material.foamHrWastage) && (
-                              <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
-                            )}
-                          </div>
+                          </Field>
+
+                          {/* REMARKS */}
+                          <Field label="REMARKS" width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+                            <Input
+                              type="text"
+                              value={material.foamHrRemarks || ''}
+                              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrRemarks', e.target.value)}
+                              placeholder="Resilience >60% is true HR, Better durability than conventional PU, CME for inherent FR"
+                            />
+                          </Field>
                         </div>
-                        {/* APPROVAL */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-                          <SearchableDropdown
-                            value={material.foamHrApproval || ''}
-                            onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
-                            placeholder="Select or type"
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
-                          />
+                        {/* Show/Hide Advance Spec Button */}
+                        <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <Button
+                            type="button"
+                            variant={material.showFoamHrAdvancedSpec ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleRawMaterialChange(actualIndex, 'showFoamHrAdvancedSpec', !material.showFoamHrAdvancedSpec)}
+                          >
+                            Advance Spec
+                          </Button>
                         </div>
 
-                        {/* REMARKS */}
-                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                          <textarea
-                            value={material.foamHrRemarks || ''}
-                            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrRemarks', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', minHeight: '44px' }}
-                            rows="1"
-                            placeholder="Resilience >60% is true HR, Better durability than conventional PU, CME for inherent FR"
-                          />
-                        </div>
-                        {/* HR FOAM - Advance Spec Button and Fields */}
-                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full" style={{ marginTop: '20px' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleRawMaterialChange(actualIndex, 'showFoamHrAdvancedSpec', !material.showFoamHrAdvancedSpec)}
-                            style={{
-                              backgroundColor: material.showFoamHrAdvancedSpec ? '#667eea' : '#ffffff',
-                              borderColor: material.showFoamHrAdvancedSpec ? '#667eea' : '#e5e7eb',
-                              color: material.showFoamHrAdvancedSpec ? '#ffffff' : '#374151',
-                              border: '2px solid',
-                              borderRadius: '8px',
-                              padding: '10px 20px',
-                              fontSize: '14px',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              width: '100%',
-                              transition: 'all 0.2s',
-                              boxShadow: material.showFoamHrAdvancedSpec ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none'
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!material.showFoamHrAdvancedSpec) {
-                                e.target.style.backgroundColor = '#f9fafb';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!material.showFoamHrAdvancedSpec) {
-                                e.target.style.backgroundColor = '#ffffff';
-                              }
-                            }}
-                          > {material.showFoamHrAdvancedSpec ? '▼ ADVANCE SPEC' : '▶ ADVANCE SPEC'}
-                          </button>
-                          {material.showFoamHrAdvancedSpec && (
-                            <div style={{ marginTop: '20px', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">ILD / IFD (Firmness)</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrIld || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrIld', selectedValue)}
-                                    options={['ILD rating (e.g., 25, 30, 35, 40, 45)']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">SUPPORT FACTOR</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrSupportFactor || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrSupportFactor', selectedValue)}
-                                    options={['Support Factor (2.4-2.8+ for HR foam)']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">RESILIENCE</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrResilience || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrResilience', selectedValue)}
-                                    options={['Resilience % (>60% for true HR foam, often 65-75%)']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">COMPRESSION SET</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrCompressionSet || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrCompressionSet', selectedValue)}
-                                    options={['Compression Set % (<5% for quality HR)']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">TENSILE STRENGTH</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrTensileStrength || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrTensileStrength', selectedValue)}
-                                    options={['Tensile Strength (kPa) - higher for HR']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">ELONGATION</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrElongation || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrElongation', selectedValue)}
-                                    options={['Elongation at Break (%)']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">FATIGUE RESISTANCE</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrFatigueResistance || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrFatigueResistance', selectedValue)}
-                                    options={['Fatigue Test (>80% height retention after 80,000 cycles)']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">FIRE RETARDANT</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrFireRetardant || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrFireRetardant', selectedValue)}
-                                    options={['Standard', 'CME (Combustion Modified)', 'FR Treated']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">CERTIFICATION</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrCertification || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrCertification', selectedValue)}
-                                    options={['CertiPUR-US', 'OEKO-TEX', 'Greenguard']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">DENSITY</label>
-                                  <SearchableDropdown
-                                    value={material.foamHrDensity || ''}
-                                    onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrDensity', selectedValue)}
-                                    options={['35 kg/m³', '40 kg/m³', '45 kg/m³', '50 kg/m³', '55 kg/m³']}
-                                    placeholder="Select or type"
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  />
-                                </div>
-                              </div>
+                        {/* Advanced Filter UI Table */}
+                        {material.showFoamHrAdvancedSpec && (
+                          <div style={{ marginTop: '1.5rem', padding: '1.5rem', backgroundColor: 'var(--muted)', borderRadius: '0.75rem', border: '1px solid var(--border)' }} className="col-span-1 md:col-span-2 lg:col-span-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+                              <Field label="ILD / IFD (Firmness)" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrIld || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrIld', selectedValue)}
+                                  options={['ILD rating (e.g., 25, 30, 35, 40, 45)']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="SUPPORT FACTOR" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrSupportFactor || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrSupportFactor', selectedValue)}
+                                  options={['Support Factor (2.4-2.8+ for HR foam)']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="RESILIENCE" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrResilience || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrResilience', selectedValue)}
+                                  options={['Resilience % (>60% for true HR foam, often 65-75%)']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="COMPRESSION SET" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrCompressionSet || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrCompressionSet', selectedValue)}
+                                  options={['Compression Set % (<5% for quality HR)']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="TENSILE STRENGTH" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrTensileStrength || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrTensileStrength', selectedValue)}
+                                  options={['Tensile Strength (kPa) - higher for HR']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="ELONGATION" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrElongation || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrElongation', selectedValue)}
+                                  options={['Elongation at Break (%)']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="FATIGUE RESISTANCE" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrFatigueResistance || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrFatigueResistance', selectedValue)}
+                                  options={['Fatigue Test (>80% height retention after 80,000 cycles)']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="FIRE RETARDANT" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrFireRetardant || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrFireRetardant', selectedValue)}
+                                  options={['Standard', 'CME (Combustion Modified)', 'FR Treated']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="CERTIFICATION" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrCertification || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrCertification', selectedValue)}
+                                  options={['CertiPUR-US', 'OEKO-TEX', 'Greenguard']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
+                              <Field label="DENSITY" width="sm">
+                                <SearchableDropdown
+                                  value={material.foamHrDensity || ''}
+                                  onChange={(selectedValue) => handleRawMaterialChange(actualIndex, 'foamHrDensity', selectedValue)}
+                                  options={['35 kg/m³', '40 kg/m³', '45 kg/m³', '50 kg/m³', '55 kg/m³']}
+                                  placeholder="Select or type"
+                                />
+                              </Field>
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     )}
                     
@@ -9789,8 +8647,10 @@ const Step2 = ({
                       WORK ORDER {woIndex + 1}
                     </h4>
                     {material.workOrders.length > 1 && (
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => {
                           // Find previous work order to scroll to
                           const currentWorkOrders = material.workOrders || [];
@@ -9815,104 +8675,71 @@ const Step2 = ({
                             }, 100);
                           }
                         }}
-                        className="border rounded-md cursor-pointer text-xs font-medium transition-all hover:-translate-x-0.5"
-                        style={{
-                          backgroundColor: '#f3f4f6',
-                          borderColor: '#d1d5db',
-                          color: '#374151',
-                          padding: '4px 10px',
-                          height: '28px'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#e5e7eb';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f3f4f6';
-                        }}
+                        className="text-xs text-destructive hover:text-destructive"
                       >
                         Remove
-                      </button>
+                      </Button>
                     )}
                   </div>
                   
                   {/* Work Order Fields */}
                   <div className="flex flex-wrap items-start gap-6">
-                    <div className="flex flex-col">
-                      <label className="text-sm font-semibold text-gray-700 mb-2">
-                        WORK ORDER <span className="text-red-600">*</span>
-                      </label>
+                    <Field
+                      label="WORK ORDER"
+                      required
+                      width="sm"
+                      error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_workOrder`]}
+                      style={{ width: '160px' }}
+                    >
                       <SearchableDropdown
                         value={workOrder.workOrder || ''}
                         onChange={(selectedValue) => {
                           handleWorkOrderChange(actualIndex, woIndex, 'workOrder', selectedValue);
                         }}
-                        options={['WEAVING', 'TUFTING', 'QUILTING', 'PRINTING', 'KNITTING', 'EMBROIDERY', 'DYEING', 'BRAIDING', 'CARPET', 'CUTTING', 'SEWING', 'FRINGE/TASSELS']}
+                        options={[
+                          'WEAVING',
+                          'TUFTING',
+                          'QUILTING',
+                          'PRINTING',
+                          'KNITTING',
+                          'EMBROIDERY',
+                          'DYEING',
+                          'BRAIDING',
+                          'CARPET',
+                          'CUTTING',
+                          'SEWING',
+                          'FRINGE/TASSELS',
+                        ]}
                         placeholder="Select Work Order"
                         strictMode={true}
-                        className={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_workOrder`] 
-                          ? 'border-red-600' 
-                          : ''}
-                        style={{ width: '160px' }}
-                        onFocus={(e) => {
-                          if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_workOrder`]) {
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                        }}
+                        className={
+                          errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_workOrder`] ? 'border-destructive' : ''
+                        }
                       />
-                      {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_workOrder`] && (
-                        <span className="text-red-600 text-xs mt-1 font-medium">
-                          {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_workOrder`]}
-                        </span>
-                      )}
-                    </div>
+                    </Field>
                     
                     {/* WASTAGE field - Hidden for KNITTING, PRINTING, QUILTING, SEWING, TUFTING, WEAVING, and FRINGE/TASSELS as they have their own sections */}
                     {workOrder.workOrder && workOrder.workOrder !== 'KNITTING' && workOrder.workOrder !== 'PRINTING' && workOrder.workOrder !== 'QUILTING' && workOrder.workOrder !== 'SEWING' && workOrder.workOrder !== 'TUFTING' && workOrder.workOrder !== 'WEAVING' && workOrder.workOrder !== 'FRINGE/TASSELS' && (
                       <>
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">
-                            WASTAGE % <span className="text-red-600">*</span>
-                          </label>
-                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100px' }}>
-                            <input
-                              type="text"
-                              value={workOrder.wastage || ''}
-                              onChange={(e) => {
-                                // Store only numeric value (remove % and non-numeric chars except decimal point)
-                                const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                                handleWorkOrderChange(actualIndex, woIndex, 'wastage', numericValue);
-                              }}
-                              className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                  ? 'border-red-600' 
-                                  : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                              }`}
-                              style={{ padding: '10px 32px 10px 14px', width: '100%', height: '44px' }}
-                              onFocus={(e) => {
-                                if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                }
-                              }}
-                              onBlur={(e) => {
-                                e.target.style.boxShadow = '';
-                              }}
-                              placeholder="e.g., 2"
-                              required
-                            />
-                            {workOrder.wastage && (
-                              <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-                            )}
-                          </div>
-                          {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                            <span className="text-red-600 text-xs mt-1 font-medium">
-                              {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                            </span>
-                          )}
-                        </div>
-                        
+                        <Field
+                          label={
+                            <>
+                              WASTAGE % <span className="text-red-600">*</span>
+                            </>
+                          }
+                          width="sm"
+                          error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
+                        >
+                          <PercentInput
+                            value={workOrder.wastage || ''}
+                            onChange={(e) => {
+                              handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value);
+                            }}
+                            placeholder="e.g., 2"
+                            error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
+                            required
+                          />
+                        </Field>
                       </>
                     )}
                   </div>
@@ -9951,110 +8778,82 @@ const Step2 = ({
                       {workOrder.workOrder === 'BRAIDING' && (
                         <>
                           {/* STRAND COUNT */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              STRAND COUNT
-                              {workOrder.machineType && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getBraidingStrandCount(workOrder.machineType)})
-                                </span>
-                              )}
-                            </label>
-                            <input
+                          <Field
+                            label="STRAND COUNT"
+                            width="sm"
+                            helper={workOrder.machineType ? getBraidingStrandCount(workOrder.machineType) : undefined}
+                          >
+                            <Input
                               type="text"
                               value={workOrder.strandCount || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'strandCount', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter strand count"
                             />
-                        </div>
+                          </Field>
 
                           {/* WIDTH / DIAMETER */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              {workOrder.machineType ? getBraidingWidthDiameter(workOrder.machineType) : 'WIDTH / DIAMETER'}
-                            </label>
-                            <input
+                          <Field
+                            label={workOrder.machineType ? getBraidingWidthDiameter(workOrder.machineType) : 'WIDTH / DIAMETER'}
+                            width="sm"
+                          >
+                            <Input
                               type="text"
                               value={workOrder.widthDiameter || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'widthDiameter', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter width/diameter"
                             />
-                        </div>
+                          </Field>
 
                           {/* GSM */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-                            <input
+                          <Field label="GSM" width="sm">
+                            <Input
                               type="text"
                               value={workOrder.gsm || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'gsm', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter GSM"
                             />
-                          </div>
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={BRAIDING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                        </div>
+                          </Field>
 
                           {/* DESIGN REF (Upload) */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`braiding-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`braiding-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
-                            </div>
-                          </div>
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`braiding-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`braiding-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                          <input
-                            type="text"
+                          <Field label="REMARKS" width="lg">
+                            <Input
+                              type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter remarks"
-                          />
-                        </div>
+                            />
+                          </Field>
                         </>
                       )}
 
@@ -10062,283 +8861,222 @@ const Step2 = ({
                       {workOrder.workOrder === 'KNITTING' && (
                         <>
                           {/* DESIGN REF (Upload) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingDesignRef', e.target.files[0])}
-                                className="hidden"
-                                id={`knitting-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`knitting-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.knittingDesignRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
-                            </div>
-                          </div>
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) =>
+                                handleWorkOrderChange(actualIndex, woIndex, 'knittingDesignRef', e.target.files[0])
+                              }
+                              className="hidden"
+                              id={`knitting-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`knitting-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.knittingDesignRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* GAUGE */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              GAUGE
-                              {workOrder.machineType && getKnittingGaugeRange(workOrder.machineType) && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getKnittingGaugeRange(workOrder.machineType)})
-                                </span>
-                              )}
-                            </label>
-                            <input
+                          <Field
+                            label="GAUGE"
+                            width="sm"
+                            helper={workOrder.machineType ? getKnittingGaugeRange(workOrder.machineType) : undefined}
+                          >
+                            <Input
                               type="text"
                               value={workOrder.knittingGauge || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingGauge', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                              placeholder={workOrder.machineType && getKnittingGaugeRange(workOrder.machineType) ? getKnittingGaugeRange(workOrder.machineType) : 'Numeric'}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
+                              onChange={(e) =>
+                                handleWorkOrderChange(actualIndex, woIndex, 'knittingGauge', e.target.value)
+                              }
+                              placeholder={
+                                workOrder.machineType && getKnittingGaugeRange(workOrder.machineType)
+                                  ? getKnittingGaugeRange(workOrder.machineType)
+                                  : 'Numeric'
+                              }
                             />
-                          </div>
+                          </Field>
 
                           {/* GSM */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-                            <input
+                          <Field label="GSM" width="sm">
+                            <Input
                               type="text"
                               value={workOrder.knittingGsm || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingGsm', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                              onChange={(e) =>
+                                handleWorkOrderChange(actualIndex, woIndex, 'knittingGsm', e.target.value)
+                              }
                               placeholder="Numeric"
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* WALES Ratio */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WALES Ratio</label>
-                            <input
+                          <Field label="WALES RATIO" width="sm" helper="0–1">
+                            <Input
                               type="number"
                               step="0.001"
                               min="0"
                               max="1"
                               value={workOrder.knittingWalesRatio || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingWalesRatio', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                              onChange={(e) =>
+                                handleWorkOrderChange(actualIndex, woIndex, 'knittingWalesRatio', e.target.value)
+                              }
                               placeholder="0-1"
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* COURSES Ratio */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">COURSES Ratio</label>
-                            <input
+                          <Field label="COURSES RATIO" width="sm" helper="0–1">
+                            <Input
                               type="number"
                               step="0.001"
                               min="0"
                               max="1"
                               value={workOrder.knittingCoursesRatio || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingCoursesRatio', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
+                              onChange={(e) =>
+                                handleWorkOrderChange(actualIndex, woIndex, 'knittingCoursesRatio', e.target.value)
+                              }
                               placeholder="0-1"
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* RATIO WEIGHT/%AGE (Wales) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">RATIO WEIGHT/%AGE (Wales)</label>
-                            <input
-                              type="text"
+                          <Field label="RATIO WEIGHT(WALES)" width="sm">
+                            <PercentInput
                               value={workOrder.knittingRatioWeightWales || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingRatioWeightWales', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              placeholder="Ratio/%"
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
+                              placeholder="e.g., 25"
                             />
-                          </div>
+                          </Field>
 
                           {/* RATIO WEIGHT/%AGE (Courses) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">RATIO WEIGHT/%AGE (Courses)</label>
-                            <input
-                              type="text"
+                          <Field label="RATIO WEIGHT(COURSE)" width="sm">
+                            <PercentInput
                               value={workOrder.knittingRatioWeightCourses || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knittingRatioWeightCourses', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              placeholder="Ratio/%"
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
+                              onChange={(e) =>
+                                handleWorkOrderChange(actualIndex, woIndex, 'knittingRatioWeightCourses', e.target.value)
+                              }
+                              placeholder="e.g., 75"
                             />
-                          </div>
+                          </Field>
 
                           {/* WASTAGE % */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '140px' }}>
-                              <input
-                                type="text"
-                                value={workOrder.wastage || ''}
-                                onChange={(e) => {
-                                  // Store only numeric value (remove % and non-numeric chars except decimal point)
-                                  const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                                  handleWorkOrderChange(actualIndex, woIndex, 'wastage', numericValue);
-                                }}
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                  errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                    ? 'border-red-600' 
-                                    : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                                }`}
-                                style={{ padding: '10px 32px 10px 14px', width: '100%', height: '44px' }}
-                                placeholder="%AGE"
-                                onFocus={(e) => {
-                                  if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                  }
-                                }}
-                                onBlur={(e) => {
-                                  e.target.style.boxShadow = '';
-                                }}
-                              />
-                              {workOrder.wastage && (
-                                <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-                              )}
-                            </div>
-                            {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                              <span className="text-red-600 text-xs mt-1 font-medium">
-                                {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                              </span>
-                            )}
-                          </div>
+                          <Field
+                            label="WASTAGE %"
+                            width="sm"
+                            error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
+                          >
+                            <PercentInput
+                              value={workOrder.wastage || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
+                              placeholder="e.g., 2"
+                              error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
+                            />
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={KNITTING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
                               placeholder="Text"
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
 
                       {/* Advanced Filter for KNITTING - Button right after REMARKS */}
                       {workOrder.workOrder === 'KNITTING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Filter Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showKnittingAdvancedFilter', !workOrder.showKnittingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showKnittingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showKnittingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showKnittingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showKnittingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showKnittingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showKnittingAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showKnittingAdvancedFilter',
+                                  !workOrder.showKnittingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
 
                           {/* Advanced Filter UI Table */}
                           {workOrder.showKnittingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* DESIGN - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getKnittingDesigns(workOrder.machineType).length} options)
-                                      </span>
-                                    )}
-                                  </label>
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field
+                                  label="DESIGN"
+                                  width="sm"
+                                  helper={
+                                    workOrder.machineType
+                                      ? `${getKnittingDesigns(workOrder.machineType).length} options`
+                                      : undefined
+                                  }
+                                >
                                   <SearchableDropdown
                                     value={workOrder.knittingDesign || ''}
-                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'knittingDesign', selectedValue)}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'knittingDesign', selectedValue)
+                                    }
                                     options={workOrder.machineType ? getKnittingDesigns(workOrder.machineType) : []}
                                     placeholder={workOrder.machineType ? "Select or type Design" : "Select Machine Type First"}
                                     disabled={!workOrder.machineType}
-                                    style={{ width: '100%' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                                   />
-                                </div>
+                                </Field>
 
-                                {/* VARIANTS - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getKnittingVariants(workOrder.machineType).length} options)
-                                      </span>
-                                    )}
-                                  </label>
+                                <Field
+                                  label="VARIANTS"
+                                  width="sm"
+                                  helper={
+                                    workOrder.machineType
+                                      ? `${getKnittingVariants(workOrder.machineType).length} options`
+                                      : undefined
+                                  }
+                                >
                                   <SearchableDropdown
                                     value={workOrder.knittingVariant || ''}
-                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'knittingVariant', selectedValue)}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'knittingVariant', selectedValue)
+                                    }
                                     options={workOrder.machineType ? getKnittingVariants(workOrder.machineType) : []}
                                     placeholder={workOrder.machineType ? "Select or type Variant" : "Select Machine Type First"}
                                     disabled={!workOrder.machineType}
-                                    style={{ width: '100%' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                                   />
-                                </div>
+                                </Field>
                               </div>
                             </div>
                           )}
@@ -10348,116 +9086,80 @@ const Step2 = ({
                       {/* Advanced Filter for BRAIDING - Button right after REMARKS */}
                       {workOrder.workOrder === 'BRAIDING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showBraidingAdvancedFilter', !workOrder.showBraidingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showBraidingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showBraidingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showBraidingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showBraidingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showBraidingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showBraidingAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showBraidingAdvancedFilter',
+                                  !workOrder.showBraidingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
-                          
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showBraidingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* VARIANTS - Dropdown */}
-                        <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                          <select
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.machineType ? getBraidingVariants(workOrder.machineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
-                                {/* DESIGN - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
-                                    value={workOrder.braidingDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'braidingDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getBraidingVariants(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Variant" : "Select Machine Type First"}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.machineType ? getBraidingDesigns(workOrder.machineType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
-                                {/* PATTERN - Text Input */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    PATTERN
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getBraidingPatternType(workOrder.machineType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
+                                  />
+                                </Field>
+
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.braidingDesign || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'braidingDesign', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getBraidingDesigns(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Design" : "Select Machine Type First"}
+                                    disabled={!workOrder.machineType}
+                                  />
+                                </Field>
+
+                                <Field
+                                  label="PATTERN"
+                                  width="sm"
+                                  helper={workOrder.machineType ? getBraidingPatternType(workOrder.machineType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.pattern || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pattern', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.machineType ? `Enter ${getBraidingPatternType(workOrder.machineType).toLowerCase()}` : 'Enter pattern'}
+                                    placeholder={
+                                      workOrder.machineType
+                                        ? `Enter ${getBraidingPatternType(workOrder.machineType).toLowerCase()}`
+                                        : 'Enter pattern'
+                                    }
                                   />
-                                </div>
+                                </Field>
                               </div>
                             </div>
                           )}
@@ -10469,142 +9171,103 @@ const Step2 = ({
                       {workOrder.workOrder === 'QUILTING' && (
                         <>
                           {/* QUILTING TYPE */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">QUILTING TYPE</label>
-                          <SearchableDropdown
-                            value={workOrder.quiltingType || ''}
-                            onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'quiltingType', selectedValue)}
-                            options={getAllQuiltingTypes()}
-                            placeholder="Select or type Quilting Type"
-                            style={{ width: '200px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                          />
-                        </div>
+                          <Field label="QUILTING TYPE" width="sm">
+                            <SearchableDropdown
+                              value={workOrder.quiltingType || ''}
+                              onChange={(selectedValue) =>
+                                handleWorkOrderChange(actualIndex, woIndex, 'quiltingType', selectedValue)
+                              }
+                              options={getAllQuiltingTypes()}
+                              placeholder="Select or type Quilting Type"
+                            />
+                          </Field>
 
                           {/* DESIGN REF (Upload) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`quilting-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`quilting-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
-                            </div>
-                          </div>
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`quilting-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`quilting-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* STITCH LENGTH (mm) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              STITCH LENGTH (mm)
-                              {workOrder.quiltingType && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getQuiltingStitchLength(workOrder.quiltingType)})
-                                </span>
-                              )}
-                            </label>
-                            <input
+                          <Field
+                            label="STITCH LENGTH (MM)"
+                            width="sm"
+                            helper={workOrder.quiltingType ? getQuiltingStitchLength(workOrder.quiltingType) : undefined}
+                          >
+                            <Input
                               type="text"
                               value={workOrder.stitchLength || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'stitchLength', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                              placeholder={workOrder.quiltingType ? getQuiltingStitchLength(workOrder.quiltingType) : 'Enter stitch length (mm)'}
+                              placeholder={
+                                workOrder.quiltingType ? getQuiltingStitchLength(workOrder.quiltingType) : 'Enter stitch length (mm)'
+                              }
                             />
-                          </div>
+                          </Field>
 
                           {/* PATTERN REPEAT */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              PATTERN REPEAT
-                              {workOrder.quiltingType && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getQuiltingPatternRepeat(workOrder.quiltingType)})
-                                </span>
-                              )}
-                            </label>
-                            <input
+                          <Field
+                            label="PATTERN REPEAT"
+                            width="sm"
+                            helper={workOrder.quiltingType ? getQuiltingPatternRepeat(workOrder.quiltingType) : undefined}
+                          >
+                            <Input
                               type="text"
                               value={workOrder.patternRepeat || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'patternRepeat', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                              placeholder={workOrder.quiltingType ? getQuiltingPatternRepeat(workOrder.quiltingType) : 'Enter pattern repeat'}
+                              placeholder={
+                                workOrder.quiltingType ? getQuiltingPatternRepeat(workOrder.quiltingType) : 'Enter pattern repeat'
+                              }
                             />
-                          </div>
+                          </Field>
 
                           {/* WASTAGE % */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                            <input
-                              type="text"
+                          <Field
+                            label="WASTAGE %"
+                            width="sm"
+                            error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
+                          >
+                            <PercentInput
                               value={workOrder.wastage || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
-                              className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                  ? 'border-red-600' 
-                                  : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                              }`}
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                              onFocus={(e) => {
-                                if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                }
-                              }}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                              placeholder="%AGE"
+                              placeholder="e.g., 2"
+                              error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
                             />
-                            {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                              <span className="text-red-600 text-xs mt-1 font-medium">
-                                {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                              </span>
-                            )}
-                          </div>
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={QUILTING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Text"
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
 
@@ -10612,120 +9275,85 @@ const Step2 = ({
                       {workOrder.workOrder === 'PRINTING' && (
                         <>
                           {/* PRINTING TYPE */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">PRINTING TYPE</label>
-                          <SearchableDropdown
-                            value={workOrder.printingType || ''}
-                            onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'printingType', selectedValue)}
-                            options={getAllPrintingTypes()}
-                            placeholder="Select or type Printing Type"
-                            style={{ width: '200px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                          />
-                        </div>
+                          <Field label="PRINTING TYPE" width="sm">
+                            <SearchableDropdown
+                              value={workOrder.printingType || ''}
+                              onChange={(selectedValue) =>
+                                handleWorkOrderChange(actualIndex, woIndex, 'printingType', selectedValue)
+                              }
+                              options={getAllPrintingTypes()}
+                              placeholder="Select or type Printing Type"
+                            />
+                          </Field>
 
                           {/* DESIGN REF (Upload) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`printing-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`printing-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
-                            </div>
-                          </div>
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`printing-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`printing-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* REPEAT SIZE */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              REPEAT SIZE
-                              {workOrder.printingType && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getPrintingRepeatSize(workOrder.printingType)})
-                                </span>
-                              )}
-                            </label>
-                            <input
+                          <Field
+                            label="REPEAT SIZE"
+                            width="sm"
+                            helper={workOrder.printingType ? getPrintingRepeatSize(workOrder.printingType) : undefined}
+                          >
+                            <Input
                               type="text"
                               value={workOrder.repeatSize || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'repeatSize', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder={workOrder.printingType ? getPrintingRepeatSize(workOrder.printingType) : 'Enter repeat size'}
                             />
-                          </div>
+                          </Field>
 
                           {/* WASTAGE % */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                            <input
-                              type="text"
+                          <Field
+                            label="WASTAGE %"
+                            width="sm"
+                            error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
+                          >
+                            <PercentInput
                               value={workOrder.wastage || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
-                              className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                  ? 'border-red-600' 
-                                  : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                              }`}
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                              onFocus={(e) => {
-                                if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                }
-                              }}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                              placeholder="%AGE"
+                              placeholder="e.g., 2"
+                              error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
                             />
-                            {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                              <span className="text-red-600 text-xs mt-1 font-medium">
-                                {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                              </span>
-                            )}
-                          </div>
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-                          <SearchableDropdown
+                          <Field label="APPROVAL" width="sm">
+                            <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={PRINTING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                          />
-                        </div>
+                            />
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Text"
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
 
@@ -10733,98 +9361,64 @@ const Step2 = ({
                       {workOrder.workOrder === 'SEWING' && (
                         <>
                           {/* SPI */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">SPI</label>
-                          <input
-                            type="text"
+                          <Field label="SPI" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.spi || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'spi', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Numeric"
-                          />
-                        </div>
+                            />
+                          </Field>
 
                           {/* THREAD TYPE */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              THREAD TYPE
-                              {workOrder.sewingMachineType && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getSewingThreadType(workOrder.sewingMachineType)})
-                                </span>
-                              )}
-                            </label>
+                          <Field
+                            label="THREAD TYPE"
+                            width="sm"
+                            helper={workOrder.sewingMachineType ? getSewingThreadType(workOrder.sewingMachineType) : undefined}
+                          >
                             <SearchableDropdown
                               value={workOrder.threadType || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'threadType', selectedValue)}
                               options={SEWING_THREAD_TYPE_OPTIONS}
                               placeholder="Select or type Thread Type"
-                              style={{ width: '220px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
-                          {/* WASTAGE % */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                            <input
-                              type="text"
+                          {/* WASTAGE % - OPTIONAL for SEWING */}
+                          <Field
+                            label="WASTAGE %"
+                            width="sm"
+                            error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
+                          >
+                            <PercentInput
                               value={workOrder.wastage || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
-                              className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                  ? 'border-red-600' 
-                                  : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                              }`}
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                              onFocus={(e) => {
-                                if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                }
-                                
+                              onChange={(e) => {
+                                handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value);
                               }}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                              placeholder="%AGE"
+                              placeholder="e.g., 2 (optional)"
+                              error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
                             />
-                            {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                              <span className="text-red-600 text-xs mt-1 font-medium">
-                                {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                              </span>
-                            )}
-                          </div>
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-                          <SearchableDropdown
+                          <Field label="APPROVAL" width="sm">
+                            <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={SEWING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                          />
-                        </div>
+                            />
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Text"
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
 
@@ -10832,73 +9426,54 @@ const Step2 = ({
                       {workOrder.workOrder === 'FRINGE/TASSELS' && (
                         <>
                           {/* TYPE */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TYPE</label>
+                          <Field label="TYPE" width="sm">
                             <SearchableDropdown
                               value={workOrder.fringeType || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeType', selectedValue)}
                               options={['Cut Fringe', 'Chainette', 'Tassel (individual)', 'Ball Fringe', 'Brush Fringe', 'Bullion', 'Loop Fringe']}
                               placeholder="Select or type"
-                              style={{ width: '180px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* MATERIAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">MATERIAL</label>
+                          <Field label="MATERIAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.fringeMaterial || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeMaterial', selectedValue)}
                               options={['Rayon (shiny)', 'Polyester', 'Cotton', 'Silk', 'Metallic', 'Wool', 'Jute']}
                               placeholder="Select or type"
-                              style={{ width: '180px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* DROP LENGTH */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DROP LENGTH</label>
+                          <Field label="DROP LENGTH" width="sm">
                             <SearchableDropdown
                               value={workOrder.dropLength || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'dropLength', selectedValue)}
                               options={['2cm', '5cm', '10cm', '15cm', '20cm']}
                               placeholder="Select or type"
-                              style={{ width: '160px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* TAPE/HEADER WIDTH */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TAPE/HEADER WIDTH</label>
+                          <Field label="TAPE/HEADER WIDTH" width="sm">
                             <SearchableDropdown
                               value={workOrder.tapeHeaderWidth || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'tapeHeaderWidth', selectedValue)}
                               options={['10mm', '15mm', '20mm']}
                               placeholder="Select or type"
-                              style={{ width: '160px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* COLOUR */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">COLOUR</label>
+                          <Field label="COLOUR" width="lg">
                             <div className="flex items-center gap-2">
                               <SearchableDropdown
                                 value={workOrder.fringeColour || ''}
                                 onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeColour', selectedValue)}
                                 options={['DTM', 'Multi-Coloured', 'Iridescent', 'Ombre']}
                                 placeholder="Select or type"
-                                style={{ width: '160px' }}
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
+                                className="flex-1"
                               />
                               <input
                                 type="file"
@@ -10906,32 +9481,29 @@ const Step2 = ({
                                 className="hidden"
                                 id={`fringe-colour-ref-${materialIndex + 1}-${woIndex}`}
                               />
-                              <label
-                                htmlFor={`fringe-colour-ref-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-11 flex-shrink-0"
+                                onClick={() =>
+                                  document.getElementById(`fringe-colour-ref-${materialIndex + 1}-${woIndex}`)?.click()
+                                }
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.fringeColourRefImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}</span>
-                              </label>
+                                {workOrder.fringeColourRefImage ? 'UPLOADED' : 'UPLOAD REF'}
+                              </Button>
                             </div>
-                          </div>
+                          </Field>
 
                           {/* PLACEMENT */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">PLACEMENT</label>
+                          <Field label="PLACEMENT" width="lg">
                             <div className="flex items-center gap-2">
-                              <input
+                              <Input
                                 type="text"
                                 value={workOrder.fringePlacement || ''}
                                 onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringePlacement', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', width: '160px', height: '44px' }}
                                 placeholder="Enter placement"
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
+                                className="flex-1"
                               />
                               <input
                                 type="file"
@@ -10939,162 +9511,97 @@ const Step2 = ({
                                 className="hidden"
                                 id={`fringe-placement-ref-${materialIndex + 1}-${woIndex}`}
                               />
-                              <label
-                                htmlFor={`fringe-placement-ref-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-11 flex-shrink-0"
+                                onClick={() =>
+                                  document.getElementById(`fringe-placement-ref-${materialIndex + 1}-${woIndex}`)?.click()
+                                }
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.fringePlacementRefImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}</span>
-                              </label>
+                                {workOrder.fringePlacementRefImage ? 'UPLOADED' : 'UPLOAD REF'}
+                              </Button>
                             </div>
-                          </div>
-
+                          </Field>
 
                           {/* QTY - Type Selection (PCS/LENGTH) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">QTY</label>
+                          <Field label="QTY" width="sm">
                             <SearchableDropdown
                               value={workOrder.fringeQtyType || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeQtyType', selectedValue)}
                               options={['PCS', 'LENGTH']}
                               placeholder="Select type"
-                              style={{ width: '140px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* Conditional QTY Fields */}
                           {workOrder.fringeQtyType === 'PCS' && (
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">PIECES</label>
-                              <input
+                            <Field label="PIECES" width="sm">
+                              <Input
                                 type="text"
                                 value={workOrder.fringeQtyPcs || ''}
                                 onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeQtyPcs', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', width: '140px', height: '44px' }}
                                 placeholder="Enter pieces"
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
                               />
-                            </div>
+                            </Field>
                           )}
 
                           {workOrder.fringeQtyType === 'LENGTH' && (
-                            <>
-                              <div className="flex flex-col">
-                                <label className="text-sm font-semibold text-gray-700 mb-2">CNS/PC</label>
-                                <input
-                                  type="text"
-                                  value={workOrder.fringeQtyCnsPerPc || ''}
-                                  onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeQtyCnsPerPc', e.target.value)}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                  style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                  placeholder="Enter CNS/PC"
-                                  onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                  onBlur={(e) => e.target.style.boxShadow = ''}
-                                />
-                              </div>
-                            </>
+                            <Field label="CNS/PC" width="sm">
+                              <Input
+                                type="text"
+                                value={workOrder.fringeQtyCnsPerPc || ''}
+                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeQtyCnsPerPc', e.target.value)}
+                                placeholder="Enter CNS/PC"
+                              />
+                            </Field>
                           )}
 
-                          {/* TESTING REQUIREMENTS - Multiselect with Upload */}
-                          <div className="flex flex-col" style={{ width: '100%' }}>
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
-                            <div className="flex items-start gap-2" style={{ flexWrap: 'wrap' }}>
-                              <div className="relative" style={{ minWidth: '220px', flex: '1 1 auto' }}>
-                                <div className="border-2 rounded-lg bg-white border-[#e5e7eb] focus-within:border-indigo-500" style={{ padding: '8px', minHeight: '100px', maxHeight: '200px', overflowY: 'auto' }}>
-                                  {['Colour Fastness (light/UV)', 'Wash Resistance', 'Flammability'].map((option) => {
-                                    const currentValues = Array.isArray(workOrder.fringeTestingRequirements) 
-                                      ? workOrder.fringeTestingRequirements 
-                                      : (workOrder.fringeTestingRequirements ? (typeof workOrder.fringeTestingRequirements === 'string' ? workOrder.fringeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                    const isChecked = currentValues.includes(option);
-                                    return (
-                                      <label key={option} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={isChecked}
-                                          onChange={(e) => {
-                                            const currentValues = Array.isArray(workOrder.fringeTestingRequirements) 
-                                              ? workOrder.fringeTestingRequirements 
-                                              : (workOrder.fringeTestingRequirements ? (typeof workOrder.fringeTestingRequirements === 'string' ? workOrder.fringeTestingRequirements.split(',').filter(v => v.trim()) : []) : []);
-                                            let newValues;
-                                            if (e.target.checked) {
-                                              newValues = [...currentValues, option];
-                                            } else {
-                                              newValues = currentValues.filter(v => v !== option);
-                                            }
-                                            handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirements', newValues);
-                                          }}
-                                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                        />
-                                        <span className="text-sm text-gray-900">{option}</span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                                {workOrder.fringeTestingRequirements && Array.isArray(workOrder.fringeTestingRequirements) && workOrder.fringeTestingRequirements.length > 0 && (
-                                  <div className="text-xs text-gray-700 mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                    <strong>Selected:</strong> {workOrder.fringeTestingRequirements.join(', ')}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex flex-col" style={{ flex: '0 0 auto' }}>
-                                <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                                <input
-                                  type="file"
-                                  onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirementsUpload', e.target.files[0])}
-                                  className="hidden"
-                                  id={`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`}
+                          {/* TESTING REQUIREMENTS */}
+                          <Field label="TESTING REQ." width="lg">
+                            <div className="flex items-center" style={{ gap: '0.75rem' }}>
+                              <div className="flex-1">
+                                <TestingRequirementsInput
+                                  value={Array.isArray(workOrder.fringeTestingRequirements) 
+                                    ? workOrder.fringeTestingRequirements 
+                                    : (workOrder.fringeTestingRequirements ? (typeof workOrder.fringeTestingRequirements === 'string' ? workOrder.fringeTestingRequirements.split(',').filter(v => v.trim()) : []) : [])}
+                                  onChange={(values) => handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirements', values)}
+                                  options={['Colour Fastness (light/UV)', 'Wash Resistance', 'Flammability']}
+                                  placeholder="Type to search or select testing requirements..."
                                 />
-                                <label
-                                  htmlFor={`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                  style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                  </svg>
-                                  <span className="truncate">{workOrder.fringeTestingRequirementsUpload ? 'UPLOADED' : 'UPLOAD'}</span>
-                                </label>
                               </div>
+                              <input
+                                type="file"
+                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirementsUpload', e.target.files[0])}
+                                className="hidden"
+                                id={`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`}
+                                accept="image/*"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-11 flex-shrink-0"
+                                onClick={() => document.getElementById(`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`)?.click()}
+                              >
+                                {workOrder.fringeTestingRequirementsUpload ? 'UPLOADED' : 'UPLOAD'}
+                              </Button>
                             </div>
-                          </div>
+                          </Field>
 
                           {/* SURPLUS % */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
-                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '140px' }}>
-                              <input
-                                type="text"
-                                value={workOrder.fringeSurplus || ''}
-                                onChange={(e) => {
-                                  // Store only numeric value (remove % and non-numeric chars except decimal point)
-                                  const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                                  handleWorkOrderChange(actualIndex, woIndex, 'fringeSurplus', numericValue);
-                                }}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 32px 10px 14px', width: '100%', height: '44px' }}
-                                placeholder="%age"
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => {
-                                  e.target.style.boxShadow = '';
-                                }}
-                              />
-                              {workOrder.fringeSurplus && (
-                                <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
-                              )}
-                            </div>
-                          </div>
+                          <Field label="SURPLUS %" width="sm">
+                            <PercentInput
+                              value={workOrder.fringeSurplus || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeSurplus', e.target.value)}
+                              placeholder="e.g., 5"
+                            />
+                          </Field>
 
                           {/* WASTAGE % - With dropdown options */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '180px' }}>
+                          <Field label="WASTAGE %" width="sm">
+                            <div className="relative">
                               <SearchableDropdown
                                 value={workOrder.fringeWastage || ''}
                                 onChange={(selectedValue) => {
@@ -11111,126 +9618,102 @@ const Step2 = ({
                                 options={['Hem', 'Pillow Edge', 'Curtain Edge', 'Trim']}
                                 placeholder="Select or type %age"
                                 strictMode={false}
-                                style={{ width: '100%', paddingRight: '32px' }}
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => {
-                                  e.target.style.boxShadow = '';
-                                }}
+                                className={workOrder.fringeWastage && !['Hem', 'Pillow Edge', 'Curtain Edge', 'Trim'].includes(workOrder.fringeWastage) ? 'pr-10' : ''}
                               />
                               {workOrder.fringeWastage && !['Hem', 'Pillow Edge', 'Curtain Edge', 'Trim'].includes(workOrder.fringeWastage) && (
-                                <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
+                                <span style={{ position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', pointerEvents: 'none', userSelect: 'none', zIndex: 10 }}>%</span>
                               )}
                             </div>
-                          </div>
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.fringeApproval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeApproval', selectedValue)}
                               options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
                               placeholder="Select or type"
-                              style={{ width: '180px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.fringeRemarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeRemarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
                               placeholder="Text"
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* Advance Spec Section for FRINGE/TASSELS */}
                           <div className="w-full" style={{ marginTop: '20px' }}>
-                            {/* Show/Hide Advance Filter Button */}
-                            <div style={{ marginBottom: '20px', width: '100%' }}>
-                              <button
+                            {/* Advance Spec Button */}
+                            <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                              <Button
                                 type="button"
-                                onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showFringeAdvancedSpec', !workOrder.showFringeAdvancedSpec)}
-                                className="border-2 rounded-lg text-sm font-medium transition-all"
-                                style={{
-                                  padding: '10px 20px',
-                                  height: '44px',
-                                  backgroundColor: workOrder.showFringeAdvancedSpec ? '#667eea' : '#ffffff',
-                                  borderColor: workOrder.showFringeAdvancedSpec ? '#667eea' : '#e5e7eb',
-                                  color: workOrder.showFringeAdvancedSpec ? '#ffffff' : '#374151'
-                                }}
-                                onMouseEnter={(e) => {
-                                  if (!workOrder.showFringeAdvancedSpec) {
-                                    e.currentTarget.style.backgroundColor = '#f9fafb';
-                                    e.currentTarget.style.borderColor = '#d1d5db';
-                                  }
-                                }}
-                                onMouseLeave={(e) => {
-                                  if (!workOrder.showFringeAdvancedSpec) {
-                                    e.currentTarget.style.backgroundColor = '#ffffff';
-                                    e.currentTarget.style.borderColor = '#e5e7eb';
-                                  }
-                                }}
+                                variant={workOrder.showFringeAdvancedSpec ? "default" : "outline"}
+                                size="sm"
+                                onClick={() =>
+                                  handleWorkOrderChange(
+                                    actualIndex,
+                                    woIndex,
+                                    'showFringeAdvancedSpec',
+                                    !workOrder.showFringeAdvancedSpec
+                                  )
+                                }
                               >
-                                Advance Filter
-                              </button>
+                                Advance Spec
+                              </Button>
                             </div>
 
                             {/* Advanced Spec UI Table */}
                             {workOrder.showFringeAdvancedSpec && (
-                              <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                                <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
+                              <div
+                                style={{
+                                  marginTop: '1.5rem',
+                                  padding: '1.5rem',
+                                  backgroundColor: 'var(--muted)',
+                                  borderRadius: '0.75rem',
+                                  border: '1px solid var(--border)',
+                                  width: '100%',
+                                }}
+                              >
+                                <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                  {/* FINISH */}
-                                  <div className="flex flex-col">
-                                    <label className="text-sm font-semibold text-gray-700 mb-2">FINISH</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" style={{ gap: '16px 12px' }}>
+                                  <Field label="FINISH" width="sm">
                                     <SearchableDropdown
                                       value={workOrder.fringeFinish || ''}
-                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeFinish', selectedValue)}
+                                      onChange={(selectedValue) =>
+                                        handleWorkOrderChange(actualIndex, woIndex, 'fringeFinish', selectedValue)
+                                      }
                                       options={['High Sheen', 'Matte', 'Twisted', 'Braided Header']}
                                       placeholder="Select or type"
-                                      style={{ width: '100%' }}
-                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                      onBlur={(e) => e.target.style.boxShadow = ''}
                                     />
-                                  </div>
+                                  </Field>
 
-                                  {/* ATTACHMENT */}
-                                  <div className="flex flex-col">
-                                    <label className="text-sm font-semibold text-gray-700 mb-2">ATTACHMENT</label>
+                                  <Field label="ATTACHMENT" width="sm">
                                     <SearchableDropdown
                                       value={workOrder.fringeAttachment || ''}
-                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeAttachment', selectedValue)}
+                                      onChange={(selectedValue) =>
+                                        handleWorkOrderChange(actualIndex, woIndex, 'fringeAttachment', selectedValue)
+                                      }
                                       options={['Sew-On Header', 'Adhesive Back', 'Loop for Hanging']}
                                       placeholder="Select or type"
-                                      style={{ width: '100%' }}
-                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                      onBlur={(e) => e.target.style.boxShadow = ''}
                                     />
-                                  </div>
+                                  </Field>
 
-                                  {/* CONSTRUCTION */}
-                                  <div className="flex flex-col">
-                                    <label className="text-sm font-semibold text-gray-700 mb-2">CONSTRUCTION</label>
+                                  <Field label="CONSTRUCTION" width="sm">
                                     <SearchableDropdown
                                       value={workOrder.fringeConstruction || ''}
-                                      onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'fringeConstruction', selectedValue)}
+                                      onChange={(selectedValue) =>
+                                        handleWorkOrderChange(actualIndex, woIndex, 'fringeConstruction', selectedValue)
+                                      }
                                       options={['Knot Density', 'Fiber Count', 'Threads per inch']}
                                       placeholder="Select or type"
-                                      style={{ width: '100%' }}
-                                      onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                      onBlur={(e) => e.target.style.boxShadow = ''}
                                     />
-                                  </div>
+                                  </Field>
                                 </div>
                               </div>
                             )}
@@ -11243,170 +9726,120 @@ const Step2 = ({
                       {workOrder.workOrder === 'DYEING' && (
                         <>
                           {/* DYEING TYPE */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">DYEING TYPE</label>
-                          <SearchableDropdown
-                            value={workOrder.dyeingType || ''}
-                            onChange={(selectedValue) => {
-                              const selectedType = selectedValue;
-                              handleWorkOrderChange(actualIndex, woIndex, 'dyeingType', selectedType);
-                              // Clear COLOR REF and REFERENCE TYPE when dyeing type changes
-                              if (!selectedType) {
-                                handleWorkOrderChange(actualIndex, woIndex, 'colorRef', '');
-                                handleWorkOrderChange(actualIndex, woIndex, 'referenceType', '');
-                              } else {
-                                handleWorkOrderChange(actualIndex, woIndex, 'colorRef', '');
-                                handleWorkOrderChange(actualIndex, woIndex, 'referenceType', '');
-                              }
-                            }}
-                            options={getAllDyeingTypes()}
-                            placeholder="Select or type Dyeing Type"
-                            style={{ width: '200px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                          />
-                        </div>
+                          <Field label="DYEING TYPE" width="sm">
+                            <SearchableDropdown
+                              value={workOrder.dyeingType || ''}
+                              onChange={(selectedValue) => {
+                                const selectedType = selectedValue;
+                                handleWorkOrderChange(actualIndex, woIndex, 'dyeingType', selectedType);
+                                // Clear COLOR REF and REFERENCE TYPE when dyeing type changes
+                                if (!selectedType) {
+                                  handleWorkOrderChange(actualIndex, woIndex, 'colorRef', '');
+                                  handleWorkOrderChange(actualIndex, woIndex, 'referenceType', '');
+                                } else {
+                                  handleWorkOrderChange(actualIndex, woIndex, 'colorRef', '');
+                                  handleWorkOrderChange(actualIndex, woIndex, 'referenceType', '');
+                                }
+                              }}
+                              options={getAllDyeingTypes()}
+                              placeholder="Select or type Dyeing Type"
+                            />
+                          </Field>
 
                           {/* COLOR REF */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">COLOR REF</label>
-                            <select
+                          <Field label="COLOR REF" width="sm">
+                            <SearchableDropdown
                               value={workOrder.colorRef || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'colorRef', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
+                              onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'colorRef', selectedValue)}
+                              options={workOrder.dyeingType ? getDyeingColorRefOptions(workOrder.dyeingType) : []}
+                              placeholder={workOrder.dyeingType ? "Select or type Color Ref" : "Select Dyeing Type First"}
                               disabled={!workOrder.dyeingType}
-                            >
-                              <option value="">Select Color Ref</option>
-                              {workOrder.dyeingType ? getDyeingColorRefOptions(workOrder.dyeingType).map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
-                              )) : <option value="">Select Dyeing Type First</option>}
-                            </select>
-                          </div>
+                            />
+                          </Field>
 
                           {/* REFERENCE TYPE */}
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">REFERENCE TYPE</label>
-                          <select
-                            value={workOrder.referenceType || ''}
-                            onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'referenceType', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '300px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
+                          <Field label="REFERENCE TYPE" width="lg">
+                            <SearchableDropdown
+                              value={workOrder.referenceType || ''}
+                              onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'referenceType', selectedValue)}
+                              options={workOrder.dyeingType ? getDyeingReferenceTypeOptions(workOrder.dyeingType) : []}
+                              placeholder={workOrder.dyeingType ? "Select or type Reference Type" : "Select Dyeing Type First"}
                               disabled={!workOrder.dyeingType}
-                            >
-                              <option value="">Select Reference Type</option>
-                              {workOrder.dyeingType ? getDyeingReferenceTypeOptions(workOrder.dyeingType).map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
-                              )) : <option value="">Select Dyeing Type First</option>}
-                            </select>
-                          </div>
+                            />
+                          </Field>
 
                           {/* REFERENCE - Text Field (appears after REFERENCE TYPE is selected) */}
-                          
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">REFERENCE</label>
-                              <input
-                                type="text"
-                                value={workOrder.dyeingReference || ''}
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'dyeingReference', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                                placeholder="Enter reference"
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
-                              />
-                            </div>
-                          
+                          <Field label="REFERENCE" width="sm">
+                            <Input
+                              type="text"
+                              value={workOrder.dyeingReference || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'dyeingReference', e.target.value)}
+                              placeholder="Enter reference"
+                            />
+                          </Field>
 
                           {/* REFERENCE IMAGE (Upload) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REFERENCE IMAGE</label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`dyeing-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`dyeing-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
-                            </div>
-                          </div>
+                          <Field label="REFERENCE IMAGE" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`dyeing-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`dyeing-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* SHRINKAGE WIDTH % */}
                           {isShrinkageWidthApplicable(workOrder.dyeingType) && (
-                            <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">SHRINKAGE WIDTH %</label>
-                              <input
-                                type="text"
+                            <Field label="SHRINKAGE WIDTH %" width="sm">
+                              <PercentInput
                                 value={workOrder.shrinkageWidthPercent || ''}
                                 onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'shrinkageWidthPercent', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                                onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
-                                placeholder="Enter %"
+                                placeholder="e.g., 2"
                               />
-                        </div>
-                      )}
+                            </Field>
+                          )}
 
                           {/* SHRINKAGE LENGTH % */}
                           {isShrinkageLengthApplicable(workOrder.dyeingType) && (
-                        <div className="flex flex-col">
-                              <label className="text-sm font-semibold text-gray-700 mb-2">SHRINKAGE LENGTH %</label>
-                          <input
-                            type="text"
+                            <Field label="SHRINKAGE LENGTH %" width="sm">
+                              <PercentInput
                                 value={workOrder.shrinkageLengthPercent || ''}
                                 onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'shrinkageLengthPercent', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                                placeholder="Enter %"
-                          />
-                        </div>
-                      )}
+                                placeholder="e.g., 2"
+                              />
+                            </Field>
+                          )}
 
                           {/* APPROVAL */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-                          <SearchableDropdown
+                          <Field label="APPROVAL" width="sm">
+                            <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={DYEING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
-                          />
-                        </div>
-                      
+                            />
+                          </Field>
+
                           {/* REMARKS */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                            onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                            onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter remarks"
                             />
-                        </div>
+                          </Field>
                         </>
                       )}
                       
@@ -11441,143 +9874,105 @@ const Step2 = ({
                       {workOrder.workOrder === 'WEAVING' && (
                         <>
                           {/* DESIGN REF (Upload) */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`weaving-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`weaving-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
-                            </div>
-                          </div>
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`weaving-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`weaving-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* REED */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              REED
-                              {workOrder.machineType && getWeavingReedRange(workOrder.machineType) && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getWeavingReedRange(workOrder.machineType)})
-                                </span>
-                              )}
-                            </label>
-                                <input
-                                  type="text"
-                                  value={workOrder.reed || ''}
-                                  onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'reed', e.target.value)}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                  onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                  onBlur={(e) => e.target.style.boxShadow = ''}
-                              placeholder={workOrder.machineType && getWeavingReedRange(workOrder.machineType) ? getWeavingReedRange(workOrder.machineType) : 'Numeric'}
-                                />
-                              </div>
+                          <Field
+                            label="REED"
+                            width="sm"
+                            helper={workOrder.machineType ? getWeavingReedRange(workOrder.machineType) : undefined}
+                          >
+                            <Input
+                              type="text"
+                              value={workOrder.reed || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'reed', e.target.value)}
+                              placeholder={
+                                workOrder.machineType && getWeavingReedRange(workOrder.machineType)
+                                  ? getWeavingReedRange(workOrder.machineType)
+                                  : 'Numeric'
+                              }
+                            />
+                          </Field>
 
                           {/* PICK */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">
-                              PICK
-                              {workOrder.machineType && getWeavingPickRange(workOrder.machineType) && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({getWeavingPickRange(workOrder.machineType)})
-                                </span>
-                              )}
-                            </label>
-                                <input
-                                  type="text"
-                                  value={workOrder.pick || ''}
-                                  onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pick', e.target.value)}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                  onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                  onBlur={(e) => e.target.style.boxShadow = ''}
-                              placeholder={workOrder.machineType && getWeavingPickRange(workOrder.machineType) ? getWeavingPickRange(workOrder.machineType) : 'Numeric'}
-                                    />
-                                </div>
+                          <Field
+                            label="PICK"
+                            width="sm"
+                            helper={workOrder.machineType ? getWeavingPickRange(workOrder.machineType) : undefined}
+                          >
+                            <Input
+                              type="text"
+                              value={workOrder.pick || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pick', e.target.value)}
+                              placeholder={
+                                workOrder.machineType && getWeavingPickRange(workOrder.machineType)
+                                  ? getWeavingPickRange(workOrder.machineType)
+                                  : 'Numeric'
+                              }
+                            />
+                          </Field>
 
                           {/* GSM */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-                                  <input
-                                    type="text"
+                          <Field label="GSM" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.gsm || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'gsm', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter GSM"
-                                  />
-                                </div>
+                            />
+                          </Field>
 
                           {/* WASTAGE % */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                                  <input
-                                    type="text"
-                                    value={workOrder.wastage || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
-                                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                      errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                        ? 'border-red-600' 
-                                        : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                                    }`}
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                      }
-                                    }}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
-                                    placeholder="%AGE"
-                                  />
-                                  {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                                    <span className="text-red-600 text-xs mt-1 font-medium">
-                                      {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                                    </span>
-                                  )}
-                                </div>
+                          <Field
+                            label="WASTAGE %"
+                            width="sm"
+                            error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
+                          >
+                            <PercentInput
+                              value={workOrder.wastage || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
+                              placeholder="e.g., 2"
+                              error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
+                            />
+                          </Field>
 
                           {/* APPROVAL */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={WEAVING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                                  <input
-                                    type="text"
+                          <Field label="REMARKS" width="lg">
+                            <Input
+                              type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Text"
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
                       
@@ -11586,129 +9981,85 @@ const Step2 = ({
                       {workOrder.workOrder === 'TUFTING' && (
                         <>
                           {/* DESIGN REF (Upload) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`tufting-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`tufting-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                              </label>
-                            </div>
-                          </div>
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`tufting-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`tufting-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* GSM */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-                                <input
+                          <Field label="GSM" width="sm">
+                            <Input
                               type="text"
                               value={workOrder.gsm || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'gsm', e.target.value)}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                  onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                  onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter GSM"
-                                />
-                            </div>
+                            />
+                          </Field>
 
                           {/* PILE HEIGHT (mm) */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">PILE HEIGHT (mm)</label>
-                                <input
+                          <Field label="PILE HEIGHT (MM)" width="sm">
+                            <Input
                               type="text"
                               value={workOrder.pileHeight || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pileHeight', e.target.value)}
-                                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                                  onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                  onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter pile height (mm)"
-                                />
-                            </div>
+                            />
+                          </Field>
 
                           {/* TPI (TUFT PER INCH) */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TPI (TUFT PER INCH)</label>
-                              <input
-                                type="text"
+                          <Field label="TPI (TUFT PER INCH)" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.tpi || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'tpi', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter TPI"
-                              />
-                            </div>
+                            />
+                          </Field>
 
                           {/* WASTAGE % */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                              <input
-                                type="text"
-                                value={workOrder.wastage || ''}
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 ${
-                                  errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] 
-                                    ? 'border-red-600' 
-                                    : 'border-[#e5e7eb] focus:border-indigo-500 focus:outline-none'
-                                }`}
-                              style={{ padding: '10px 14px', width: '140px', height: '44px' }}
-                                onFocus={(e) => {
-                                  if (!errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]) {
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                  }
-                                }}
-                                onBlur={(e) => e.target.style.boxShadow = ''}
-                                placeholder="%AGE"
-                              />
-                              {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`] && (
-                                <span className="text-red-600 text-xs mt-1 font-medium">
-                                  {errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}
-                                </span>
-                              )}
-                            </div>
+                          <Field label="WASTAGE %" width="sm" error={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`]}>
+                            <PercentInput
+                              value={workOrder.wastage || ''}
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'wastage', e.target.value)}
+                              placeholder="e.g., 2"
+                              error={Boolean(errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_wastage`])}
+                            />
+                          </Field>
 
                           {/* APPROVAL */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={TUFTING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                              <input
-                                type="text"
+                          <Field label="REMARKS" width="lg">
+                            <Input
+                              type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Text"
-                              />
-                            </div>
+                            />
+                          </Field>
                         </>
                       )}
 
@@ -11716,226 +10067,160 @@ const Step2 = ({
                       {workOrder.workOrder === 'CARPET' && (
                         <>
                           {/* GSM */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">GSM</label>
-                                  <input
-                                type="text"
+                          <Field label="GSM" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.gsm || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'gsm', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter GSM"
-                              />
-                            </div>
+                            />
+                          </Field>
 
                           {/* PILE HEIGHT (mm) */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">PILE HEIGHT (mm)</label>
-                                  <input
-                                    type="text"
+                          <Field label="PILE HEIGHT (MM)" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.pileHeight || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pileHeight', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter pile height"
-                                  />
-                              </div>
-                            
+                            />
+                          </Field>
+
                           {/* TPI / KPSI */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TPI / KPSI</label>
-                                  <input
-                                    type="text"
+                          <Field label="TPI / KPSI" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.tpiKpsi || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'tpiKpsi', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter TPI/KPSI"
-                                  />
-                              </div>
+                            />
+                          </Field>
 
                           {/* KNOT TYPE */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">KNOT TYPE</label>
-                            <select
+                          <Field label="KNOT TYPE" width="sm">
+                            <SearchableDropdown
                               value={workOrder.knotType || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'knotType', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                            >
-                              <option value="">Select Knot Type</option>
-                              {KNOT_TYPE_OPTIONS.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
-                              ))}
-                            </select>
-                            </div>
-                            
+                              onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'knotType', selectedValue)}
+                              options={KNOT_TYPE_OPTIONS}
+                              placeholder="Select or type Knot Type"
+                            />
+                          </Field>
+
                           {/* PITCH/ROWS */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">PITCH/ROWS</label>
-                                  <input
-                                type="text"
+                          <Field label="PITCH/ROWS" width="sm">
+                            <Input
+                              type="text"
                               value={workOrder.pitchRows || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'pitchRows', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '160px', height: '44px' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter pitch/rows"
-                                  />
-                                </div>
+                            />
+                          </Field>
 
                           {/* APPROVAL */}
-                                <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={CARPET_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* DESIGN REF (Upload) */}
-                            <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                                  <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`carpet-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`carpet-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                                </label>
-                              </div>
-                            </div>
-                            
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`carpet-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`carpet-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
+
                           {/* REMARKS */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                                  <input
-                                    type="text"
+                          <Field label="REMARKS" width="lg">
+                            <Input
+                              type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                                    onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                                    onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter remarks"
-                                  />
-                                </div>
+                            />
+                          </Field>
                         </>
                       )}
 
                       {/* Advanced Filter for CARPET - Button right after REMARKS */}
                       {workOrder.workOrder === 'CARPET' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showCarpetAdvancedFilter', !workOrder.showCarpetAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showCarpetAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showCarpetAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showCarpetAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showCarpetAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showCarpetAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showCarpetAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showCarpetAdvancedFilter',
+                                  !workOrder.showCarpetAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
-                              </div>
-                          
+                              Advance Spec
+                            </Button>
+                          </div>
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showCarpetAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* VARIANTS - Dropdown */}
-                      <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                        <select
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                onFocus={(e) => {
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.machineType ? getCarpetVariants(workOrder.machineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                            </div>
-                            
-                                {/* DESIGN - Dropdown */}
-                              <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
-                                    value={workOrder.carpetDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'carpetDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getCarpetVariants(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Variant" : "Select Machine Type First"}
                                     disabled={!workOrder.machineType}
-                                  onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.machineType ? getCarpetDesigns(workOrder.machineType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
+                                  />
+                                </Field>
+
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.carpetDesign || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'carpetDesign', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getCarpetDesigns(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Design" : "Select Machine Type First"}
+                                    disabled={!workOrder.machineType}
+                                  />
+                                </Field>
                               </div>
                             </div>
-                          </div>
                           )}
                         </div>
                       )}
@@ -11944,163 +10229,107 @@ const Step2 = ({
                       {workOrder.workOrder === 'CUTTING' && (
                         <>
                           {/* VARIANTS - Dropdown */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">VARIANTS</label>
-                            <select
+                          <Field label="VARIANTS" width="sm">
+                            <SearchableDropdown
                               value={workOrder.variants || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
-                        >
-                              <option value="">Select Variant</option>
-                              {workOrder.machineType ? getCuttingVariants(workOrder.machineType).map(variant => (
-                                <option key={variant} value={variant}>{variant}</option>
-                              )) : <option value="">Select Machine Type First</option>}
-                        </select>
-                          </div>
+                              onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)}
+                              options={workOrder.machineType ? getCuttingVariants(workOrder.machineType) : []}
+                              placeholder={workOrder.machineType ? "Select or type Variant" : "Select Machine Type First"}
+                              disabled={!workOrder.machineType}
+                            />
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={CUTTING_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter remarks"
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
 
                       {/* Advanced Filter for CUTTING - Button right after REMARKS */}
                       {workOrder.workOrder === 'CUTTING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showCuttingAdvancedFilter', !workOrder.showCuttingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showCuttingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showCuttingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showCuttingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showCuttingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showCuttingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showCuttingAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showCuttingAdvancedFilter',
+                                  !workOrder.showCuttingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
-                            </div>
-                          
+                              Advance Spec
+                            </Button>
+                          </div>
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showCuttingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* CUT TYPE - Dropdown */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    CUT TYPE
-                                  </label>
-                            <select
-                              value={workOrder.cutType || ''}
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'cutType', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="CUT TYPE" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.cutType || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'cutType', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getCuttingCutTypes(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Cut Type" : "Select Machine Type First"}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Cut Type</option>
-                                    {workOrder.machineType ? getCuttingCutTypes(workOrder.machineType).map(cutType => (
-                                      <option key={cutType} value={cutType}>{cutType}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                            </div>
-                            
-                                {/* LAYERS - Text Input */}
-                              <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    LAYERS
-                                  </label>
-                              <input
-                                type="text"
+                                  />
+                                </Field>
+
+                                <Field label="LAYERS" width="sm">
+                                  <Input
+                                    type="text"
                                     value={workOrder.layers || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'layers', e.target.value)}
-                                className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder="Enter layers"
                                   />
-                              </div>
-                                
-                                {/* NESTING - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    NESTING
-                                  </label>
-                                  <select
+                                </Field>
+
+                                <Field label="NESTING" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.nesting || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'nesting', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Nesting</option>
-                                    {NESTING_OPTIONS.map(opt => (
-                                      <option key={opt} value={opt}>{opt}</option>
-                                    ))}
-                                  </select>
-                            </div>
-                          </div>
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'nesting', selectedValue)
+                                    }
+                                    options={NESTING_OPTIONS}
+                                    placeholder="Select or type Nesting"
+                                  />
+                                </Field>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -12110,225 +10339,159 @@ const Step2 = ({
                       {workOrder.workOrder === 'EMBROIDERY' && (
                         <>
                           {/* DESIGN REF (Upload) */}
-                              <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">DESIGN REF</label>
-                            <div className="flex items-center gap-2">
-                                  <input
-                                type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
-                                className="hidden"
-                                id={`embroidery-file-${materialIndex + 1}-${woIndex}`}
-                              />
-                              <label
-                                htmlFor={`embroidery-file-${materialIndex + 1}-${woIndex}`}
-                                className="border-2 rounded-lg text-sm transition-all bg-white cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-600 border-[#e5e7eb]"
-                                style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                <span className="truncate">{workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}</span>
-                                </label>
-                            </div>
-                          </div>
+                          <Field label="DESIGN REF" width="sm">
+                            <input
+                              type="file"
+                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              className="hidden"
+                              id={`embroidery-file-${materialIndex + 1}-${woIndex}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() =>
+                                document.getElementById(`embroidery-file-${materialIndex + 1}-${woIndex}`)?.click()
+                              }
+                            >
+                              {workOrder.imageRef ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </Field>
 
                           {/* APPROVAL */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
+                          <Field label="APPROVAL" width="sm">
                             <SearchableDropdown
                               value={workOrder.approval || ''}
                               onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'approval', selectedValue)}
                               options={EMBROIDERY_APPROVAL_OPTIONS}
                               placeholder="Select or type Approval"
-                              style={{ width: '200px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                             />
-                          </div>
+                          </Field>
 
                           {/* REMARKS */}
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                            <input
+                          <Field label="REMARKS" width="lg">
+                            <Input
                               type="text"
                               value={workOrder.remarks || ''}
                               onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', width: '200px', height: '44px' }}
-                              onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                              onBlur={(e) => e.target.style.boxShadow = ''}
                               placeholder="Enter remarks"
                             />
-                          </div>
+                          </Field>
                         </>
                       )}
 
                       {/* Advanced Filter for EMBROIDERY - At the very bottom after all fields */}
                       {workOrder.workOrder === 'EMBROIDERY' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showEmbroideryAdvancedFilter', !workOrder.showEmbroideryAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showEmbroideryAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showEmbroideryAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showEmbroideryAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showEmbroideryAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showEmbroideryAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showEmbroideryAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showEmbroideryAdvancedFilter',
+                                  !workOrder.showEmbroideryAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
-                              </div>
-                          
+                              Advance Spec
+                            </Button>
+                          </div>
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showEmbroideryAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* VARIANTS - Dropdown */}
-                      <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                        <select
-                                    value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.machineType ? getEmbroideryVariants(workOrder.machineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                        </select>
-                      </div>
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
 
-                                {/* DESIGN - Dropdown */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
-                                    value={workOrder.embroideryDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'embroideryDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.variants || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getEmbroideryVariants(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Variant" : "Select Machine Type First"}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.machineType ? getEmbroideryDesigns(workOrder.machineType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
-                                {/* THREAD COLORS */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    THREAD COLORS
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getEmbroideryThreadColors(workOrder.machineType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
-                              type="text"
+                                  />
+                                </Field>
+
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.embroideryDesign || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'embroideryDesign', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getEmbroideryDesigns(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? "Select or type Design" : "Select Machine Type First"}
+                                    disabled={!workOrder.machineType}
+                                  />
+                                </Field>
+
+                                <Field
+                                  label="THREAD COLORS"
+                                  width="sm"
+                                  helper={workOrder.machineType ? getEmbroideryThreadColors(workOrder.machineType) : undefined}
+                                >
+                                  <Input
+                                    type="text"
                                     value={workOrder.threadColors || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'threadColors', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.machineType ? `Enter ${getEmbroideryThreadColors(workOrder.machineType)}` : 'Enter thread colors'}
-                            />
-                          </div>
-                                
-                                {/* STITCH COUNT */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    STITCH COUNT
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getEmbroideryStitchCount(workOrder.machineType)})
-                                      </span>
-                                    )}
-                                </label>
-                                  <input
+                                    placeholder={
+                                      workOrder.machineType
+                                        ? `Enter ${getEmbroideryThreadColors(workOrder.machineType)}`
+                                        : 'Enter thread colors'
+                                    }
+                                  />
+                                </Field>
+
+                                <Field
+                                  label="STITCH COUNT"
+                                  width="sm"
+                                  helper={workOrder.machineType ? getEmbroideryStitchCount(workOrder.machineType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.stitchCount || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'stitchCount', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.machineType ? `Enter ${getEmbroideryStitchCount(workOrder.machineType)}` : 'Enter stitch count'}
+                                    placeholder={
+                                      workOrder.machineType
+                                        ? `Enter ${getEmbroideryStitchCount(workOrder.machineType)}`
+                                        : 'Enter stitch count'
+                                    }
                                   />
-                            </div>
-                            
-                                {/* HOOP/FRAME SIZE */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    HOOP/FRAME SIZE
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getEmbroideryHoopFrameSize(workOrder.machineType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
+                                </Field>
+
+                                <Field
+                                  label="HOOP/FRAME SIZE"
+                                  width="sm"
+                                  helper={workOrder.machineType ? getEmbroideryHoopFrameSize(workOrder.machineType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.hoopFrameSize || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'hoopFrameSize', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.machineType ? `Enter ${getEmbroideryHoopFrameSize(workOrder.machineType)}` : 'Enter hoop/frame size'}
+                                    placeholder={
+                                      workOrder.machineType
+                                        ? `Enter ${getEmbroideryHoopFrameSize(workOrder.machineType)}`
+                                        : 'Enter hoop/frame size'
+                                    }
                                   />
-                                </div>
+                                </Field>
                               </div>
                             </div>
                           )}
@@ -12338,197 +10501,120 @@ const Step2 = ({
                       {/* Advanced Filter for PRINTING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'PRINTING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Show/Hide Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showPrintingAdvancedFilter', !workOrder.showPrintingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showPrintingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showPrintingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showPrintingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showPrintingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showPrintingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showPrintingAdvancedFilter ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showPrintingAdvancedFilter',
+                                  !workOrder.showPrintingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
                           
                           {/* Advanced Filter UI Table */}
                           {workOrder.showPrintingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* VARIANTS - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                        <select
-                                    value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    disabled={!workOrder.printingType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.printingType ? getPrintingVariants(workOrder.printingType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Printing Type First</option>}
-                        </select>
-                      </div>
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-4">ADVANCE SPEC</h4>
 
-                                {/* DESIGN - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
-                                    value={workOrder.printingDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'printingDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+                                {/* VARIANTS */}
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.variants || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.printingType ? getPrintingVariants(workOrder.printingType) : []}
+                                    placeholder={workOrder.printingType ? 'Select or type' : 'Select Printing Type First'}
                                     disabled={!workOrder.printingType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.printingType ? getPrintingDesigns(workOrder.printingType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Printing Type First</option>}
-                                  </select>
-                                </div>
-                                
+                                  />
+                                </Field>
+
+                                {/* DESIGN */}
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
+                                    value={workOrder.printingDesign || ''}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'printingDesign', selectedValue)
+                                    }
+                                    options={workOrder.printingType ? getPrintingDesigns(workOrder.printingType) : []}
+                                    placeholder={workOrder.printingType ? 'Select or type' : 'Select Printing Type First'}
+                                    disabled={!workOrder.printingType}
+                                  />
+                                </Field>
+
                                 {/* # OF SCREENS */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    # OF SCREENS
-                                    {workOrder.printingType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getPrintingNumberOfScreens(workOrder.printingType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
+                                <Field
+                                  label="# OF SCREENS"
+                                  width="sm"
+                                  helper={workOrder.printingType ? getPrintingNumberOfScreens(workOrder.printingType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.numberOfScreens || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'numberOfScreens', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.printingType ? getPrintingNumberOfScreens(workOrder.printingType) : 'Enter # of screens'}
+                                    placeholder={
+                                      workOrder.printingType ? getPrintingNumberOfScreens(workOrder.printingType) : 'Enter # of screens'
+                                    }
                                   />
-                                </div>
-                                
+                                </Field>
+
                                 {/* COLORS */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    COLORS
-                                    {workOrder.printingType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getPrintingColors(workOrder.printingType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
+                                <Field label="COLORS" width="sm" helper={workOrder.printingType ? getPrintingColors(workOrder.printingType) : undefined}>
+                                  <Input
                                     type="text"
                                     value={workOrder.colors || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'colors', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder={workOrder.printingType ? getPrintingColors(workOrder.printingType) : 'Enter colors'}
                                   />
-                            </div>
-                            
+                                </Field>
+
                                 {/* COVERAGE % */}
-                              <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    COVERAGE %
-                                    {workOrder.printingType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getPrintingCoveragePercent(workOrder.printingType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                <input
-                                  type="text"
+                                <Field
+                                  label="COVERAGE %"
+                                  width="sm"
+                                  helper={workOrder.printingType ? getPrintingCoveragePercent(workOrder.printingType) : undefined}
+                                >
+                                  <PercentInput
                                     value={workOrder.coveragePercent || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'coveragePercent', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                  onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder={workOrder.printingType ? getPrintingCoveragePercent(workOrder.printingType) : 'Enter coverage %'}
                                   />
-                                </div>
-                                
+                                </Field>
+
                                 {/* RESOLUTION */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    RESOLUTION
-                                    {workOrder.printingType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getPrintingResolution(workOrder.printingType)})
-                                  </span>
-                                )}
-                                  </label>
-                                  <input
+                                <Field
+                                  label="RESOLUTION"
+                                  width="sm"
+                                  helper={workOrder.printingType ? getPrintingResolution(workOrder.printingType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.resolution || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'resolution', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder={workOrder.printingType ? getPrintingResolution(workOrder.printingType) : 'Enter resolution'}
                                   />
+                                </Field>
                               </div>
                             </div>
-                          </div>
                           )}
                         </div>
                       )}
@@ -12536,117 +10622,81 @@ const Step2 = ({
                       {/* Advanced Filter for QUILTING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'QUILTING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Show/Hide Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showQuiltingAdvancedFilter', !workOrder.showQuiltingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showQuiltingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showQuiltingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showQuiltingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showQuiltingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showQuiltingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showQuiltingAdvancedFilter ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showQuiltingAdvancedFilter',
+                                  !workOrder.showQuiltingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
                           
                           {/* Advanced Filter UI Table */}
                           {workOrder.showQuiltingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* VARIANTS - Dropdown */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                                  <select
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-4">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+                                {/* VARIANTS */}
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.quiltingType ? getQuiltingVariants(workOrder.quiltingType) : []}
+                                    placeholder={workOrder.quiltingType ? 'Select or type' : 'Select Quilting Type First'}
                                     disabled={!workOrder.quiltingType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.quiltingType ? getQuiltingVariants(workOrder.quiltingType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Quilting Type First</option>}
-                                  </select>
-                          </div>
-                                
-                                {/* DESIGN - Dropdown */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
+                                  />
+                                </Field>
+
+                                {/* DESIGN */}
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.quiltingDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'quiltingDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'quiltingDesign', selectedValue)
+                                    }
+                                    options={workOrder.quiltingType ? getQuiltingDesigns(workOrder.quiltingType) : []}
+                                    placeholder={workOrder.quiltingType ? 'Select or type' : 'Select Quilting Type First'}
                                     disabled={!workOrder.quiltingType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.quiltingType ? getQuiltingDesigns(workOrder.quiltingType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Quilting Type First</option>}
-                                  </select>
-                                </div>
-                                
+                                  />
+                                </Field>
+
                                 {/* NEEDLE SPACING */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    NEEDLE SPACING
-                                    {workOrder.quiltingType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getQuiltingNeedleSpacing(workOrder.quiltingType)})
-                                      </span>
-                                    )}
-                                  </label>
-                            <input
-                              type="text"
+                                <Field
+                                  label="NEEDLE SPACING"
+                                  width="sm"
+                                  helper={workOrder.quiltingType ? getQuiltingNeedleSpacing(workOrder.quiltingType) : undefined}
+                                >
+                                  <Input
+                                    type="text"
                                     value={workOrder.needleSpacing || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'needleSpacing', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.quiltingType ? getQuiltingNeedleSpacing(workOrder.quiltingType) : 'Enter needle spacing'}
-                            />
-                          </div>
+                                    placeholder={
+                                      workOrder.quiltingType ? getQuiltingNeedleSpacing(workOrder.quiltingType) : 'Enter needle spacing'
+                                    }
+                                  />
+                                </Field>
                               </div>
                             </div>
                           )}
@@ -12656,48 +10706,42 @@ const Step2 = ({
                       {/* Advanced Filter for SEWING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'SEWING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showSewingAdvancedFilter', !workOrder.showSewingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showSewingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showSewingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showSewingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showSewingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showSewingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showSewingAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showSewingAdvancedFilter',
+                                  !workOrder.showSewingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
-                          
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showSewingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* MACHINE TYPE - Dropdown */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    MACHINE TYPE
-                                  </label>
-                            <SearchableDropdown
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="MACHINE TYPE" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.sewingMachineType || ''}
                                     onChange={(selectedValue) => {
                                       const selectedType = selectedValue;
@@ -12710,82 +10754,47 @@ const Step2 = ({
                                     }}
                                     options={getAllSewingMachineTypes()}
                                     placeholder="Select or type Machine Type"
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                   />
-                          </div>
-                                
-                                {/* STITCH TYPE */}
-                          <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    STITCH TYPE
-                                  </label>
-                            <input
-                              type="text"
+                                </Field>
+
+                                <Field
+                                  label="STITCH TYPE"
+                                  width="sm"
+                                  helper={workOrder.sewingMachineType ? getSewingStitchType(workOrder.sewingMachineType) : undefined}
+                                >
+                                  <Input
+                                    type="text"
                                     value={workOrder.stitchType || getSewingStitchType(workOrder.sewingMachineType) || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'stitchType', e.target.value)}
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.sewingMachineType ? getSewingStitchType(workOrder.sewingMachineType) : 'Enter stitch type'}
+                                    placeholder={
+                                      workOrder.sewingMachineType
+                                        ? getSewingStitchType(workOrder.sewingMachineType)
+                                        : 'Enter stitch type'
+                                    }
                                     disabled={!workOrder.sewingMachineType}
-                            />
-                          </div>
+                                  />
+                                </Field>
 
-                                {/* VARIANTS - Dropdown */}
-                      <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                        <select
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.sewingMachineType ? getSewingVariants(workOrder.sewingMachineType) : []}
+                                    placeholder={workOrder.sewingMachineType ? "Select or type Variant" : "Select Machine Type First"}
                                     disabled={!workOrder.sewingMachineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.sewingMachineType ? getSewingVariants(workOrder.sewingMachineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                        </select>
-                      </div>
+                                  />
+                                </Field>
 
-                                {/* NEEDLE SIZE */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    NEEDLE SIZE
-                                  </label>
-                                  <input
+                                <Field label="NEEDLE SIZE" width="sm">
+                                  <Input
                                     type="text"
                                     value={workOrder.needleSize || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'needleSize', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder="TEXT"
                                   />
-                                </div>
+                                </Field>
                               </div>
                             </div>
                           )}
@@ -12795,98 +10804,67 @@ const Step2 = ({
                       {/* Advanced Filter for WEAVING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'WEAVING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Show/Hide Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showWeavingAdvancedFilter', !workOrder.showWeavingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showWeavingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showWeavingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showWeavingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showWeavingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showWeavingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showWeavingAdvancedFilter ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showWeavingAdvancedFilter',
+                                  !workOrder.showWeavingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
                           
                           {/* Advanced Filter UI Table */}
                           {workOrder.showWeavingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* VARIANTS - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                                  <select
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-4">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+                                {/* VARIANTS */}
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)}
+                                    options={workOrder.machineType ? getWeavingVariants(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? 'Select or type' : 'Select Machine Type First'}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.machineType ? getWeavingVariants(workOrder.machineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
-                                {/* DESIGN - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
+                                  />
+                                </Field>
+
+                                {/* DESIGN */}
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.weavingDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'weavingDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'weavingDesign', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getWeavingDesigns(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? 'Select or type' : 'Select Machine Type First'}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.machineType ? getWeavingDesigns(workOrder.machineType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
-                                {/* WARP Ratio */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    WARP Ratio
-                                  </label>
-                                  <input
+                                  />
+                                </Field>
+
+                                {/* WARP RATIO */}
+                                <Field label="WARP RATIO" width="sm" helper="0–1 (sum with weft = 1)">
+                                  <Input
                                     type="number"
                                     step="0.001"
                                     min="0"
@@ -12902,24 +10880,13 @@ const Step2 = ({
                                         handleWorkOrderChange(actualIndex, woIndex, 'advancedWeftRatio', weftVal);
                                       }
                                     }}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder="0-1"
                                   />
-                                </div>
-                                
-                                {/* WEFT Ratio */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    WEFT Ratio
-                                  </label>
-                                  <input
+                                </Field>
+
+                                {/* WEFT RATIO */}
+                                <Field label="WEFT RATIO" width="sm" helper="0–1 (sum with warp = 1)">
+                                  <Input
                                     type="number"
                                     step="0.001"
                                     min="0"
@@ -12935,17 +10902,9 @@ const Step2 = ({
                                         handleWorkOrderChange(actualIndex, woIndex, 'advancedWarpRatio', warpVal);
                                       }
                                     }}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
                                     placeholder="0-1"
                                   />
-                                </div>
+                                </Field>
                               </div>
                             </div>
                           )}
@@ -12955,228 +10914,150 @@ const Step2 = ({
                       {/* Advanced Filter for TUFTING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'TUFTING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Show/Hide Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showTuftingAdvancedFilter', !workOrder.showTuftingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showTuftingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showTuftingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showTuftingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showTuftingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showTuftingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showTuftingAdvancedFilter ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showTuftingAdvancedFilter',
+                                  !workOrder.showTuftingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
                           
                           {/* Advanced Filter UI Table */}
                           {workOrder.showTuftingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* DESIGN - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    DESIGN
-                                  </label>
-                                  <select
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-4">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '16px 12px' }}>
+                                {/* DESIGN */}
+                                <Field label="DESIGN" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.tuftingDesign || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'tuftingDesign', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'tuftingDesign', selectedValue)
+                                    }
+                                    options={workOrder.machineType ? getTuftingDesigns(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? 'Select or type' : 'Select Machine Type First'}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Design</option>
-                                    {workOrder.machineType ? getTuftingDesigns(workOrder.machineType).map(design => (
-                                      <option key={design} value={design}>{design}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
-                                {/* VARIANTS - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                                  <select
+                                  />
+                                </Field>
+
+                                {/* VARIANTS */}
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) => handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)}
+                                    options={workOrder.machineType ? getTuftingVariants(workOrder.machineType) : []}
+                                    placeholder={workOrder.machineType ? 'Select or type' : 'Select Machine Type First'}
                                     disabled={!workOrder.machineType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.machineType ? getTuftingVariants(workOrder.machineType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Machine Type First</option>}
-                                  </select>
-                                </div>
-                                
+                                  />
+                                </Field>
+
                                 {/* MACHINE GAUGE */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    MACHINE GAUGE
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getTuftingMachineGauge(workOrder.machineType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
+                                <Field
+                                  label="MACHINE GAUGE"
+                                  width="sm"
+                                  helper={workOrder.machineType ? getTuftingMachineGauge(workOrder.machineType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.machineGauge || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'machineGauge', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.machineType ? getTuftingMachineGauge(workOrder.machineType) : 'Enter machine gauge'}
+                                    placeholder={
+                                      workOrder.machineType ? getTuftingMachineGauge(workOrder.machineType) : 'Enter machine gauge'
+                                    }
                                   />
-                                </div>
-                                
+                                </Field>
+
                                 {/* STITCH RATE */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    STITCH RATE
-                                    {workOrder.machineType && (
-                                      <span className="text-xs text-gray-500 ml-2">
-                                        ({getTuftingStitchRate(workOrder.machineType)})
-                                      </span>
-                                    )}
-                                  </label>
-                                  <input
+                                <Field
+                                  label="STITCH RATE"
+                                  width="sm"
+                                  helper={workOrder.machineType ? getTuftingStitchRate(workOrder.machineType) : undefined}
+                                >
+                                  <Input
                                     type="text"
                                     value={workOrder.stitchRate || ''}
                                     onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'stitchRate', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                    placeholder={workOrder.machineType ? getTuftingStitchRate(workOrder.machineType) : 'Enter stitch rate'}
+                                    placeholder={
+                                      workOrder.machineType ? getTuftingStitchRate(workOrder.machineType) : 'Enter stitch rate'
+                                    }
                                   />
-                                </div>
+                                </Field>
                               </div>
                             </div>
                           )}
                         </div>
                       )}
 
-                      {/* Remarks - Hidden for BRAIDING, CARPET, CUTTING, DYEING, EMBROIDERY, KNITTING, PRINTING, QUILTING, SEWING, TUFTING, and WEAVING (they have their own REMARKS fields) */}
-                      {workOrder.workOrder !== 'BRAIDING' && workOrder.workOrder !== 'CARPET' && workOrder.workOrder !== 'CUTTING' && workOrder.workOrder !== 'DYEING' && workOrder.workOrder !== 'EMBROIDERY' && workOrder.workOrder !== 'KNITTING' && workOrder.workOrder !== 'PRINTING' && workOrder.workOrder !== 'QUILTING' && workOrder.workOrder !== 'SEWING' && workOrder.workOrder !== 'TUFTING' && workOrder.workOrder !== 'WEAVING' && (
-                      <div className="w-full flex flex-col mt-8">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                        <textarea
-                          value={workOrder.remarks || ''}
-                          onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'remarks', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '12px 16px', width: '100%' }}
-                          onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'}
-                          onBlur={(e) => e.target.style.boxShadow = ''}
-                          rows="2"
-                        ></textarea>
-                      </div>
-                      )}
 
                       {/* Advanced Filter for DYEING - At the very bottom after all fields */}
                       {workOrder.workOrder === 'DYEING' && (
                         <div className="w-full" style={{ marginTop: '20px' }}>
-                          {/* Show/Hide Advance Filter Button */}
-                          <div style={{ marginBottom: '20px', width: '100%' }}>
-                            <button
+                          {/* Advance Spec Button */}
+                          <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} className="w-full">
+                            <Button
                               type="button"
-                              onClick={() => handleWorkOrderChange(actualIndex, woIndex, 'showDyeingAdvancedFilter', !workOrder.showDyeingAdvancedFilter)}
-                              className="border-2 rounded-lg text-sm font-medium transition-all"
-                              style={{
-                                padding: '10px 20px',
-                                height: '44px',
-                                backgroundColor: workOrder.showDyeingAdvancedFilter ? '#667eea' : '#ffffff',
-                                borderColor: workOrder.showDyeingAdvancedFilter ? '#667eea' : '#e5e7eb',
-                                color: workOrder.showDyeingAdvancedFilter ? '#ffffff' : '#374151'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!workOrder.showDyeingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                  e.currentTarget.style.borderColor = '#d1d5db';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!workOrder.showDyeingAdvancedFilter) {
-                                  e.currentTarget.style.backgroundColor = '#ffffff';
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                }
-                              }}
+                              variant={workOrder.showDyeingAdvancedFilter ? "default" : "outline"}
+                              size="sm"
+                              onClick={() =>
+                                handleWorkOrderChange(
+                                  actualIndex,
+                                  woIndex,
+                                  'showDyeingAdvancedFilter',
+                                  !workOrder.showDyeingAdvancedFilter
+                                )
+                              }
                             >
-                              Advance Filter
-                            </button>
+                              Advance Spec
+                            </Button>
                           </div>
-                          
+
                           {/* Advanced Filter UI Table */}
                           {workOrder.showDyeingAdvancedFilter && (
-                            <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', width: '100%' }}>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-6">ADVANCE SPEC~UI</h4>
-                              
-                              <div className="grid grid-cols-2 gap-6">
-                                {/* VARIANTS - Dropdown */}
-                                <div className="flex flex-col">
-                                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                                    VARIANTS
-                                  </label>
-                                  <select
+                            <div
+                              style={{
+                                marginTop: '1.5rem',
+                                padding: '1.5rem',
+                                backgroundColor: 'var(--muted)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border)',
+                                width: '100%',
+                              }}
+                            >
+                              <h4 className="text-sm font-semibold text-foreground/90 mb-6">ADVANCE SPEC</h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px 12px' }}>
+                                <Field label="VARIANTS" width="sm">
+                                  <SearchableDropdown
                                     value={workOrder.variants || ''}
-                                    onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'variants', e.target.value)}
-                                    className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                                    style={{ padding: '10px 14px', height: '44px' }}
+                                    onChange={(selectedValue) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'variants', selectedValue)
+                                    }
+                                    options={workOrder.dyeingType ? getDyeingVariants(workOrder.dyeingType) : []}
+                                    placeholder={workOrder.dyeingType ? "Select or type Variant" : "Select Dyeing Type First"}
                                     disabled={!workOrder.dyeingType}
-                                    onFocus={(e) => {
-                                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                      e.target.style.boxShadow = '';
-                                    }}
-                                  >
-                                    <option value="">Select Variant</option>
-                                    {workOrder.dyeingType ? getDyeingVariants(workOrder.dyeingType).map(variant => (
-                                      <option key={variant} value={variant}>{variant}</option>
-                                    )) : <option value="">Select Dyeing Type First</option>}
-                                  </select>
-                                </div>
+                                  />
+                                </Field>
                               </div>
                             </div>
                           )}
@@ -13189,9 +11070,10 @@ const Step2 = ({
               
               {/* Add Work Order Button at Bottom - Only show if at least one work order exists */}
               {material.workOrders && material.workOrders.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-200" style={{ marginTop: '24px', paddingTop: '24px' }}>
-                <button
+              <div className="mt-6 pt-6" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => {
                       const currentLength = material.workOrders?.length || 0;
                       addWorkOrder(actualIndex);
@@ -13209,28 +11091,9 @@ const Step2 = ({
                     };
                     attemptScroll();
                   }}
-                  style={{
-                      background: '#f3f4f6',
-                      border: '1px solid #d1d5db',
-                    color: '#374151',
-                    padding: '10px 16px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e5e7eb';
-                      e.currentTarget.style.transform = 'translateX(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6';
-                      e.currentTarget.style.transform = 'translateX(0)';
-                  }}
                 >
                   + Add Work Order
-                </button>
+                </Button>
               </div>
               )}
             </div>
@@ -13241,58 +11104,34 @@ const Step2 = ({
 
           {/* Bottom Save and Add Raw Material Buttons - Only show when materials exist */}
           {materialsForComponent.length > 0 && (
-            <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <button
-              type="button"
-              onClick={handleBottomSave}
-              style={{
-                background: '#f3f4f6',
-                border: '1px solid #d1d5db',
-                color: '#374151',
-                padding: '10px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#e5e7eb';
-                e.currentTarget.style.transform = 'translateX(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }}
-            >
-              Save
-            </button>
-            <div style={{ position: 'relative' }}>
-              <button
+            <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <Button
                 type="button"
+                variant="outline"
+                onClick={handleBottomSave}
+                className={cn(
+                  'min-w-[90px]',
+                  saveStatus === 'error'
+                    ? 'text-red-600 border-red-500 hover:text-red-700'
+                    : isComponentDone(selectedComponent)
+                      ? 'text-green-600 hover:text-green-700'
+                      : ''
+                )}
+              >
+                {saveStatus === 'error'
+                  ? 'Not Saved'
+                  : isComponentDone(selectedComponent)
+                    ? 'Saved'
+                    : 'Save'}
+              </Button>
+            <div style={{ position: 'relative' }}>
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setShowMaterialTypeModal(!showMaterialTypeModal)}
-                style={{
-                  background: '#f3f4f6',
-                  border: '1px solid #d1d5db',
-                  color: '#374151',
-                  padding: '10px 16px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e5e7eb';
-                  e.currentTarget.style.transform = 'translateX(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  e.currentTarget.style.transform = 'translateX(0)';
-                }}
               >
                 Add Raw Material
-              </button>
+              </Button>
               {showMaterialTypeModal && (
                 <div
                   style={{
@@ -13300,10 +11139,10 @@ const Step2 = ({
                     top: '100%',
                     left: 0,
                     marginTop: '8px',
-                    background: 'white',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    padding: '8px',
+                    background: 'var(--background)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    padding: '0.5rem',
                     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                     zIndex: 1000,
                     minWidth: '200px'
