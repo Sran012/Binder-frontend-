@@ -609,7 +609,7 @@ const Step2 = ({
                     onChange={(selectedValue) => {
                       handleRawMaterialChange(actualIndex, 'unit', selectedValue);
                     }}
-                    options={['R METERS', 'CM', 'Inches', 'Meter', 'KGS']}
+                    options={['KGS', 'CM']}
                     placeholder="Select unit"
                     className={errors[`rawMaterial_${actualIndex}_unit`] ? 'border-destructive' : ''}
                     required

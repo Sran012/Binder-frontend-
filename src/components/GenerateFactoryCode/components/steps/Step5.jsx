@@ -314,9 +314,8 @@ const Step5 = ({
                     className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                     style={{ padding: '10px 14px', width: '120px', height: '44px' }}
                     >
-                      <option value="CMS">CMS</option>
-                      <option value="INCHES">INCHES</option>
-                      <option value="MM">MM</option>
+                      <option value="CM">CM</option>
+                      <option value="KGS">KGS</option>
                     </select>
                   </div>
                 </div>

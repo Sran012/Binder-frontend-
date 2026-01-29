@@ -128,14 +128,14 @@ const Step3 = ({
               
               <div className="flex flex-col">
                 <label className="text-sm font-semibold text-gray-700 mb-2">UNIT</label>
-                                        <SearchableDropdown
-                          value={material.unit || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unit', selectedValue)}
-                          options={['Kgs', 'Pcs', 'Meters', 'Yards', 'Sets', 'Rolls', 'Gross']}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
+                <SearchableDropdown
+                  value={material.unit || ''}
+                  onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unit', selectedValue)}
+                  options={['KGS', 'CM']}
+                  placeholder="Select or type"
+                  className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                  style={{ padding: '10px 14px', height: '44px' }}
+                />
               </div>
             </div>
 
