@@ -24,6 +24,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     componentErrors: [] // Array of { componentName, errorCount, errors: [{ fieldKey, message }] }
   });
   const [step0Saved, setStep0Saved] = useState(false);
+  const [step1Saved, setStep1Saved] = useState(false);
   const [step2SavedComponents, setStep2SavedComponents] = useState(new Set()); // Track saved components in Step-2
   const [showSaveMessage, setShowSaveMessage] = useState(false); // Show "save first" message
   const [saveMessage, setSaveMessage] = useState(''); // Message to display
@@ -406,7 +407,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-    
+    setStep0Saved(false); // Any edit invalidates saved state
     if (name === 'image' && files && files[0]) {
       const file = files[0];
       const reader = new FileReader();
@@ -436,6 +437,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
   // SKU handlers
   const handleSkuChange = (skuIndex, field, value) => {
+    setStep0Saved(false); // Any edit invalidates saved state
     setFormData(prev => {
       const updatedSkus = [...prev.skus];
       updatedSkus[skuIndex] = {
@@ -450,6 +452,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const handleSkuImageChange = (skuIndex, file) => {
+    setStep0Saved(false); // Any edit invalidates saved state
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -625,6 +628,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   });
 
   const addSku = () => {
+    setStep0Saved(false); // Adding SKU invalidates saved state
     setFormData(prev => ({
       ...prev,
       skus: [...prev.skus, {
@@ -649,6 +653,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
   // Subproduct handlers
   const addSubproduct = (skuIndex) => {
+    setStep0Saved(false); // Adding subproduct invalidates saved state
     setFormData(prev => {
       const updatedSkus = [...prev.skus];
       if (!updatedSkus[skuIndex].subproducts) {
@@ -668,6 +673,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const removeSubproduct = (skuIndex, subproductIndex) => {
+    setStep0Saved(false); // Removing subproduct invalidates saved state
     setFormData(prev => {
       const updatedSkus = [...prev.skus];
       if (updatedSkus[skuIndex].subproducts) {
@@ -680,6 +686,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const handleSubproductChange = (skuIndex, subproductIndex, field, value) => {
+    setStep0Saved(false); // Any edit invalidates saved state
     setFormData(prev => {
       const updatedSkus = [...prev.skus];
       if (!updatedSkus[skuIndex].subproducts) {
@@ -694,6 +701,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const handleSubproductImageChange = (skuIndex, subproductIndex, file) => {
+    setStep0Saved(false); // Any edit invalidates saved state
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -715,6 +723,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const removeSku = (skuIndex) => {
+    setStep0Saved(false); // Removing SKU invalidates saved state
     if (formData.skus.length > 1) {
       setFormData(prev => ({
         ...prev,
@@ -899,7 +908,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       // Validate components for each product
       product.components.forEach((component, componentIndex) => {
         if (!component.productComforter?.trim()) {
-          newErrors[`product_${productIndex}_component_${componentIndex}_productComforter`] = 'Product/Comforter is required';
+          newErrors[`product_${productIndex}_component_${componentIndex}_productComforter`] = 'Product is required';
         }
         if (!component.unit?.trim()) {
           newErrors[`product_${productIndex}_component_${componentIndex}_unit`] = 'Unit is required';
@@ -969,6 +978,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const handleComponentChange = (productIndex, componentIndex, field, value) => {
+    setStep1Saved(false); // Any edit invalidates saved state
     updateSelectedSkuStepData((stepData) => {
       const updatedProducts = [...stepData.products];
       updatedProducts[productIndex] = {
@@ -1023,6 +1033,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const handleComponentCuttingSizeChange = (productIndex, componentIndex, field, value) => {
+    setStep1Saved(false); // Any edit invalidates saved state
     updateSelectedSkuStepData((stepData) => {
       const updatedProducts = [...stepData.products];
       updatedProducts[productIndex] = {
@@ -1056,6 +1067,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const handleComponentSewSizeChange = (productIndex, componentIndex, field, value) => {
+    setStep1Saved(false); // Any edit invalidates saved state
     updateSelectedSkuStepData((stepData) => {
       const updatedProducts = [...stepData.products];
       updatedProducts[productIndex] = {
@@ -1116,6 +1128,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const addComponent = (productIndex) => {
+    setStep1Saved(false); // Adding component invalidates saved state
     const stepData = getSelectedSkuStepData();
     if (!stepData) return;
     
@@ -2106,6 +2119,12 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       console.error('Error generating IPC codes:', error);
       alert('Error generating IPC codes');
     }
+  };
+
+  const handleSaveStep1 = () => {
+    if (!validateStep1()) return;
+    setStep1Saved(true);
+    setShowSaveMessage(false);
   };
 
   const validateStep3 = () => {
@@ -3260,6 +3279,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const removeComponent = (productIndex, componentIndex) => {
+    setStep1Saved(false); // Removing component invalidates saved state
     updateSelectedSkuStepData((stepData) => {
       const updatedProducts = [...stepData.products];
       const currentComponents = updatedProducts[productIndex].components;
@@ -3600,9 +3620,15 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         setSelectedSku(0);
       }
     } else if (currentStep === 1) {
+      if (!step1Saved) {
+        setShowSaveMessage(true);
+        setSaveMessage('Save first');
+        return;
+      }
       if (!validateStep1()) {
         return;
       }
+      setShowSaveMessage(false);
       // Don't auto-initialize raw materials - user will select component first
     } else if (currentStep === 2) {
       // Check if Step-2 has unsaved components
@@ -3785,6 +3811,11 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               handleComponentChange={handleComponentChange}
               handleComponentCuttingSizeChange={handleComponentCuttingSizeChange}
               handleComponentSewSizeChange={handleComponentSewSizeChange}
+              validateStep1={validateStep1}
+              handleSave={handleSaveStep1}
+              handleNext={handleNext}
+              showSaveMessage={showSaveMessage && currentStep === 1}
+              isSaved={step1Saved}
             />
           );
         case 2:
@@ -4365,7 +4396,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               </div>
             ) : (
               <div className="flex justify-end items-center gap-3" style={{ marginTop: '32px' }}>
-                {showSaveMessage && currentStep === 2 && (
+                {showSaveMessage && (currentStep === 1 || currentStep === 2) && (
                   <span className="text-red-600 text-sm font-medium">Save first</span>
                 )}
                 {currentStep > 0 && (
