@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { FaSearch } from 'react-icons/fa';
+import { ChevronDown } from 'lucide-react';
 import './SearchableDropdown.css';
 
 const SearchableDropdown = ({ options, value, onChange, placeholder, error }) => {
@@ -57,11 +58,13 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, error }) =>
     }
   };
 
-  const handleClear = (e) => {
+  // Clicking the dropdown arrow should clear current selection and reopen options
+  const handleArrowClick = (e) => {
     e.stopPropagation();
     onChange('');
-    setIsOpen(false);
     setSearchTerm('');
+    setIsOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   return (
@@ -73,21 +76,14 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, error }) =>
         <span className={`selected-value ${!value ? 'placeholder' : ''}`}>
           {value || placeholder}
         </span>
-        <div className="dropdown-actions">
-          {value && (
-            <button
-              type="button"
-              className="dropdown-clear"
-              onClick={handleClear}
-              aria-label="Clear selection"
-            >
-              ✕
-            </button>
-          )}
-          <span className={`dropdown-arrow ${isOpen ? 'up' : 'down'}`}>
-            {isOpen ? '▲' : '▼'}
-          </span>
-        </div>
+        <button
+          type="button"
+          className={`dropdown-arrow-button ${isOpen ? 'up' : 'down'}`}
+          onClick={handleArrowClick}
+          aria-label="Open options"
+        >
+          <ChevronDown size={16} />
+        </button>
       </div>
       
       {isOpen && (
