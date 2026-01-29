@@ -2502,229 +2502,165 @@ const Step3 = ({
                     </>
                   )}
 
+                  {/* BUCKLES — Field, Input, PercentInput, TestingRequirementsInput, Button, shadcn tokens */}
                   {material.trimAccessory === 'BUCKLES' && (
                     <>
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">TYPE</label>
-                        <SearchableDropdown
-                          value={material.bucklesType || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesType', selectedValue)}
-                          options={['Side Release', 'D-Ring', 'Tri-Glide', 'Ladder Lock', 'Belt Buckle', 'Cam Buckle', 'Snap', 'Swivel', 'Center Bar', 'O-Ring', 'Magnetic', 'Roller', 'Military/Web']}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">MATERIAL</label>
-                        <SearchableDropdown
-                          value={material.bucklesMaterial || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesMaterial', selectedValue)}
-                          options={['Plastic (Nylon)', 'Plastic (POM/Acetal)', 'Plastic (ABS)', 'Metal (Brass)', 'Metal (Zinc)', 'Metal (Steel)', 'Metal (Stainless)', 'Metal (Aluminium)', 'Acetal/POM', 'Zinc Alloy Die-Cast', 'Carbon Fiber Look']}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE (Webbing Width)</label>
-                        <SearchableDropdown
-                          value={material.bucklesSize || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesSize', selectedValue)}
-                          options={['10mm', '15mm', '20mm', '25mm', '32mm', '38mm', '50mm', '1"', '1.5"', '2"']}
-                          placeholder="Select or type (CM)"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">FINISH/COLOUR</label>
-                        <SearchableDropdown
-                          value={material.bucklesFinishColour || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesFinishColour', selectedValue)}
-                          options={['Black', 'Clear', 'DTM', 'Plating (Nickel)', 'Plating (Gunmetal)', 'Plating (Antique Brass)', 'Matte', 'Glossy', 'Antique', 'Plated (Nickel/Chrome)', 'Powder Coated', 'Anodized']}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">PLACEMENT</label>
-                        <input
-                          type="text"
-                          value={material.bucklesPlacement || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesPlacement', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Enter placement location"
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  {/* BUCKLES - Complete fields matching table exactly */}
-                  {material.trimAccessory === 'BUCKLES' && (
-                    <>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-                        <div className="flex flex-col flex-1">
-                          <label className="text-sm font-semibold text-gray-700 mb-2">TESTING REQUIREMENTS</label>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4">
+                        <Field label="TYPE" width="sm">
                           <SearchableDropdown
-                            value={material.bucklesTestingRequirements || ''}
-                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesTestingRequirements', selectedValue)}
-                            options={['Tensile Load', 'Corrosion (Salt Spray)', 'UV Resistance', 'REACH']}
-                            placeholder="Select or type Testing Requirements"
-                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                            style={{ padding: '10px 14px', height: '44px' }}
+                            value={material.bucklesType || ''}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesType', selectedValue)}
+                            options={['Side Release', 'D-Ring', 'Tri-Glide', 'Ladder Lock', 'Belt Buckle', 'Cam Buckle', 'Snap', 'Swivel', 'Center Bar', 'O-Ring', 'Magnetic', 'Roller', 'Military/Web']}
+                            placeholder="Select or type"
+                            className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                           />
-                        </div>
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                          <input
-                            type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesReferenceImage', e.target.files[0])}
-                            className="hidden"
-                            id={`upload-buckles-ref-${materialIndex}`}
-                            accept="image/*"
+                        </Field>
+                        <Field label="MATERIAL" width="sm">
+                          <SearchableDropdown
+                            value={material.bucklesMaterial || ''}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesMaterial', selectedValue)}
+                            options={['Plastic (Nylon)', 'Plastic (POM/Acetal)', 'Plastic (ABS)', 'Metal (Brass)', 'Metal (Zinc)', 'Metal (Steel)', 'Metal (Stainless)', 'Metal (Aluminium)', 'Acetal/POM', 'Zinc Alloy Die-Cast', 'Carbon Fiber Look']}
+                            placeholder="Select or type"
+                            className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                           />
-                          <label
-                            htmlFor={`upload-buckles-ref-${materialIndex}`}
-                            className="border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 border-[#e5e7eb] hover:bg-gray-50"
-                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '100px' }}
-                          >
-                            {material.bucklesReferenceImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}
-                          </label>
-                        </div>
-                      </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">QTY</label>
-                        <input
-                          type="text"
-                          value={material.bucklesQty || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesQty', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="Unit: Pieces"
-                        />
-                      </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS %</label>
-                        <input
-                          type="text"
-                          value={material.bucklesSurplus || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesSurplus', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="e.g., 3-5%"
-                        />
-                      </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE %</label>
-                        <SearchableDropdown
-                          value={material.bucklesWastage || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesWastage', selectedValue)}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
-                      </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
-                        <SearchableDropdown
-                          value={material.bucklesApproval || ''}
-                          onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesApproval', selectedValue)}
-                          options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
-                          placeholder="Select or type"
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                        />
-                      </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">REMARKS</label>
-                        <textarea
-                          value={material.bucklesRemarks || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesRemarks', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', minHeight: '44px' }}
-                          rows="1"
-                          placeholder="e.g., Finger guard, Outdoor suitable, Smooth edges"
-                        />
-                      </div>
-                    </>
-                  )}
+                        </Field>
+                        <Field label="SIZE (Webbing Width)" width="sm">
+                          <SearchableDropdown
+                            value={material.bucklesSize || ''}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesSize', selectedValue)}
+                            options={['10mm', '15mm', '20mm', '25mm', '32mm', '38mm', '50mm', '1"', '1.5"', '2"']}
+                            placeholder="Select or type (CM)"
+                            className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
+                          />
+                        </Field>
+                        <Field label="FINISH/COLOUR" width="sm">
+                          <SearchableDropdown
+                            value={material.bucklesFinishColour || ''}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesFinishColour', selectedValue)}
+                            options={['Black', 'Clear', 'DTM', 'Plating (Nickel)', 'Plating (Gunmetal)', 'Plating (Antique Brass)', 'Matte', 'Glossy', 'Antique', 'Plated (Nickel/Chrome)', 'Powder Coated', 'Anodized']}
+                            placeholder="Select or type"
+                            className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
+                          />
+                        </Field>
+                        <Field label="PLACEMENT" width="sm">
+                          <Input
+                            type="text"
+                            value={material.bucklesPlacement || ''}
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesPlacement', e.target.value)}
+                            placeholder="Enter placement location"
+                          />
+                        </Field>
 
+                        <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <TestingRequirementsInput
+                                value={Array.isArray(material.bucklesTestingRequirements) ? material.bucklesTestingRequirements : (material.bucklesTestingRequirements ? [material.bucklesTestingRequirements] : [])}
+                                onChange={(arr) => handleConsumptionMaterialChange(materialIndex, 'bucklesTestingRequirements', arr)}
+                                options={['Tensile Load', 'Corrosion (Salt Spray)', 'UV Resistance', 'REACH']}
+                                placeholder="Select testing requirements"
+                              />
+                            </div>
+                            <input
+                              type="file"
+                              onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesReferenceImage', e.target.files[0])}
+                              className="hidden"
+                              id={`upload-buckles-ref-${materialIndex}`}
+                              accept="image/*"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11"
+                              onClick={() => document.getElementById(`upload-buckles-ref-${materialIndex}`)?.click()}
+                            >
+                              {material.bucklesReferenceImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}
+                            </Button>
+                          </div>
+                        </Field>
 
-                                    {/* BUCKLES - Advance Spec Button and Fields */}
-                                    {material.trimAccessory === 'BUCKLES' && (
-                    <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full" style={{ marginTop: '20px' }}>
-                      {/* Show/Hide Advance Spec Button */}
-                      <div style={{ marginBottom: '20px', width: '100%' }}>
-                        <button
+                        <Field label="QTY" width="sm">
+                          <Input
+                            type="text"
+                            value={material.bucklesQty || ''}
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesQty', e.target.value)}
+                            placeholder="Unit: Pieces"
+                          />
+                        </Field>
+                        <Field label="SURPLUS %" width="sm">
+                          <PercentInput
+                            value={material.bucklesSurplus || ''}
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesSurplus', e.target.value)}
+                          />
+                        </Field>
+                        <Field label="WASTAGE %" width="sm">
+                          <PercentInput
+                            value={material.bucklesWastage || ''}
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesWastage', e.target.value)}
+                          />
+                        </Field>
+                        <Field label="APPROVAL" width="sm">
+                          <SearchableDropdown
+                            value={material.bucklesApproval || ''}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesApproval', selectedValue)}
+                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            placeholder="Select or type"
+                            className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
+                          />
+                        </Field>
+                        <Field label="REMARKS" width="md" className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <Input
+                            type="text"
+                            value={material.bucklesRemarks || ''}
+                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesRemarks', e.target.value)}
+                            placeholder="e.g., Finger guard, Outdoor suitable, Smooth edges"
+                          />
+                        </Field>
+                      </div>
+
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full mt-5 mb-5">
+                        <Button
                           type="button"
+                          variant={material.showBucklesAdvancedSpec ? 'default' : 'outline'}
+                          size="sm"
                           onClick={() => handleConsumptionMaterialChange(materialIndex, 'showBucklesAdvancedSpec', !material.showBucklesAdvancedSpec)}
-                          className="border-2 rounded-lg text-sm font-medium transition-all"
-                          style={{
-                            padding: '10px 20px',
-                            height: '44px',
-                            backgroundColor: material.showBucklesAdvancedSpec ? '#667eea' : '#ffffff',
-                            borderColor: material.showBucklesAdvancedSpec ? '#667eea' : '#e5e7eb',
-                            color: material.showBucklesAdvancedSpec ? '#ffffff' : '#374151'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!material.showBucklesAdvancedSpec) {
-                              e.currentTarget.style.backgroundColor = '#f9fafb';
-                              e.currentTarget.style.borderColor = '#d1d5db';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!material.showBucklesAdvancedSpec) {
-                              e.currentTarget.style.backgroundColor = '#ffffff';
-                              e.currentTarget.style.borderColor = '#e5e7eb';
-                            }
-                          }}
                         >
-                          ADVANCE SPEC
-                        </button>
+                          {material.showBucklesAdvancedSpec ? '− Advance Spec' : '+ Advance Spec'}
+                        </Button>
                       </div>
-                      
-                      {/* Advanced Spec Fields */}
                       {material.showBucklesAdvancedSpec && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-5">
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">FUNCTION</label>
+                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4">
+                          <Field label="FUNCTION" width="sm">
                             <SearchableDropdown
                               value={material.bucklesFunction || ''}
                               onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesFunction', selectedValue)}
                               options={['Load Bearing', 'Decorative', 'Quick Release', 'Adjustable', 'Auto-Lock', 'Swivel']}
                               placeholder="Select or type"
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', height: '44px' }}
+                              className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                             />
-                          </div>
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">TENSILE STRENGTH</label>
+                          </Field>
+                          <Field label="TENSILE STRENGTH" width="sm">
                             <SearchableDropdown
                               value={material.bucklesTensileStrength || ''}
                               onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesTensileStrength', selectedValue)}
                               options={['Break Strength (100kg)', 'Break Strength (500N)', 'Light Duty (<50 kg)', 'Standard (50-150 kg)', 'Heavy Duty (150-500 kg)', 'Safety (>500 kg)']}
                               placeholder="Select or type"
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', height: '44px' }}
+                              className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                             />
-                          </div>
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">SAFETY</label>
+                          </Field>
+                          <Field label="SAFETY" width="sm">
                             <SearchableDropdown
                               value={material.bucklesSafety || ''}
                               onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesSafety', selectedValue)}
                               options={['Standard', 'Child-Safe', 'Breakaway (safety release)']}
                               placeholder="Select or type"
-                              className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                              style={{ padding: '10px 14px', height: '44px' }}
+                              className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                             />
-                          </div>
+                          </Field>
                         </div>
                       )}
-                    </div>
+                    </>
                   )}
 
 
