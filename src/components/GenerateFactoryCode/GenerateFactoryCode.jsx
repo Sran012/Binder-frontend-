@@ -12,6 +12,7 @@ import Step4 from './components/steps/Step4';
 import Step5 from './components/steps/Step5';
 import { Button } from '@/components/ui/button';
 import { FormCard } from '@/components/ui/form-layout';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCreation, onNavigateToIPO }) => {
   const scrollContainerRef = useRef(null);
@@ -32,6 +33,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const [step4SaveStatus, setStep4SaveStatus] = useState('idle'); // 'idle' | 'success' | 'error'
   const [showSaveMessage, setShowSaveMessage] = useState(false); // Show "save first" message
   const [saveMessage, setSaveMessage] = useState(''); // Message to display
+  const [showFactoryCodePopup, setShowFactoryCodePopup] = useState(false);
+  const [shippingGroups, setShippingGroups] = useState({}); // { "0-product": 1, "0-sp-0": 2, ... } -> itemId -> groupNum
   const [formData, setFormData] = useState({
     // Internal Purchase Order fields (if provided)
     orderType: initialFormData.orderType || '',
@@ -4465,9 +4468,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                         setSaveMessage('Save first');
                         return;
                       }
-                      // Handle final submission
-                      clearLocalStorage();
-                      alert('Factory code generation will be implemented here');
+                      setShowFactoryCodePopup(true);
                     }}
                   >
                     Generate Factory Code
@@ -4557,6 +4558,125 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           </div>
         </>
       )}
+
+      {/* Generate Factory Code Popup */}
+      <Dialog open={showFactoryCodePopup} onOpenChange={(open) => {
+        setShowFactoryCodePopup(open);
+        if (open) {
+          const init = {};
+          formData.skus?.forEach((sku, idx) => {
+            init[`${idx}-product`] = 1;
+            (sku.subproducts || []).forEach((_, spIdx) => {
+              init[`${idx}-sp-${spIdx}`] = 1;
+            });
+          });
+          setShippingGroups(init);
+        }
+      }}>
+        <DialogContent
+          showCloseButton={true}
+          className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl border-2 border-border shadow-2xl bg-white p-6"
+          style={{ padding: '18px' }}
+        >
+          <DialogHeader className="pb-5 pt-2 px-2 border-b border-border">
+            <DialogTitle className="text-xl font-semibold text-foreground">
+              Factory Code Generation
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-6 overflow-y-auto px-6 py-6" style={{ maxHeight: 'calc(90vh - 160px)' }}>
+            {/* Derived consumption loading - hardcoded */}
+            <div
+              className="flex items-center gap-3 px-5 py-4 rounded-xl"
+              style={{ background: 'rgba(34 197 94 / 0.08)', border: '1px solid rgb(34 197 94 / 0.4)' }}
+            >
+              <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
+              <span className="text-sm font-medium text-foreground">
+                Derived consumption table is loading...
+              </span>
+            </div>
+
+            {/* All IPC codes */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">All IPC Codes</h4>
+              <div className="flex flex-wrap gap-3">
+                {formData.skus?.map((sku, idx) => {
+                  const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode || '';
+                  const items = [];
+                  if (baseIpc) items.push({ label: `SKU ${idx + 1}`, code: baseIpc });
+                  (sku.subproducts || []).forEach((sp, spIdx) => {
+                    items.push({ label: `SKU ${idx + 1} SP${spIdx + 1}`, code: `${baseIpc}/SP${spIdx + 1}` });
+                  });
+                  return items.map((item, i) => (
+                    <span
+                      key={`${idx}-${i}`}
+                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-mono font-semibold"
+                      style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+                    >
+                      {item.code}
+                    </span>
+                  ));
+                })}
+              </div>
+            </div>
+
+            {/* Shipping Group - assign products/subproducts to groups */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Shipping Group</h4>
+              <p className="text-sm text-muted-foreground mb-4">Assign each product and subproduct to a shipping group. Items in the same group ship together.</p>
+              <div className="space-y-4 rounded-xl border border-border p-5 bg-white">
+                {formData.skus?.map((sku, idx) => {
+                  const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode || '';
+                  const maxGroup = Math.max(1, ...Object.values(shippingGroups));
+                  return (
+                    <div key={idx} className="space-y-3">
+                      <div className="flex items-center gap-4 p-3 rounded-lg border border-border bg-muted/20">
+                        <span className="text-sm font-medium flex-1">{sku.sku || `Product ${idx + 1}`}</span>
+                        <span className="text-xs text-muted-foreground font-mono">{baseIpc}</span>
+                        <select
+                          value={shippingGroups[`${idx}-product`] ?? 1}
+                          onChange={(e) => setShippingGroups(prev => ({ ...prev, [`${idx}-product`]: parseInt(e.target.value) }))}
+                          className="rounded-md border border-border px-3 py-2 text-sm bg-white min-w-[100px]"
+                        >
+                          {Array.from({ length: maxGroup }, (_, i) => i + 1).map((g) => (
+                            <option key={g} value={g}>Group {g}</option>
+                          ))}
+                          <option value={maxGroup + 1}>+ New Group</option>
+                        </select>
+                      </div>
+                      {(sku.subproducts || []).map((sp, spIdx) => (
+                        <div
+                          key={spIdx}
+                          className="flex items-center gap-4 p-3 pl-8 rounded-lg border border-border bg-muted/10"
+                        >
+                          <span className="text-sm flex-1">{sp.subproduct || `Subproduct ${spIdx + 1}`}</span>
+                          <span className="text-xs text-muted-foreground font-mono">{baseIpc}/SP{spIdx + 1}</span>
+                          <select
+                            value={shippingGroups[`${idx}-sp-${spIdx}`] ?? 1}
+                            onChange={(e) => setShippingGroups(prev => ({ ...prev, [`${idx}-sp-${spIdx}`]: parseInt(e.target.value) }))}
+                            className="rounded-md border border-border px-3 py-2 text-sm bg-white min-w-[100px]"
+                          >
+                            {Array.from({ length: maxGroup }, (_, i) => i + 1).map((g) => (
+                              <option key={g} value={g}>Group {g}</option>
+                            ))}
+                            <option value={maxGroup + 1}>+ New Group</option>
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end px-6 py-5 border-t border-border bg-white">
+            <Button type="button" onClick={() => setShowFactoryCodePopup(false)} variant="default">
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </>
   );

@@ -29,6 +29,12 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
   });
   const [buyerCodeOptions, setBuyerCodeOptions] = useState([]);
   const [errors, setErrors] = useState({});
+  const [existingIPOs, setExistingIPOs] = useState([]);
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('internalPurchaseOrders') || '[]');
+    setExistingIPOs(stored);
+  }, [showInitialScreen]);
 
   const orderTypeOptions = ['Production', 'Sampling', 'Company'];
   const companyTypeOptions = ['STOCK', 'SAM'];
@@ -203,6 +209,7 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
       };
       existingIPOs.push(newIPO);
       localStorage.setItem('internalPurchaseOrders', JSON.stringify(existingIPOs));
+      setExistingIPOs(existingIPOs);
     } catch (error) {
       console.error('Error saving IPO:', error);
     }
@@ -375,6 +382,49 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
             </Button>
           </div>
         </FormCard>
+
+        {existingIPOs.length > 0 && (
+          <div
+            className="w-fit"
+            style={{
+              marginTop: '16px',
+              border: '1px solid rgb(34 197 94)',
+              borderRadius: '8px',
+              padding: '16px 20px',
+              maxWidth: '480px'
+            }}
+          >
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', letterSpacing: '0.5px' }}>
+              Existing codes
+            </span>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginTop: '12px'
+              }}
+            >
+              {[...existingIPOs].reverse().map((item, idx) => (
+                <div
+                  key={(item.ipoCode || '') + '-' + (item.createdAt || idx)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '6px 10px',
+                    backgroundColor: 'var(--muted)',
+                    borderRadius: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: '600', color: 'var(--foreground)' }}>
+                    {item.ipoCode || 'N/A'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* IPO success is shown inline (no modal) */}
