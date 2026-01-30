@@ -12,48 +12,54 @@ const BuyerMasterSheet = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const normalizeBuyer = (b) => ({
+    code: b.code || b.id || '',
+    buyerName: b.buyer_name || b.buyerName || '',
+    contactPerson: b.contact_person || b.contactPerson || '',
+    retailer: b.retailer || b.end_customer || '',
+    createdAt: b.created_at || b.createdAt || new Date().toISOString()
+  });
+
   useEffect(() => {
     const fetchBuyers = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Try to fetch from API first
+
+        let buyerList = [];
+
+        // 1. Try to fetch from API
         try {
           const data = await getBuyerCodes();
-          let buyerList = [];
-          
           if (data && Array.isArray(data)) {
             buyerList = data;
           } else if (data && data.results && Array.isArray(data.results)) {
             buyerList = data.results;
-          } else {
-            // Fallback to localStorage if API doesn't return expected format
-            buyerList = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
           }
-          
-          // Normalize buyer data to handle both API and localStorage formats
-          const normalizedBuyers = buyerList.map(buyer => ({
-            code: buyer.code || buyer.id || '',
-            buyerName: buyer.buyer_name || buyer.buyerName || '',
-            contactPerson: buyer.contact_person || buyer.contactPerson || '',
-            retailer: buyer.retailer || buyer.end_customer || '',
-            createdAt: buyer.created_at || buyer.createdAt || new Date().toISOString()
-          }));
-          
-          setBuyers(normalizedBuyers);
         } catch (apiError) {
-          console.warn('API fetch failed, using localStorage:', apiError);
-          // Fallback to localStorage if API fails
-          const storedBuyers = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
-          setBuyers(storedBuyers);
+          console.warn('API fetch failed:', apiError);
         }
+
+        // 2. Always merge with localStorage (codes created via Generate Buyer Code)
+        const storedBuyers = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
+        const codeSet = new Set(buyerList.map(b => (b.code || b.id || '').toString()));
+        storedBuyers.forEach(s => {
+          const c = (s.code || s.id || '').toString();
+          if (c && !codeSet.has(c)) {
+            buyerList.push(s);
+            codeSet.add(c);
+          }
+        });
+
+        // 3. Normalize all buyer data
+        const normalizedBuyers = buyerList.map(b => normalizeBuyer(b));
+        setBuyers(normalizedBuyers);
       } catch (err) {
         console.error('Error fetching buyers:', err);
         setError('Failed to load buyers');
-        // Fallback to localStorage
+        // Fallback to localStorage only on error
         const storedBuyers = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
-        setBuyers(storedBuyers);
+        setBuyers(storedBuyers.map(b => normalizeBuyer(b)));
       } finally {
         setLoading(false);
       }
@@ -64,10 +70,10 @@ const BuyerMasterSheet = ({ onBack }) => {
 
   // Filter buyers based on search term
   const filteredBuyers = buyers.filter(buyer =>
-    buyer.buyerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    buyer.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    buyer.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    buyer.retailer.toLowerCase().includes(searchTerm.toLowerCase())
+    (buyer.buyerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (buyer.code || '').toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (buyer.contactPerson || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (buyer.retailer || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Sort buyers

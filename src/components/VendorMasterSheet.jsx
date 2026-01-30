@@ -12,62 +12,64 @@ const VendorMasterSheet = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const normalizeVendor = (v) => ({
+    code: v.code || v.id || '',
+    vendorName: v.vendor_name || v.vendorName || '',
+    address: v.address || '',
+    gst: v.gst || '',
+    bankName: v.bank_name || v.bankName || '',
+    accNo: v.account_number || v.accNo || '',
+    ifscCode: v.ifsc_code || v.ifscCode || '',
+    jobWorkCategory: Array.isArray(v.job_work_category) ? v.job_work_category.join(', ') : (Array.isArray(v.jobWorkCategory) ? v.jobWorkCategory.join(', ') : (v.job_work_category || v.jobWorkCategory || '')),
+    jobWorkSubCategory: Array.isArray(v.job_work_sub_category) ? v.job_work_sub_category.join(', ') : (Array.isArray(v.jobWorkSubCategory) ? v.jobWorkSubCategory.join(', ') : (v.job_work_sub_category || v.jobWorkSubCategory || '')),
+    contactPerson: v.contact_person || v.contactPerson || '',
+    whatsappNo: v.whatsapp_number || v.whatsappNo || '',
+    altWhatsappNo: v.alt_whatsapp_number || v.altWhatsappNo || '',
+    email: v.email || '',
+    paymentTerms: v.payment_terms || v.paymentTerms || '',
+    createdAt: v.created_at || v.createdAt || new Date().toISOString()
+  });
+
   useEffect(() => {
     const fetchVendors = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Try to fetch from API first
+
+        let vendorList = [];
+
+        // 1. Try to fetch from API
         try {
           const data = await getVendorCodes();
-          let vendorList = [];
-          
           if (data && Array.isArray(data)) {
             vendorList = data;
           } else if (data && data.results && Array.isArray(data.results)) {
             vendorList = data.results;
-          } else {
-            // Fallback to localStorage if API doesn't return expected format
-            vendorList = JSON.parse(localStorage.getItem('vendorCodes') || '[]');
           }
-          
-          // Normalize vendor data to handle both API and localStorage formats
-          const normalizedVendors = vendorList.map(vendor => ({
-            code: vendor.code || vendor.id || '',
-            vendorName: vendor.vendor_name || vendor.vendorName || '',
-            address: vendor.address || '',
-            gst: vendor.gst || '',
-            bankName: vendor.bank_name || vendor.bankName || '',
-            accNo: vendor.account_number || vendor.accNo || '',
-            ifscCode: vendor.ifsc_code || vendor.ifscCode || '',
-            jobWorkCategory: Array.isArray(vendor.job_work_category) 
-              ? vendor.job_work_category.join(', ') 
-              : (vendor.job_work_category || vendor.jobWorkCategory || ''),
-            jobWorkSubCategory: Array.isArray(vendor.job_work_sub_category)
-              ? vendor.job_work_sub_category.join(', ')
-              : (vendor.job_work_sub_category || vendor.jobWorkSubCategory || ''),
-            contactPerson: vendor.contact_person || vendor.contactPerson || '',
-            whatsappNo: vendor.whatsapp_number || vendor.whatsappNo || '',
-            altWhatsappNo: vendor.alt_whatsapp_number || vendor.altWhatsappNo || '',
-            email: vendor.email || '',
-            paymentTerms: vendor.payment_terms || vendor.paymentTerms || '',
-            createdAt: vendor.created_at || vendor.createdAt || new Date().toISOString()
-          }));
-          
-          setVendors(normalizedVendors);
         } catch (apiError) {
-          console.warn('API fetch failed, using localStorage:', apiError);
-          // Fallback to localStorage if API fails
-          const storedVendors = JSON.parse(localStorage.getItem('vendorCodes') || '[]');
-          setVendors(storedVendors);
+          console.warn('API fetch failed:', apiError);
         }
+
+        // 2. Always merge with localStorage (codes created via Generate Vendor Code)
+        const storedVendors = JSON.parse(localStorage.getItem('vendorCodes') || '[]');
+        const codeSet = new Set(vendorList.map(v => (v.code || v.id || '').toString()));
+        storedVendors.forEach(s => {
+          const c = (s.code || s.id || '').toString();
+          if (c && !codeSet.has(c)) {
+            vendorList.push(s);
+            codeSet.add(c);
+          }
+        });
+
+        // 3. Normalize all vendor data
+        const normalizedVendors = vendorList.map(v => normalizeVendor(v));
+        setVendors(normalizedVendors);
       } catch (err) {
         console.error('Error fetching vendors:', err);
         setError('Failed to load vendors');
-        // Fallback to localStorage
+        // Fallback to localStorage only on error
         const storedVendors = JSON.parse(localStorage.getItem('vendorCodes') || '[]');
-        setVendors(storedVendors);
+        setVendors(storedVendors.map(v => normalizeVendor(v)));
       } finally {
         setLoading(false);
       }
@@ -78,13 +80,13 @@ const VendorMasterSheet = ({ onBack }) => {
 
   // Filter vendors based on search term
   const filteredVendors = vendors.filter(vendor =>
-    vendor.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.gst.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.paymentTerms.toLowerCase().includes(searchTerm.toLowerCase())
+    (vendor.vendorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (vendor.code || '').toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (vendor.contactPerson || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (vendor.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (vendor.gst || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (vendor.address || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (vendor.paymentTerms || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Sort vendors

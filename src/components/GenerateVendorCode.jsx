@@ -233,6 +233,12 @@ const GenerateVendorCode = ({ onBack }) => {
   const [errors, setErrors] = useState({});
   const [generatedCode, setGeneratedCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [existingVendorCodes, setExistingVendorCodes] = useState([]);
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('vendorCodes') || '[]');
+    setExistingVendorCodes(stored);
+  }, [generatedCode]);
 
   const jobWorkCategories = [
     'categories',
@@ -386,7 +392,8 @@ const GenerateVendorCode = ({ onBack }) => {
     };
     existingCodes.push(newVendorData);
     localStorage.setItem('vendorCodes', JSON.stringify(existingCodes));
-    
+    setExistingVendorCodes(existingCodes);
+
     setGeneratedCode(newCode);
     setIsGenerating(false);
   };
@@ -797,6 +804,54 @@ const GenerateVendorCode = ({ onBack }) => {
           </div>
         </form>
         </FormCard>
+
+        {existingVendorCodes.length > 0 && (
+          <div
+            className="w-fit"
+            style={{
+              marginTop: '16px',
+              border: '1px solid rgb(34 197 94)',
+              borderRadius: '8px',
+              padding: '16px 20px',
+              maxWidth: '480px',
+              marginTop: '16px'
+            }}
+          >
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', letterSpacing: '0.5px' }}>
+              Existing codes
+            </span>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginTop: '12px'
+              }}
+            >
+              {[...existingVendorCodes].reverse().map((item, idx) => (
+                <div
+                  key={item.code + '-' + (item.createdAt || idx)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 10px',
+                    backgroundColor: 'var(--muted)',
+                    borderRadius: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: '600', color: 'var(--foreground)' }}>
+                    {item.code || 'N/A'}
+                  </span>
+                  <span style={{ color: 'var(--muted-foreground)', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {item.vendorName || item.vendor_name || 'N/A'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

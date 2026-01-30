@@ -12,6 +12,7 @@ import Step4 from './components/steps/Step4';
 import Step5 from './components/steps/Step5';
 import { Button } from '@/components/ui/button';
 import { FormCard } from '@/components/ui/form-layout';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCreation, onNavigateToIPO }) => {
   const scrollContainerRef = useRef(null);
@@ -32,6 +33,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const [step4SaveStatus, setStep4SaveStatus] = useState('idle'); // 'idle' | 'success' | 'error'
   const [showSaveMessage, setShowSaveMessage] = useState(false); // Show "save first" message
   const [saveMessage, setSaveMessage] = useState(''); // Message to display
+  const [showFactoryCodePopup, setShowFactoryCodePopup] = useState(false);
+  const [shippingGroups, setShippingGroups] = useState({}); // { "0-product": 1, "0-sp-0": 2, ... } -> itemId -> groupNum
   const [formData, setFormData] = useState({
     // Internal Purchase Order fields (if provided)
     orderType: initialFormData.orderType || '',
@@ -172,7 +175,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               unit: '',
             },
             workOrders: [
-              { workOrder: '', wastage: '', for: '' },
+              { workOrder: 'Packaging', wastage: '', for: '' },
               { workOrder: '', wastage: '', for: '' },
             ],
             totalNetConsumption: '',
@@ -333,7 +336,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         },
         // Work orders (two sets)
         workOrders: [
-          { workOrder: '', wastage: '', for: '' },
+          { workOrder: 'Packaging', wastage: '', for: '' },
           { workOrder: '', wastage: '', for: '' },
         ],
         // Calculated fields
@@ -365,6 +368,115 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     },
   });
   const [errors, setErrors] = useState({});
+
+  const STORAGE_KEY = 'factoryCodeFormData';
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve) => {
+      if (!file || !(file instanceof File)) {
+        resolve(null);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve({ data: reader.result, name: file.name, type: file.type });
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const base64ToFile = (base64Obj) => {
+    if (!base64Obj || !base64Obj.data) return null;
+    try {
+      const arr = base64Obj.data.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1] || base64Obj.type;
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) u8arr[n] = bstr.charCodeAt(n);
+      return new File([u8arr], base64Obj.name, { type: mime });
+    } catch {
+      return null;
+    }
+  };
+
+  const saveToLocalStorage = async (data) => {
+    try {
+      const cloned = JSON.parse(JSON.stringify(data, (key, value) => {
+        if (value instanceof File) return null;
+        return value;
+      }));
+
+      for (let i = 0; i < (cloned.skus || []).length; i++) {
+        const sku = data.skus[i];
+        if (sku?.image instanceof File) {
+          cloned.skus[i].imageBase64 = await fileToBase64(sku.image);
+        }
+        for (let j = 0; j < (sku?.subproducts || []).length; j++) {
+          const sub = sku.subproducts[j];
+          if (sub?.image instanceof File) {
+            cloned.skus[i].subproducts[j].imageBase64 = await fileToBase64(sub.image);
+          }
+        }
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cloned));
+    } catch (e) {
+      console.warn('Failed to save to localStorage:', e);
+    }
+  };
+
+  const loadFromLocalStorage = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return null;
+
+      const data = JSON.parse(saved);
+
+      (data.skus || []).forEach((sku) => {
+        if (sku.imageBase64) {
+          sku.image = base64ToFile(sku.imageBase64);
+          sku.imagePreview = sku.imageBase64.data;
+        }
+        (sku.subproducts || []).forEach((sub) => {
+          if (sub.imageBase64) {
+            sub.image = base64ToFile(sub.imageBase64);
+            sub.imagePreview = sub.imageBase64.data;
+          }
+        });
+      });
+
+      return data;
+    } catch (e) {
+      console.warn('Failed to load from localStorage:', e);
+      return null;
+    }
+  };
+
+  const clearLocalStorage = () => {
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
+  useEffect(() => {
+    const savedData = loadFromLocalStorage();
+    if (!savedData) return;
+
+    const hasInitialFromIPO = initialFormData?.ipoCode || (initialFormData?.programName && (initialFormData?.buyerCode || initialFormData?.type));
+
+    if (!hasInitialFromIPO) {
+      setFormData(prev => ({ ...prev, ...savedData }));
+      return;
+    }
+
+    const draftMatchesContext =
+      savedData.programName === initialFormData.programName &&
+      (initialFormData.orderType === 'Company'
+        ? savedData.type === initialFormData.type
+        : String(savedData.buyerCode || '') === String(initialFormData.buyerCode || ''));
+
+    if (draftMatchesContext) {
+      setFormData(prev => ({ ...prev, ...savedData }));
+    }
+  }, []);
 
   const totalSteps = 4;
 
@@ -601,7 +713,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           unit: '',
         },
         workOrders: [
-          { workOrder: '', wastage: '', for: '' },
+          { workOrder: 'Packaging', wastage: '', for: '' },
           { workOrder: '', wastage: '', for: '' },
         ],
         totalNetConsumption: '',
@@ -2045,7 +2157,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         return updated;
       });
     }
-    // You can add actual save logic here (API call, etc.)
+    saveToLocalStorage(formData);
   };
 
   const handleSaveStep3 = () => {
@@ -2057,6 +2169,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     setStep3Saved(true);
     setStep3SaveStatus('success');
     setShowSaveMessage(false);
+    saveToLocalStorage(formData);
   };
 
   const handleSaveStep4 = () => {
@@ -2068,6 +2181,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     setStep4Saved(true);
     setStep4SaveStatus('success');
     setShowSaveMessage(false);
+    saveToLocalStorage(formData);
   };
 
   // Generate IPC code for SKUs and subproducts
@@ -2153,6 +2267,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         setStep0Saved(true); // Mark Step-0 as saved
         setShowSaveMessage(false); // Hide save message after saving
         console.log('Generated IPC codes:', ipcCodes);
+        saveToLocalStorage({ ...formData, skus: updatedSkus });
       } catch (error) {
         console.error('Error saving IPC codes:', error);
         alert('IPC codes generated but failed to save');
@@ -2168,6 +2283,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     if (!validateStep1()) return;
     setStep1Saved(true);
     setShowSaveMessage(false);
+    saveToLocalStorage(formData);
   };
 
   const validateStep3 = () => {
@@ -3159,7 +3275,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
             unit: '',
           },
           workOrders: [
-            { workOrder: '', wastage: '', for: '' },
+            { workOrder: 'Packaging', wastage: '', for: '' },
             { workOrder: '', wastage: '', for: '' },
           ],
           totalNetConsumption: '',
@@ -4272,22 +4388,25 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
                 <FormCard className="rounded-xl border-border bg-card" style={{ padding: '20px 18px' }}>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {generatedIPCCodes.map((sku, idx) => (
-                      <div key={idx} style={{ marginBottom: idx === generatedIPCCodes.length - 1 ? 0 : '12px' }}>
-                        <div className="text-sm font-semibold text-foreground">
-                          SKU {idx + 1}: <span className="text-primary font-semibold">{sku.ipcCode}</span>
-                        </div>
-                        {sku.subproducts && sku.subproducts.length > 0 && (
-                          <div className="text-sm text-muted-foreground" style={{ marginLeft: '16px', marginTop: '6px' }}>
-                            {sku.subproducts.map((sp, spIdx) => (
-                              <div key={spIdx} style={{ marginTop: spIdx === 0 ? 0 : '4px' }}>
-                                Subproduct {spIdx + 1}: <span className="text-foreground">{sp.ipcCode}</span>
-                              </div>
-                            ))}
+                    {generatedIPCCodes.map((sku, idx) => {
+                      const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode;
+                      return (
+                        <div key={idx} style={{ marginBottom: idx === generatedIPCCodes.length - 1 ? 0 : '12px' }}>
+                          <div className="text-sm font-semibold text-foreground">
+                            SKU {idx + 1}: <span className="text-primary font-semibold">{baseIpc}</span>
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          {sku.subproducts && sku.subproducts.length > 0 && (
+                            <div className="text-sm text-muted-foreground" style={{ marginLeft: '16px', marginTop: '6px' }}>
+                              {sku.subproducts.map((sp, spIdx) => (
+                                <div key={spIdx} style={{ marginTop: spIdx === 0 ? 0 : '4px' }}>
+                                  Subproduct {spIdx + 1}: <span className="text-foreground">{baseIpc}/SP{spIdx + 1}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </FormCard>
               </div>
@@ -4349,8 +4468,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                         setSaveMessage('Save first');
                         return;
                       }
-                      // Handle final submission
-                      alert('Factory code generation will be implemented here');
+                      setShowFactoryCodePopup(true);
                     }}
                   >
                     Generate Factory Code
@@ -4440,6 +4558,125 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           </div>
         </>
       )}
+
+      {/* Generate Factory Code Popup */}
+      <Dialog open={showFactoryCodePopup} onOpenChange={(open) => {
+        setShowFactoryCodePopup(open);
+        if (open) {
+          const init = {};
+          formData.skus?.forEach((sku, idx) => {
+            init[`${idx}-product`] = 1;
+            (sku.subproducts || []).forEach((_, spIdx) => {
+              init[`${idx}-sp-${spIdx}`] = 1;
+            });
+          });
+          setShippingGroups(init);
+        }
+      }}>
+        <DialogContent
+          showCloseButton={true}
+          className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl border-2 border-border shadow-2xl bg-white p-6"
+          style={{ padding: '18px' }}
+        >
+          <DialogHeader className="pb-5 pt-2 px-2 border-b border-border">
+            <DialogTitle className="text-xl font-semibold text-foreground">
+              Factory Code Generation
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-6 overflow-y-auto px-6 py-6" style={{ maxHeight: 'calc(90vh - 160px)' }}>
+            {/* Derived consumption loading - hardcoded */}
+            <div
+              className="flex items-center gap-3 px-5 py-4 rounded-xl"
+              style={{ background: 'rgba(34 197 94 / 0.08)', border: '1px solid rgb(34 197 94 / 0.4)' }}
+            >
+              <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
+              <span className="text-sm font-medium text-foreground">
+                Derived consumption table is loading...
+              </span>
+            </div>
+
+            {/* All IPC codes */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">All IPC Codes</h4>
+              <div className="flex flex-wrap gap-3">
+                {formData.skus?.map((sku, idx) => {
+                  const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode || '';
+                  const items = [];
+                  if (baseIpc) items.push({ label: `SKU ${idx + 1}`, code: baseIpc });
+                  (sku.subproducts || []).forEach((sp, spIdx) => {
+                    items.push({ label: `SKU ${idx + 1} SP${spIdx + 1}`, code: `${baseIpc}/SP${spIdx + 1}` });
+                  });
+                  return items.map((item, i) => (
+                    <span
+                      key={`${idx}-${i}`}
+                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-mono font-semibold"
+                      style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+                    >
+                      {item.code}
+                    </span>
+                  ));
+                })}
+              </div>
+            </div>
+
+            {/* Shipping Group - assign products/subproducts to groups */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Shipping Group</h4>
+              <p className="text-sm text-muted-foreground mb-4">Assign each product and subproduct to a shipping group. Items in the same group ship together.</p>
+              <div className="space-y-4 rounded-xl border border-border p-5 bg-white">
+                {formData.skus?.map((sku, idx) => {
+                  const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode || '';
+                  const maxGroup = Math.max(1, ...Object.values(shippingGroups));
+                  return (
+                    <div key={idx} className="space-y-3">
+                      <div className="flex items-center gap-4 p-3 rounded-lg border border-border bg-muted/20">
+                        <span className="text-sm font-medium flex-1">{sku.sku || `Product ${idx + 1}`}</span>
+                        <span className="text-xs text-muted-foreground font-mono">{baseIpc}</span>
+                        <select
+                          value={shippingGroups[`${idx}-product`] ?? 1}
+                          onChange={(e) => setShippingGroups(prev => ({ ...prev, [`${idx}-product`]: parseInt(e.target.value) }))}
+                          className="rounded-md border border-border px-3 py-2 text-sm bg-white min-w-[100px]"
+                        >
+                          {Array.from({ length: maxGroup }, (_, i) => i + 1).map((g) => (
+                            <option key={g} value={g}>Group {g}</option>
+                          ))}
+                          <option value={maxGroup + 1}>+ New Group</option>
+                        </select>
+                      </div>
+                      {(sku.subproducts || []).map((sp, spIdx) => (
+                        <div
+                          key={spIdx}
+                          className="flex items-center gap-4 p-3 pl-8 rounded-lg border border-border bg-muted/10"
+                        >
+                          <span className="text-sm flex-1">{sp.subproduct || `Subproduct ${spIdx + 1}`}</span>
+                          <span className="text-xs text-muted-foreground font-mono">{baseIpc}/SP{spIdx + 1}</span>
+                          <select
+                            value={shippingGroups[`${idx}-sp-${spIdx}`] ?? 1}
+                            onChange={(e) => setShippingGroups(prev => ({ ...prev, [`${idx}-sp-${spIdx}`]: parseInt(e.target.value) }))}
+                            className="rounded-md border border-border px-3 py-2 text-sm bg-white min-w-[100px]"
+                          >
+                            {Array.from({ length: maxGroup }, (_, i) => i + 1).map((g) => (
+                              <option key={g} value={g}>Group {g}</option>
+                            ))}
+                            <option value={maxGroup + 1}>+ New Group</option>
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end px-6 py-5 border-t border-border bg-white">
+            <Button type="button" onClick={() => setShowFactoryCodePopup(false)} variant="default">
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </>
   );

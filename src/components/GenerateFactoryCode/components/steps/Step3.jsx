@@ -214,7 +214,7 @@ const Step3 = ({
                                         <SearchableDropdown
                           value={material.size?.unit || ''}
                           onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'size.unit', selectedValue)}
-                          options={['CMS', 'INCHES', 'MM']}
+                          options={['CM', 'KGS']}
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ width: '120px' }}
@@ -312,7 +312,7 @@ const Step3 = ({
                             </div>
                             <input
                               type="file"
-                              onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', f); }}
                               className="hidden"
                               id={`upload-zippers-${materialIndex}`}
                               accept="image/*"
@@ -339,11 +339,13 @@ const Step3 = ({
                           />
                         </Field>
                         <Field label="UNIT" width="sm">
-                          <Input
-                            type="text"
+                          <SearchableDropdown
                             value={material.unitAdditional || ''}
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', e.target.value)}
-                            placeholder="cm/in/mm"
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', selectedValue)}
+                            options={['CM', 'KGS']}
+                            placeholder="Select or type"
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                            style={{ padding: '10px 14px', height: '44px' }}
                           />
                         </Field>
                         <Field label="SURPLUS %" width="sm">
@@ -477,7 +479,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'velcroPlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'velcroPlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-velcro-placement-${materialIndex}`}
                             accept="image/*"
@@ -583,7 +585,7 @@ const Step3 = ({
                             className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                           />
                         </Field>
-                        <Field label="SIZE" width="sm">
+                        <Field label="SIZE SPEC" width="sm">
                           <Input
                             type="text"
                             value={material.buttonSize || ''}
@@ -639,7 +641,7 @@ const Step3 = ({
                             </div>
                             <input
                               type="file"
-                              onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'buttonTestingRequirementFile', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'buttonTestingRequirementFile', f); }}
                               className="hidden"
                               id={`upload-button-testing-${materialIndex}`}
                               accept="image/*"
@@ -696,7 +698,7 @@ const Step3 = ({
                         <Field label="" width="sm" className="col-span-1 md:col-span-2 lg:col-span-5 flex flex-row gap-3 items-end">
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'buttonColorReference', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'buttonColorReference', f); }}
                             className="hidden"
                             id={`upload-button-color-ref-${materialIndex}`}
                             accept="image/*"
@@ -712,7 +714,7 @@ const Step3 = ({
                           </Button>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'buttonReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'buttonReferenceImage', f); }}
                             className="hidden"
                             id={`upload-button-ref-image-${materialIndex}`}
                             accept="image/*"
@@ -844,7 +846,7 @@ const Step3 = ({
                         />
                         <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'rivetPlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'rivetPlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-rivet-placement-${materialIndex}`}
                             accept="image/*"
@@ -900,13 +902,13 @@ const Step3 = ({
                         </div>
                         <div className="flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">UNIT</label>
-                          <input
-                            type="text"
+                          <SearchableDropdown
                             value={material.unitAdditional || ''}
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', e.target.value)}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', selectedValue)}
+                            options={['CM', 'KGS']}
+                            placeholder="Select or type"
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                             style={{ padding: '10px 14px', height: '44px', width: '100px' }}
-                            placeholder="mm/in"
                           />
                         </div>
                       </div>
@@ -996,13 +998,13 @@ const Step3 = ({
                         </div>
                         <div className="flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">UNIT</label>
-                          <input
-                            type="text"
+                          <SearchableDropdown
                             value={material.unitAdditional || ''}
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', e.target.value)}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', selectedValue)}
+                            options={['CM', 'KGS']}
+                            placeholder="Select or type"
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                             style={{ padding: '10px 14px', height: '44px', width: '100px' }}
-                            placeholder="mm/in"
                           />
                         </div>
                       </div>
@@ -1071,7 +1073,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'velcroTestingRequirementFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'velcroTestingRequirementFile', f); }}
                             className="hidden"
                             id={`upload-velcro-testing-${materialIndex}`}
                             accept="image/*"
@@ -1208,7 +1210,7 @@ const Step3 = ({
                                 <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                                 <input
                                   type="file"
-                                  onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'velcroColorReference', e.target.files[0])}
+                                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'velcroColorReference', f); }}
                                   className="hidden"
                                   id={`upload-velcro-color-${materialIndex}`}
                                   accept="image/*"
@@ -1291,7 +1293,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'rivetTestingRequirementFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'rivetTestingRequirementFile', f); }}
                             className="hidden"
                             id={`upload-rivet-testing-${materialIndex}`}
                             accept="image/*"
@@ -1431,7 +1433,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                         <input
                           type="file"
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', f); }}
                           className="hidden"
                             id={`upload-niwar-${materialIndex}`}
                         />
@@ -1522,7 +1524,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                         <input
                           type="file"
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', f); }}
                           className="hidden"
                             id={`upload-lace-${materialIndex}`}
                         />
@@ -1634,7 +1636,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                         <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'feltColorReference', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'feltColorReference', f); }}
                             className="hidden"
                             id={`upload-felt-color-${materialIndex}`}
                             accept="image/*"
@@ -1943,7 +1945,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                         <input
                           type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'interliningPlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'interliningPlacementReferenceImage', f); }}
                           className="hidden"
                             id={`upload-interlining-placement-${materialIndex}`}
                             accept="image/*"
@@ -2222,7 +2224,7 @@ const Step3 = ({
 
                       {/* SIZE */}
                       <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE</label>
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE SPEC</label>
                         <SearchableDropdown
                           value={material.hookEyeSize || ''}
                           onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'hookEyeSize', selectedValue)}
@@ -2279,7 +2281,7 @@ const Step3 = ({
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'hookEyeReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'hookEyeReferenceImage', f); }}
                             className="hidden"
                             id={`upload-hooks-reference-${materialIndex}`}
                           />
@@ -2492,7 +2494,7 @@ const Step3 = ({
                             </div>
                             <input
                               type="file"
-                              onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'bucklesReferenceImage', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'bucklesReferenceImage', f); }}
                               className="hidden"
                               id={`upload-buckles-ref-${materialIndex}`}
                               accept="image/*"
@@ -2623,7 +2625,7 @@ const Step3 = ({
 
                       {/* SIZE */}
                       <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE</label>
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE SPEC</label>
                         <input
                           type="text"
                           value={material.shoulderPadSize || ''}
@@ -2731,7 +2733,7 @@ const Step3 = ({
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'shoulderPadReferenceImage', f); }}
                             className="hidden"
                             id={`upload-reference-image-${materialIndex}`}
                           />
@@ -2940,7 +2942,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                         <input
                           type="file"
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', f); }}
                           className="hidden"
                           id={`upload-tubular-${materialIndex}`}
                         />
@@ -3034,7 +3036,7 @@ const Step3 = ({
                             className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                           />
                         </Field>
-                        <Field label="SIZE" width="sm">
+                        <Field label="SIZE SPEC" width="sm">
                           <SearchableDropdown
                             value={material.cableTieSize || ''}
                             onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cableTieSize', selectedValue)}
@@ -3073,7 +3075,7 @@ const Step3 = ({
                             </div>
                             <input
                               type="file"
-                              onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cableTieReferenceImage', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'cableTieReferenceImage', f); }}
                               className="hidden"
                               id={`upload-cable-ref-${materialIndex}`}
                               accept="image/*"
@@ -3244,7 +3246,7 @@ const Step3 = ({
                           />
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'seamTapePlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'seamTapePlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-seam-tape-placement-${materialIndex}`}
                             accept="image/*"
@@ -3280,7 +3282,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'seamTapeTestingRequirementFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'seamTapeTestingRequirementFile', f); }}
                             className="hidden"
                             id={`upload-seam-tape-testing-${materialIndex}`}
                             accept="image/*"
@@ -3471,7 +3473,7 @@ const Step3 = ({
                           />
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'reflectiveTapePlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'reflectiveTapePlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-reflective-tape-placement-${materialIndex}`}
                             accept="image/*"
@@ -3507,7 +3509,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'reflectiveTapeTestingRequirementFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'reflectiveTapeTestingRequirementFile', f); }}
                             className="hidden"
                             id={`upload-reflective-tape-testing-${materialIndex}`}
                             accept="image/*"
@@ -3815,7 +3817,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                         <input
                           type="file"
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', e.target.files[0])}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'testingRequirementFile', f); }}
                           className="hidden"
                           id={`upload-fr-${materialIndex}`}
                         />
@@ -3901,7 +3903,7 @@ const Step3 = ({
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE</label>
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE SPEC</label>
                         <SearchableDropdown
                           value={material.cordStopSize || ''}
                           onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'cordStopSize', selectedValue)}
@@ -3949,7 +3951,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cordStopPlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'cordStopPlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-cord-placement-${materialIndex}`}
                             accept="image/*"
@@ -3985,7 +3987,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'cordStopPlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'cordStopPlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-cord-placement-${materialIndex}`}
                             accept="image/*"
@@ -4145,7 +4147,7 @@ const Step3 = ({
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE</label>
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE SPEC</label>
                         <input
                           type="text"
                           value={material.ringsLoopsSize || ''}
@@ -4190,7 +4192,7 @@ const Step3 = ({
                         />
                         <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'ringsLoopsPlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'ringsLoopsPlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-rings-loops-placement-${materialIndex}`}
                             accept="image/*"
@@ -4226,7 +4228,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'ringsLoopsTestingRequirementFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'ringsLoopsTestingRequirementFile', f); }}
                             className="hidden"
                             id={`upload-rings-loops-testing-${materialIndex}`}
                             accept="image/*"
@@ -4385,7 +4387,7 @@ const Step3 = ({
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE</label>
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE SPEC</label>
                         <input
                           type="text"
                           value={material.pinBarbSize || ''}
@@ -4430,7 +4432,7 @@ const Step3 = ({
                           />
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'pinBarbPlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'pinBarbPlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-pin-barb-placement-${materialIndex}`}
                             accept="image/*"
@@ -4466,7 +4468,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'pinBarbTestingRequirementFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'pinBarbTestingRequirementFile', f); }}
                             className="hidden"
                             id={`upload-pin-barb-testing-${materialIndex}`}
                             accept="image/*"
@@ -4624,7 +4626,7 @@ const Step3 = ({
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE</label>
+                        <label className="text-sm font-semibold text-gray-700 mb-2">SIZE SPEC</label>
                         <input
                           type="text"
                           value={material.magneticClosureSize || ''}
@@ -4661,7 +4663,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'magneticClosurePlacementReferenceImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'magneticClosurePlacementReferenceImage', f); }}
                             className="hidden"
                             id={`upload-magnetic-placement-${materialIndex}`}
                             accept="image/*"
@@ -4697,7 +4699,7 @@ const Step3 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
                           <input
                             type="file"
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'magneticClosureTestingRequirementFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleConsumptionMaterialChange(materialIndex, 'magneticClosureTestingRequirementFile', f); }}
                             className="hidden"
                             id={`upload-magnetic-testing-${materialIndex}`}
                             accept="image/*"

@@ -442,7 +442,7 @@
 
 // export default GenerateBuyerCode;
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/ui/field';
 import { Button } from '@/components/ui/button';
@@ -457,6 +457,12 @@ const GenerateBuyerCode = ({ onBack }) => {
   const [errors, setErrors] = useState({});
   const [generatedCode, setGeneratedCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [existingBuyerCodes, setExistingBuyerCodes] = useState([]);
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('buyerCodes') || '[]');
+    setExistingBuyerCodes(stored);
+  }, [generatedCode]); // Refresh when returning from success screen
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -627,7 +633,8 @@ const GenerateBuyerCode = ({ onBack }) => {
       existingCodes.push(newBuyerData);
       localStorage.setItem('buyerCodes', JSON.stringify(existingCodes));
       console.log('Saved to localStorage:', newBuyerData);
-      
+      setExistingBuyerCodes(existingCodes);
+
       // Set the generated code to show success screen
       setGeneratedCode(newCode);
       setIsGenerating(false);
@@ -845,6 +852,54 @@ const GenerateBuyerCode = ({ onBack }) => {
             </div>
           </form>
         </FormCard>
+
+        {existingBuyerCodes.length > 0 && (
+          <div
+            className="w-fit"
+            style={{
+              marginTop: '16px',
+              border: '1px solid rgb(34 197 94)',
+              borderRadius: '8px',
+              padding: '16px 20px',
+              maxWidth: '480px',
+              marginTop: '16px'
+            }}
+          >
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', letterSpacing: '0.5px' }}>
+              Existing codes
+            </span>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginTop: '12px'
+              }}
+            >
+              {[...existingBuyerCodes].reverse().map((item, idx) => (
+                <div
+                  key={item.code + '-' + (item.createdAt || idx)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 10px',
+                    backgroundColor: 'var(--muted)',
+                    borderRadius: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: '600', color: 'var(--foreground)' }}>
+                    {item.code || 'N/A'}
+                  </span>
+                  <span style={{ color: 'var(--muted-foreground)', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {item.buyerName || item.buyer_name || 'N/A'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
