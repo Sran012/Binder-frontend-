@@ -622,7 +622,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'labelsBrandArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'labelsBrandArtworkSpecFile', f); }}
                             className="hidden"
                             id={`labels-brand-artwork-${materialIndex}`}
                           />
@@ -683,7 +683,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'labelsBrandPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'labelsBrandPlacementImageRef', f); }}
                               className="hidden"
                               id={`labels-brand-placement-${materialIndex}`}
                             />
@@ -889,7 +889,7 @@ const Step4 = ({
                               <div className="flex items-center gap-2">
                                 <input
                                   type="file"
-                                  onChange={(e) => handleArtworkMaterialChange(materialIndex, 'careCompositionArtworkSpecFile', e.target.files[0])}
+                                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'careCompositionArtworkSpecFile', f); }}
                                   className="hidden"
                                   id={`care-composition-artwork-${materialIndex}`}
                                 />
@@ -953,7 +953,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'careCompositionPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'careCompositionPlacementImageRef', f); }}
                               className="hidden"
                               id={`care-composition-placement-${materialIndex}`}
                             />
@@ -1132,7 +1132,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'rfidArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'rfidArtworkSpecFile', f); }}
                             className="hidden"
                             id={`rfid-artwork-${materialIndex}`}
                           />
@@ -1219,7 +1219,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'rfidPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'rfidPlacementImageRef', f); }}
                               className="hidden"
                               id={`rfid-placement-${materialIndex}`}
                             />
@@ -1262,7 +1262,7 @@ const Step4 = ({
                           )}
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'rfidTestingRequirementsFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'rfidTestingRequirementsFile', f); }}
                             className="hidden"
                             id={`rfid-testing-${materialIndex}`}
                           />
@@ -1314,7 +1314,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>APPROVAL</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'rfidApprovalFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'rfidApprovalFile', f); }}
                             className="hidden"
                             id={`rfid-approval-${materialIndex}`}
                           />
@@ -1412,7 +1412,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'lawLabelArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'lawLabelArtworkSpecFile', f); }}
                             className="hidden"
                             id={`law-label-artwork-${materialIndex}`}
                           />
@@ -1474,7 +1474,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'lawLabelPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'lawLabelPlacementImageRef', f); }}
                               className="hidden"
                               id={`law-label-placement-${materialIndex}`}
                             />
@@ -1666,7 +1666,7 @@ const Step4 = ({
                               <div className="flex items-center gap-2">
                                 <input
                                   type="file"
-                                  onChange={(e) => handleArtworkMaterialChange(materialIndex, 'hangTagSealsArtworkSpecFile', e.target.files[0])}
+                                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'hangTagSealsArtworkSpecFile', f); }}
                                   className="hidden"
                                   id={`hang-tag-seals-artwork-${materialIndex}`}
                                 />
@@ -1731,7 +1731,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'hangTagSealsPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'hangTagSealsPlacementImageRef', f); }}
                               className="hidden"
                               id={`hang-tag-seals-placement-${materialIndex}`}
                             />
@@ -1960,7 +1960,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'heatTransferPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'heatTransferPlacementImageRef', f); }}
                               className="hidden"
                               id={`heat-transfer-placement-${materialIndex}`}
                             />
@@ -2149,7 +2149,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'upcBarcodeArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'upcBarcodeArtworkSpecFile', f); }}
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none w-full"
                             style={{ padding: '10px 14px', height: '44px' }}
                           />
@@ -2188,7 +2188,7 @@ const Step4 = ({
                           <div className="flex items-center gap-2">
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'upcBarcodeSizeImageFile', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'upcBarcodeSizeImageFile', f); }}
                               className="hidden"
                               id={`upc-barcode-size-image-${materialIndex}`}
                             />
@@ -2397,7 +2397,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'priceTicketArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'priceTicketArtworkSpecFile', f); }}
                             className="hidden"
                             id={`price-ticket-artwork-${materialIndex}`}
                           />
@@ -2634,7 +2634,7 @@ const Step4 = ({
                               <div className="flex items-center gap-2">
                                 <input
                                   type="file"
-                                  onChange={(e) => handleArtworkMaterialChange(materialIndex, 'artworkSpecFile', e.target.files[0])}
+                                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'artworkSpecFile', f); }}
                                   className="hidden"
                                   id={`anti-counterfeit-artwork-${materialIndex}`}
                                 />
@@ -2791,7 +2791,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'placementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'placementImageRef', f); }}
                               className="hidden"
                               id={`anti-counterfeit-placement-${materialIndex}`}
                             />
@@ -2970,7 +2970,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'qcInspectionArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'qcInspectionArtworkSpecFile', f); }}
                             className="hidden"
                             id={`qc-inspection-artwork-${materialIndex}`}
                           />
@@ -3119,7 +3119,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'qcInspectionPlacementImageFile', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'qcInspectionPlacementImageFile', f); }}
                               className="hidden"
                               id={`qc-inspection-placement-image-${materialIndex}`}
                             />
@@ -3312,7 +3312,7 @@ const Step4 = ({
                               <div className="flex items-center gap-2">
                                 <input
                                   type="file"
-                                  onChange={(e) => handleArtworkMaterialChange(materialIndex, 'bellyBandArtworkSpecFile', e.target.files[0])}
+                                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'bellyBandArtworkSpecFile', f); }}
                                   className="hidden"
                                   id={`belly-band-artwork-${materialIndex}`}
                                 />
@@ -3437,7 +3437,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'bellyBandPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'bellyBandPlacementImageRef', f); }}
                               className="hidden"
                               id={`belly-band-placement-${materialIndex}`}
                             />
@@ -3598,7 +3598,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'sizeLabelsArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'sizeLabelsArtworkSpecFile', f); }}
                             className="hidden"
                             id={`size-labels-artwork-${materialIndex}`}
                           />
@@ -3747,7 +3747,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'sizeLabelsPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'sizeLabelsPlacementImageRef', f); }}
                               className="hidden"
                               id={`size-labels-placement-${materialIndex}`}
                             />
@@ -3935,7 +3935,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'tagsSpecialLabelsArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'tagsSpecialLabelsArtworkSpecFile', f); }}
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none w-full"
                             style={{ padding: '10px 14px', height: '44px' }}
                           />
@@ -4045,7 +4045,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'tagsSpecialLabelsPlacementImageFile', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'tagsSpecialLabelsPlacementImageFile', f); }}
                               className="hidden"
                               id={`tags-special-labels-placement-image-${materialIndex}`}
                             />
@@ -4130,7 +4130,7 @@ const Step4 = ({
                           )}
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'tagsSpecialLabelsTestingRequirementsFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'tagsSpecialLabelsTestingRequirementsFile', f); }}
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none mt-2"
                             style={{ padding: '10px 14px', height: '44px' }}
                           />
@@ -4165,7 +4165,7 @@ const Step4 = ({
                           )}
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'tagsSpecialLabelsApprovalFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'tagsSpecialLabelsApprovalFile', f); }}
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none mt-2"
                             style={{ padding: '10px 14px', height: '44px' }}
                           />
@@ -4297,7 +4297,7 @@ const Step4 = ({
                               <div className="flex items-center gap-2">
                                 <input
                                   type="file"
-                                  onChange={(e) => handleArtworkMaterialChange(materialIndex, 'flammabilitySafetyArtworkSpecFile', e.target.files[0])}
+                                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'flammabilitySafetyArtworkSpecFile', f); }}
                                   className="hidden"
                                   id={`flammability-safety-artwork-${materialIndex}`}
                                 />
@@ -4362,7 +4362,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'flammabilitySafetyPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'flammabilitySafetyPlacementImageRef', f); }}
                               className="hidden"
                               id={`flammability-safety-placement-${materialIndex}`}
                             />
@@ -4642,7 +4642,7 @@ const Step4 = ({
                             />
                             <input
                               type="file"
-                              onChange={(e) => handleArtworkMaterialChange(materialIndex, 'insertCardsPlacementImageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'insertCardsPlacementImageRef', f); }}
                               className="hidden"
                               id={`insert-cards-placement-${materialIndex}`}
                             />
@@ -4830,7 +4830,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>ARTWORK SPEC</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'ribbonsArtworkSpecFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'ribbonsArtworkSpecFile', f); }}
                             className="hidden"
                             id={`ribbons-artwork-${materialIndex}`}
                           />
@@ -4937,7 +4937,7 @@ const Step4 = ({
                           <label className="text-sm font-semibold text-gray-700 mb-2" style={{ whiteSpace: 'nowrap' }}>APPROVAL</label>
                           <input
                             type="file"
-                            onChange={(e) => handleArtworkMaterialChange(materialIndex, 'ribbonsApprovalFile', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'ribbonsApprovalFile', f); }}
                             className="hidden"
                             id={`ribbons-approval-${materialIndex}`}
                           />
@@ -4984,7 +4984,7 @@ const Step4 = ({
                         />
                         <input
                           type="file"
-                          onChange={(e) => handleArtworkMaterialChange(materialIndex, 'referenceImage', e.target.files[0])}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleArtworkMaterialChange(materialIndex, 'referenceImage', f); }}
                           className="hidden"
                           id={`art-file-${materialIndex}`}
                         />

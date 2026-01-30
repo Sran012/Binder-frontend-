@@ -1879,7 +1879,7 @@ const Step2 = ({
                       <Field label="UPLOAD REF IMAGE" width="sm">
                         <input
                           type="file"
-                          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamShapeRefImage', e.target.files[0])}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamShapeRefImage', f); }}
                           className="hidden"
                           id={`upload-foam-shape-${actualIndex}`}
                           accept="image/*"
@@ -1971,7 +1971,7 @@ const Step2 = ({
                             </div>
                             <input
                               type="file"
-                              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamTestingRequirementsFile', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamTestingRequirementsFile', f); }}
                               className="hidden"
                               id={`upload-foam-testing-${actualIndex}`}
                               accept="image/*"
@@ -2227,7 +2227,7 @@ const Step2 = ({
     <Field label="UPLOAD REF IMAGE" width="sm">
       <input
         type="file"
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeShapeRefImage', e.target.files[0])}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamPeEpeShapeRefImage', f); }}
         className="hidden"
         id={`upload-pe-epe-foam-shape-${actualIndex}`}
         accept="image/*"
@@ -2320,7 +2320,7 @@ const Step2 = ({
           </div>
           <input
             type="file"
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirementsFile', e.target.files[0])}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamPeEpeTestingRequirementsFile', f); }}
             className="hidden"
             id={`upload-pe-epe-testing-${actualIndex}`}
             accept="image/*"
@@ -2567,7 +2567,7 @@ const Step2 = ({
     <Field label="UPLOAD REF IMAGE" width="sm">
       <input
         type="file"
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPuShapeRefImage', e.target.files[0])}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamPuShapeRefImage', f); }}
         className="hidden"
         id={`upload-pu-foam-shape-${actualIndex}`}
         accept="image/*"
@@ -2660,7 +2660,7 @@ const Step2 = ({
         </div>
         <input
           type="file"
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamPuTestingRequirementsFile', e.target.files[0])}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamPuTestingRequirementsFile', f); }}
           className="hidden"
           id={`upload-pu-foam-testing-${actualIndex}`}
           accept="image/*"
@@ -2941,7 +2941,7 @@ const Step2 = ({
     <Field label="UPLOAD REF IMAGE" width="sm">
       <input
         type="file"
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamRebondedShapeRefImage', e.target.files[0])}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamRebondedShapeRefImage', f); }}
         className="hidden"
         id={`upload-rebonded-foam-shape-${actualIndex}`}
         accept="image/*"
@@ -3034,7 +3034,7 @@ const Step2 = ({
         </div>
         <input
           type="file"
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamRebondedTestingRequirementsFile', e.target.files[0])}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamRebondedTestingRequirementsFile', f); }}
           className="hidden"
           id={`upload-rebonded-foam-testing-${actualIndex}`}
           accept="image/*"
@@ -3257,7 +3257,7 @@ const Step2 = ({
     <Field label="UPLOAD REF IMAGE" width="sm">
       <input
         type="file"
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamGelInfusedShapeRefImage', e.target.files[0])}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamGelInfusedShapeRefImage', f); }}
         className="hidden"
         id={`upload-gel-infused-foam-shape-${actualIndex}`}
         accept="image/*"
@@ -3356,7 +3356,7 @@ const Step2 = ({
           </div>
           <input
             type="file"
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirementsFile', e.target.files[0])}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamGelInfusedTestingRequirementsFile', f); }}
             className="hidden"
             id={`upload-gel-infused-testing-${actualIndex}`}
             accept="image/*"
@@ -3638,7 +3638,7 @@ const Step2 = ({
     <Field label="UPLOAD REF IMAGE" width="sm">
       <input
         type="file"
-        onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexShapeRefImage', e.target.files[0])}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamLatexShapeRefImage', f); }}
         className="hidden"
         id={`upload-latex-foam-shape-${actualIndex}`}
         accept="image/*"
@@ -3731,7 +3731,7 @@ const Step2 = ({
           </div>
           <input
             type="file"
-            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirementsFile', e.target.files[0])}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamLatexTestingRequirementsFile', f); }}
             className="hidden"
             id={`upload-latex-testing-${actualIndex}`}
             accept="image/*"
@@ -4014,7 +4014,7 @@ const Step2 = ({
       <Field label="UPLOAD REF IMAGE" width="sm">
         <input
           type="file"
-          onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryShapeRefImage', e.target.files[0])}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamMemoryShapeRefImage', f); }}
           className="hidden"
           id={`upload-memory-foam-shape-${actualIndex}`}
           accept="image/*"
@@ -4107,7 +4107,7 @@ const Step2 = ({
             </div>
             <input
               type="file"
-              onChange={(e) => handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirementsFile', e.target.files[0])}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamMemoryTestingRequirementsFile', f); }}
               className="hidden"
               id={`upload-memory-testing-${actualIndex}`}
               accept="image/*"
@@ -4404,7 +4404,7 @@ const Step2 = ({
                         <Field label="UPLOAD REF IMAGE" width="sm">
                           <input
                             type="file"
-                            onChange={(e) => handleRawMaterialChange(actualIndex, 'foamHrShapeRefImage', e.target.files[0])}
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRawMaterialChange(actualIndex, 'foamHrShapeRefImage', f); }}
                             className="hidden"
                             id={`upload-hr-foam-shape-${actualIndex}`}
                             accept="image/*"
@@ -8828,7 +8828,7 @@ const Step2 = ({
                           <Field label="DESIGN REF" width="sm">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`braiding-file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -8864,9 +8864,10 @@ const Step2 = ({
                           <Field label="DESIGN REF" width="sm">
                             <input
                               type="file"
-                              onChange={(e) =>
-                                handleWorkOrderChange(actualIndex, woIndex, 'knittingDesignRef', e.target.files[0])
-                              }
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleWorkOrderChange(actualIndex, woIndex, 'knittingDesignRef', f);
+                              }}
                               className="hidden"
                               id={`knitting-file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -9186,7 +9187,7 @@ const Step2 = ({
                           <Field label="DESIGN REF" width="sm">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`quilting-file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -9290,7 +9291,7 @@ const Step2 = ({
                           <Field label="DESIGN REF" width="sm">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`printing-file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -9477,7 +9478,7 @@ const Step2 = ({
                               />
                               <input
                                 type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeColourRefImage', e.target.files[0])}
+                                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'fringeColourRefImage', f); }}
                                 className="hidden"
                                 id={`fringe-colour-ref-${materialIndex + 1}-${woIndex}`}
                               />
@@ -9507,7 +9508,7 @@ const Step2 = ({
                               />
                               <input
                                 type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringePlacementRefImage', e.target.files[0])}
+                                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'fringePlacementRefImage', f); }}
                                 className="hidden"
                                 id={`fringe-placement-ref-${materialIndex + 1}-${woIndex}`}
                               />
@@ -9573,7 +9574,7 @@ const Step2 = ({
                               </div>
                               <input
                                 type="file"
-                                onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirementsUpload', e.target.files[0])}
+                                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'fringeTestingRequirementsUpload', f); }}
                                 className="hidden"
                                 id={`fringe-testing-requirements-upload-${materialIndex + 1}-${woIndex}`}
                                 accept="image/*"
@@ -9782,7 +9783,7 @@ const Step2 = ({
                           <Field label="REFERENCE IMAGE" width="sm">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`dyeing-file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -9852,7 +9853,7 @@ const Step2 = ({
                           <div className="flex items-center gap-2">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -9877,7 +9878,7 @@ const Step2 = ({
                           <Field label="DESIGN REF" width="sm">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`weaving-file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -9984,7 +9985,7 @@ const Step2 = ({
                           <Field label="DESIGN REF" width="sm">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`tufting-file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -10130,7 +10131,7 @@ const Step2 = ({
                           <Field label="DESIGN REF" width="sm">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`carpet-file-${materialIndex + 1}-${woIndex}`}
                             />
@@ -10342,7 +10343,7 @@ const Step2 = ({
                           <Field label="DESIGN REF" width="sm">
                             <input
                               type="file"
-                              onChange={(e) => handleWorkOrderChange(actualIndex, woIndex, 'imageRef', e.target.files[0])}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleWorkOrderChange(actualIndex, woIndex, 'imageRef', f); }}
                               className="hidden"
                               id={`embroidery-file-${materialIndex + 1}-${woIndex}`}
                             />
