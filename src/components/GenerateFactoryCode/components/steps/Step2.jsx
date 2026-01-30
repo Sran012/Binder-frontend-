@@ -10864,46 +10864,26 @@ const Step2 = ({
                                 </Field>
 
                                 {/* WARP RATIO */}
-                                <Field label="WARP RATIO" width="sm" helper="0–1 (sum with weft = 1)">
+                                <Field label="WARP RATIO" width="sm">
                                   <Input
-                                    type="number"
-                                    step="0.001"
-                                    min="0"
-                                    max="1"
-                                    value={workOrder.advancedWarpRatio || ''}
-                                    onChange={(e) => {
-                                      const val = parseFloat(e.target.value) || 0;
-                                      const clampedVal = val > 1 ? 1 : val < 0 ? 0 : val;
-                                      handleWorkOrderChange(actualIndex, woIndex, 'advancedWarpRatio', clampedVal);
-                                      // Auto-calculate WEFT if both are being used (ratios should sum to 1)
-                                      if (workOrder.advancedWeftRatio !== '' && clampedVal <= 1) {
-                                        const weftVal = Math.max(0, Math.min(1, 1 - clampedVal)).toFixed(3);
-                                        handleWorkOrderChange(actualIndex, woIndex, 'advancedWeftRatio', weftVal);
-                                      }
-                                    }}
-                                    placeholder="0-1"
+                                    type="text"
+                                    value={workOrder.advancedWarpRatio ?? ''}
+                                    onChange={(e) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'advancedWarpRatio', e.target.value)
+                                    }
+                                    placeholder="e.g. 0.6 or 60"
                                   />
                                 </Field>
 
                                 {/* WEFT RATIO */}
-                                <Field label="WEFT RATIO" width="sm" helper="0–1 (sum with warp = 1)">
+                                <Field label="WEFT RATIO" width="sm">
                                   <Input
-                                    type="number"
-                                    step="0.001"
-                                    min="0"
-                                    max="1"
-                                    value={workOrder.advancedWeftRatio || ''}
-                                    onChange={(e) => {
-                                      const val = parseFloat(e.target.value) || 0;
-                                      const clampedVal = val > 1 ? 1 : val < 0 ? 0 : val;
-                                      handleWorkOrderChange(actualIndex, woIndex, 'advancedWeftRatio', clampedVal);
-                                      // Auto-calculate WARP if both are being used (ratios should sum to 1)
-                                      if (workOrder.advancedWarpRatio !== '' && clampedVal <= 1) {
-                                        const warpVal = Math.max(0, Math.min(1, 1 - clampedVal)).toFixed(3);
-                                        handleWorkOrderChange(actualIndex, woIndex, 'advancedWarpRatio', warpVal);
-                                      }
-                                    }}
-                                    placeholder="0-1"
+                                    type="text"
+                                    value={workOrder.advancedWeftRatio ?? ''}
+                                    onChange={(e) =>
+                                      handleWorkOrderChange(actualIndex, woIndex, 'advancedWeftRatio', e.target.value)
+                                    }
+                                    placeholder="e.g. 0.4 or 40"
                                   />
                                 </Field>
                               </div>
