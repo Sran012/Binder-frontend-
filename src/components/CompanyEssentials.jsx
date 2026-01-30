@@ -15,12 +15,18 @@ const CompanyEssentials = ({ onBack }) => {
   const [errors, setErrors] = useState({}); // { [formId]: { [fieldName]: string } }
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'success' | 'error'
   const [isSaved, setIsSaved] = useState(false);
+  const [existingEssentials, setExistingEssentials] = useState([]);
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('companyEssentials') || '[]');
+    setExistingEssentials(stored);
+  }, [selectedCategory, saveStatus]);
 
   const categories = [
     'STATIONARY',
     'PANTRY',
     'MACHINERY',
-    'HOUSE KEEPING',
+    'HOUSEKEEPING',
     'ELECTRICAL',
     'HARDWARE & CHEMICALS',
     'AUDIT & COMPLIANCES',
@@ -63,7 +69,7 @@ const CompanyEssentials = ({ onBack }) => {
       // Extract PO numbers from existing entries for this category
       const poNumbers = categoryEntries
         .map(entry => {
-          // Extract PO number from code (format: CHD/E/{TYPE}/26-27/PO-{N}/)
+          // Extract PO number from code (format: CHD/E/{TYPE}/26-27/PO-{N})
           const match = entry.code?.match(/PO-(\d+)/);
           return match ? parseInt(match[1]) : 0;
         })
@@ -82,9 +88,9 @@ const CompanyEssentials = ({ onBack }) => {
   const generateCode = (category, poNumber) => {
     const type = category.toUpperCase().replace(/\s+/g, ' ');
     if (poNumber) {
-      return `CHD/E/${type}/26-27/PO-${poNumber}/`;
+      return `CHD/E/${type}/26-27/PO-${poNumber}`;
     }
-    return `CHD/E/${type}/26-27/`;
+    return `CHD/E/${type}/26-27`;
   };
 
   // Reset when category changes
@@ -182,6 +188,7 @@ const CompanyEssentials = ({ onBack }) => {
     const existingData = JSON.parse(localStorage.getItem('companyEssentials') || '[]');
     existingData.push(dataToSave);
     localStorage.setItem('companyEssentials', JSON.stringify(existingData));
+    setExistingEssentials(existingData);
   };
 
   const handleSubmitAll = (e) => {
@@ -591,6 +598,54 @@ const CompanyEssentials = ({ onBack }) => {
             </div>
           </form>
         </FormCard>
+      )}
+
+      {/* Existing codes box - show when we have category selected and localStorage has entries */}
+      {selectedCategory && existingEssentials.filter(e => e.category === selectedCategory).length > 0 && (
+        <div
+          className="w-fit"
+          style={{
+            marginTop: '16px',
+            border: '1px solid rgb(34 197 94)',
+            borderRadius: '8px',
+            padding: '16px 20px',
+            maxWidth: '480px'
+          }}
+        >
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', letterSpacing: '0.5px' }}>
+            Existing codes
+          </span>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              marginTop: '12px'
+            }}
+          >
+            {existingEssentials
+              .filter(e => e.category === selectedCategory)
+              .slice()
+              .reverse()
+              .map((item, idx) => (
+                <div
+                  key={(item.code || '') + '-' + (item.timestamp || idx)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '6px 10px',
+                    backgroundColor: 'var(--muted)',
+                    borderRadius: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: '600', color: 'var(--foreground)' }}>
+                    {(item.code || '').replace(/\/$/, '') || 'N/A'}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
       )}
 
       {/* Popup Modal */}

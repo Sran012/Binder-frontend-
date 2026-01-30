@@ -855,8 +855,9 @@ const GenerateBuyerCode = ({ onBack }) => {
 
         {existingBuyerCodes.length > 0 && (
           <div
-            className="mt-8 w-fit"
+            className="w-fit"
             style={{
+              marginTop: '16px',
               border: '1px solid rgb(34 197 94)',
               borderRadius: '8px',
               padding: '16px 20px',
