@@ -1224,11 +1224,13 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange }) => {
                           />
                         </Field>
                         <Field label="UNIT" width="sm">
-                          <Input
-                            type="text"
+                          <SearchableDropdown
                             value={material.unitAdditional || ''}
-                            onChange={(e) => handleChange(materialIndex, 'unitAdditional', e.target.value)}
-                            placeholder="cm/in/mm"
+                            onChange={(selectedValue) => handleChange(materialIndex, 'unitAdditional', selectedValue)}
+                            options={['CM', 'KGS']}
+                            placeholder="Select or type"
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                            style={{ padding: '10px 14px', height: '44px' }}
                           />
                         </Field>
                         <Field label="SURPLUS %" width="sm">

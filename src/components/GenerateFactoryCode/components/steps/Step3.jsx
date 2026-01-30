@@ -214,7 +214,7 @@ const Step3 = ({
                                         <SearchableDropdown
                           value={material.size?.unit || ''}
                           onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'size.unit', selectedValue)}
-                          options={['CMS', 'INCHES', 'MM']}
+                          options={['CM', 'KGS']}
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ width: '120px' }}
@@ -339,11 +339,13 @@ const Step3 = ({
                           />
                         </Field>
                         <Field label="UNIT" width="sm">
-                          <Input
-                            type="text"
+                          <SearchableDropdown
                             value={material.unitAdditional || ''}
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', e.target.value)}
-                            placeholder="cm/in/mm"
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', selectedValue)}
+                            options={['CM', 'KGS']}
+                            placeholder="Select or type"
+                            className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
+                            style={{ padding: '10px 14px', height: '44px' }}
                           />
                         </Field>
                         <Field label="SURPLUS %" width="sm">
@@ -900,13 +902,13 @@ const Step3 = ({
                         </div>
                         <div className="flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">UNIT</label>
-                          <input
-                            type="text"
+                          <SearchableDropdown
                             value={material.unitAdditional || ''}
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', e.target.value)}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', selectedValue)}
+                            options={['CM', 'KGS']}
+                            placeholder="Select or type"
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                             style={{ padding: '10px 14px', height: '44px', width: '100px' }}
-                            placeholder="mm/in"
                           />
                         </div>
                       </div>
@@ -996,13 +998,13 @@ const Step3 = ({
                         </div>
                         <div className="flex flex-col">
                           <label className="text-sm font-semibold text-gray-700 mb-2">UNIT</label>
-                          <input
-                            type="text"
+                          <SearchableDropdown
                             value={material.unitAdditional || ''}
-                            onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', e.target.value)}
+                            onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'unitAdditional', selectedValue)}
+                            options={['CM', 'KGS']}
+                            placeholder="Select or type"
                             className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                             style={{ padding: '10px 14px', height: '44px', width: '100px' }}
-                            placeholder="mm/in"
                           />
                         </div>
                       </div>
