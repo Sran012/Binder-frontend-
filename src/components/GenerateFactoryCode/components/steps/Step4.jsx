@@ -220,7 +220,7 @@ const Step4 = ({
       {/* Header with proper spacing */}
       <div style={{ marginBottom: '28px' }}>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">PART-4 ARTWORK & LABELING</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">PART-3 ARTWORK & LABELING</h2>
           <p className="text-sm text-gray-600">Artwork & packaging materials</p>
         </div>
       </div>
