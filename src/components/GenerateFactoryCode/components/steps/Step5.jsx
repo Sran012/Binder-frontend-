@@ -71,6 +71,25 @@ const Step5 = ({
     return [...new Set(names)];
   };
 
+  // All IPC codes created in Step 0 (from localStorage + current formData.skus)
+const getIpcLinkOptions = () => {
+  const codes = new Set();
+  // From current session SKUs
+  (formData.skus || []).forEach((sku) => {
+    if (sku.ipcCode) codes.add(sku.ipcCode);
+  });
+  // From localStorage (all previous Step 0 saves)
+  try {
+    const existing = JSON.parse(localStorage.getItem('ipcCodes') || '[]');
+    existing.forEach((batch) => {
+      (batch.skus || []).forEach((s) => {
+        if (s.ipcCode) codes.add(s.ipcCode);
+      });
+    });
+  } catch (_) {}
+  return [...codes].sort();
+};
+
   return (
 <div className="w-full">
       {/* Header with proper spacing */}
@@ -137,7 +156,7 @@ const Step5 = ({
           </div>
 
           {/* IPC Link for Assorted */}
-          {formData.packaging.type === 'ASSORTED' && (
+          {/* {formData.packaging.type === 'ASSORTED' && (
             <div className="flex flex-col">
               <label className="text-sm font-semibold text-gray-700 mb-2">
                 LINK IPC# <span className="text-red-600">*</span>
@@ -156,7 +175,31 @@ const Step5 = ({
                 <span className="text-red-600 text-xs mt-1">{errors.packaging_assortedSkuLink}</span>
               )}
             </div>
+          )} */}
+
+                    {/* IPC Link for Assorted */}
+                    {formData.packaging.type === 'ASSORTED' && (
+            <div className="flex flex-col" style={{ minWidth: '320px', width: '100%', maxWidth: '420px' }}>
+              <label className="text-sm font-semibold text-gray-700 mb-2">
+                LINK IPC# <span className="text-red-600">*</span>
+              </label>
+              <SearchableDropdown
+                value={formData.packaging.assortedSkuLink || ''}
+                onChange={(selectedValue) => handlePackagingChange('assortedSkuLink', selectedValue || '')}
+                options={getIpcLinkOptions()}
+                placeholder="Select or type IPC code"
+                strictMode={false}
+                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${
+                  errors?.packaging_assortedSkuLink ? 'border-red-600' : 'border-[#e5e7eb]'
+                }`}
+                style={{ padding: '10px 14px', height: '44px', minWidth: '300px' }}
+              />
+              {errors?.packaging_assortedSkuLink && (
+                <span className="text-red-600 text-xs mt-1">{errors.packaging_assortedSkuLink}</span>
+              )}
+            </div>
           )}
+
       </div>
         </div>
 
