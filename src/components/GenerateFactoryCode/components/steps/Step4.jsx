@@ -4197,7 +4197,7 @@ const Step4 = ({
                           onChange={(e) => handleArtworkMaterialChange(materialIndex, 'sizeArtworkId', e.target.value)}
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder="e.g., 20mm x 40mm"
+                          placeholder=""
                         />
                       </div>
                     )}
