@@ -142,11 +142,6 @@ export const WEAVING_APPROVAL_OPTIONS = [
   '1st PC',
   'SELF',
   'BUYER\'S',
-  'PROTO',
-  'FIT',
-  'SIZE SET',
-  'PP',
-  'TOP SAMPLE'
 ];
 
 // Helper function to get variants for a weaving machine type

@@ -339,23 +339,39 @@ const Step0 = ({
                       </Button>
                     </div>
 
-                    {/* SUBPRODUCT Field */}
-                    <Field
-                      label="SUBPRODUCT"
-                      error={errors[`subproduct_${skuIndex}_${subproductIndex}`]}
-                      required
-                      className="mb-6"
-                      width="md"
-                    >
-                      <SearchableDropdown
-                        value={subproduct.subproduct || ''}
-                        onChange={(value) => handleSubproductChange(skuIndex, subproductIndex, 'subproduct', value)}
-                        options={[]}
-                        placeholder="Select or type subproduct"
-                        strictMode={false}
-                        className={errors[`subproduct_${skuIndex}_${subproductIndex}`] ? 'border-destructive' : ''}
-                      />
-                    </Field>
+                    {/* SUBPRODUCT + ADD BUYER SKU - side by side */}
+                    <div className="flex flex-wrap" style={{ gap: '16px 12px', marginBottom: '16px' }}>
+                      <Field
+                        label="SUBPRODUCT"
+                        error={errors[`subproduct_${skuIndex}_${subproductIndex}`]}
+                        required
+                        width="md"
+                      >
+                        <SearchableDropdown
+                          value={subproduct.subproduct || ''}
+                          onChange={(value) => handleSubproductChange(skuIndex, subproductIndex, 'subproduct', value)}
+                          options={[]}
+                          placeholder="Select or type subproduct"
+                          strictMode={false}
+                          className={errors[`subproduct_${skuIndex}_${subproductIndex}`] ? 'border-destructive' : ''}
+                        />
+                      </Field>
+
+                      <Field
+                        label="ADD BUYER SKU"
+                        error={errors[`subproduct_${skuIndex}_${subproductIndex}_buyerSku`]}
+                        width="md"
+                      >
+                        <SearchableDropdown
+                          value={subproduct.buyerSku || ''}
+                          onChange={(value) => handleSubproductChange(skuIndex, subproductIndex, 'buyerSku', value)}
+                          options={[]}
+                          placeholder="Select or type buyer SKU"
+                          strictMode={false}
+                          className={errors[`subproduct_${skuIndex}_${subproductIndex}_buyerSku`] ? 'border-destructive' : ''}
+                        />
+                      </Field>
+                    </div>
 
                     {/* Row: PO QTY, Overage %, Delivery Date */}
                     <div className="flex flex-wrap" style={{ gap: '16px 12px', marginBottom: '16px' }}>
