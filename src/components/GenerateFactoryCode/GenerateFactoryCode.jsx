@@ -25,6 +25,7 @@ import Step2 from './components/steps/Step2';
 import Step3 from './components/steps/Step3';
 import Step4 from './components/steps/Step4';
 import Step5 from './components/steps/Step5';
+import ConsumptionSheet from './components/ConsumptionSheet';
 import ValidationErrorsDialog from './components/ValidationErrorsDialog';
 import { Button } from '@/components/ui/button';
 import { FormCard } from '@/components/ui/form-layout';
@@ -51,6 +52,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const [showSaveMessage, setShowSaveMessage] = useState(false); // Show "save first" message
   const [saveMessage, setSaveMessage] = useState(''); // Message to display
   const [showFactoryCodePopup, setShowFactoryCodePopup] = useState(false);
+  const [showConsumptionSheet, setShowConsumptionSheet] = useState(false);
   const [shippingGroups, setShippingGroups] = useState({}); // { "0-product": 1, "0-sp-0": 2, ... } -> itemId -> groupNum
   const [validationErrorsPopup, setValidationErrorsPopup] = useState({
     open: false,
@@ -4805,6 +4807,19 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
             </div>
           </FormCard>
         </div>
+      ) : showConsumptionSheet ? (
+        <>
+          {/* Consumption Sheet View - Just the sheet, no extra header */}
+          <div className="mb-8 mx-auto" style={{ maxWidth: '1400px' }}>
+            {/* Close Button */}
+            <div className="flex justify-end mb-4">
+              <Button type="button" onClick={() => setShowConsumptionSheet(false)} variant="default">
+                Close
+              </Button>
+            </div>
+            <ConsumptionSheet formData={formData} />
+          </div>
+        </>
       ) : (
         <>
           {/* Step Content */}
@@ -4848,6 +4863,13 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                     }}
                   >
                     Generate Factory Code
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowConsumptionSheet(true)}
+                  >
+                    Consumption Sheet
                   </Button>
                 </div>
               </div>
@@ -5029,6 +5051,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           </div>
         </DialogContent>
       </Dialog>
+
 
       {/* Validation Errors Dialog */}
       <ValidationErrorsDialog
