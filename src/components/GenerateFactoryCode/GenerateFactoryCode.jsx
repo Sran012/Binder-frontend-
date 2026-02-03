@@ -818,6 +818,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       }
       updatedSkus[skuIndex].subproducts.push({
         subproduct: '',
+        buyerSku: '',
         poQty: '',
         overagePercentage: '',
         deliveryDueDate: '',
