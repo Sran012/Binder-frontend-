@@ -4378,6 +4378,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       className="w-full h-full overflow-y-auto rounded-xl border border-border bg-background shadow-sm"
       style={{ padding: '40px' }}
     >
+      {!showConsumptionSheet && (
+      <>
       <div style={{ marginBottom: '40px' }}>
         <Button
           variant="outline"
@@ -4521,7 +4523,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           border: '1px solid #e5e7eb' 
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 className="text-base font-semibold text-gray-800">Select SKU to Work On</h3>
+            <h3 className="text-base font-semibold text-gray-800">SELECT SKU TO PROCEED</h3>
             <div style={{ 
               padding: '4px 12px', 
               background: '#e0e7ff', 
@@ -4748,6 +4750,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
             })}
           </div>
         </div>
+      )}
+
+      </>
       )}
 
       {showIPCPopup ? (
