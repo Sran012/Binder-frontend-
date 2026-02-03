@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import SearchableDropdown from '../SearchableDropdown';
+import { TestingRequirementsInput } from '@/components/ui/testing-requirements-input';
 
 const Step5 = ({
   formData,
@@ -69,6 +70,15 @@ const Step5 = ({
       }
     });
     return [...new Set(names)];
+  };
+
+  // Normalize values for chip-style multi-select fields.
+  // Keeps backward compatibility if old data stored a single string.
+  const asArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (value === undefined || value === null) return [];
+    const v = String(value).trim();
+    return v ? [v] : [];
   };
 
   // Best-effort parsing for legacy single-field dimension strings like:
@@ -2910,35 +2920,32 @@ const getIpcLinkOptions = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">CAVITY/CUT-OUT</label>
-                              <SearchableDropdown
-                                value={material.foamInsertCavityCutout || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'foamInsertCavityCutout', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.foamInsertCavityCutout)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'foamInsertCavityCutout', vals)}
                                 options={['Single Cavity', 'Multi-Cavity', 'Through-Cut', 'Partial Cut']}
-                                placeholder="Select or type Cavity/Cut-out"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_foamInsertCavityCutout`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_foamInsertCavityCutout`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">ANTI-STATIC</label>
-                              <SearchableDropdown
-                                value={material.foamInsertAntiStatic || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'foamInsertAntiStatic', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.foamInsertAntiStatic)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'foamInsertAntiStatic', vals)}
                                 options={['Standard', 'Anti-Static (Pink/Black)']}
-                                placeholder="Select or type Anti-Static"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_foamInsertAntiStatic`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_foamInsertAntiStatic`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">LAMINATION</label>
-                              <SearchableDropdown
-                                value={material.foamInsertLamination || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'foamInsertLamination', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.foamInsertLamination)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'foamInsertLamination', vals)}
                                 options={['None', 'PE Film', 'Fabric', 'Foil']}
-                                placeholder="Select or type Lamination"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_foamInsertLamination`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_foamInsertLamination`]}
                               />
                             </div>
                   </div>
@@ -2985,24 +2992,22 @@ const getIpcLinkOptions = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">TENSILE STRENGTH</label>
-                              <SearchableDropdown
-                                value={material.palletStrapTensileStrength || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'palletStrapTensileStrength', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.palletStrapTensileStrength)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'palletStrapTensileStrength', vals)}
                                 options={['150 kg', '200 kg', '250 kg', '300 kg', '400 kg', '500 kg+']}
-                                placeholder="Select or type Tensile Strength"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_palletStrapTensileStrength`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_palletStrapTensileStrength`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">CORE SIZE</label>
-                              <SearchableDropdown
-                                value={material.palletStrapCoreSize || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'palletStrapCoreSize', selectedValue)}
-                                options={['200mm', '400mm', '406mm (16")']}
-                                placeholder="Select or type Core Size"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_palletStrapCoreSize`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                              <TestingRequirementsInput
+                                value={asArray(material.palletStrapCoreSize)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'palletStrapCoreSize', vals)}
+                                options={['200mm', '400mm', '406mm (16\")']}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_palletStrapCoreSize`]}
                               />
                             </div>
                           </div>
@@ -3070,68 +3075,62 @@ const getIpcLinkOptions = () => {
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PRINTING</label>
-                              <SearchableDropdown
-                                value={material.polybagBalePrinting || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagBalePrinting', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagBalePrinting)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagBalePrinting', vals)}
                                 options={['Plain/Unprinted', '1-2 Color Printed', 'Repeating Logo']}
-                                placeholder="Select or type Printing"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagBalePrinting`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagBalePrinting`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">CORE SIZE</label>
-                              <SearchableDropdown
-                                value={material.polybagBaleCoreSize || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagBaleCoreSize', selectedValue)}
-                                options={['3" core', '6" core']}
-                                placeholder="Select or type Core Size"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagBaleCoreSize`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagBaleCoreSize)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagBaleCoreSize', vals)}
+                                options={['3\" core', '6\" core']}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagBaleCoreSize`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PERFORATION</label>
-                              <SearchableDropdown
-                                value={material.polybagBalePerforation || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagBalePerforation', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagBalePerforation)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagBalePerforation', vals)}
                                 options={['None', 'Perforated at intervals', 'Easy-Tear Perforation']}
-                                placeholder="Select or type Perforation"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagBalePerforation`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagBalePerforation`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">CLING/TACK</label>
-                              <SearchableDropdown
-                                value={material.polybagBaleClingTack || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagBaleClingTack', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagBaleClingTack)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagBaleClingTack', vals)}
                                 options={['Standard', 'High Cling (stretch wrap)', 'Low Cling']}
-                                placeholder="Select or type Cling/Tack"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagBaleClingTack`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagBaleClingTack`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">UV STABILIZED</label>
-                              <SearchableDropdown
-                                value={material.polybagBaleUvStabilized || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagBaleUvStabilized', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagBaleUvStabilized)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagBaleUvStabilized', vals)}
                                 options={['Standard', 'UV Stabilized (outdoor storage)']}
-                                placeholder="Select or type UV Stabilized"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagBaleUvStabilized`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagBaleUvStabilized`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">ANTI-STATIC</label>
-                              <SearchableDropdown
-                                value={material.polybagBaleAntiStatic || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagBaleAntiStatic', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagBaleAntiStatic)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagBaleAntiStatic', vals)}
                                 options={['Standard', 'Anti-Static']}
-                                placeholder="Select or type Anti-Static"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagBaleAntiStatic`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagBaleAntiStatic`]}
                               />
                             </div>
                           </div>
@@ -3178,35 +3177,32 @@ const getIpcLinkOptions = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">SEAL TYPE</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapSealType || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapSealType', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapSealType)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapSealType', vals)}
                                 options={['Open Top (unsealed)', 'Heat Seal', 'Adhesive Seal', 'Zip Lock', 'Drawstring']}
-                                placeholder="Select or type Seal Type"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapSealType`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapSealType`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">VENT HOLES</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapVentHoles || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapVentHoles', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapVentHoles)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapVentHoles', vals)}
                                 options={['None', 'Single Hole', 'Multiple Holes', 'Perforated']}
-                                placeholder="Select or type Vent Holes"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapVentHoles`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapVentHoles`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">SUFFOCATION WARNING</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapSuffocationWarning || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapSuffocationWarning', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapSuffocationWarning)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapSuffocationWarning', vals)}
                                 options={['Required (printed warning text per ASTM D3951)', 'Not Required']}
-                                placeholder="Select or type Suffocation Warning"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapSuffocationWarning`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapSuffocationWarning`]}
                               />
                             </div>
                             <div className="flex flex-col">
@@ -3232,24 +3228,22 @@ const getIpcLinkOptions = () => {
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PRINTING</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapPrinting || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapPrinting', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapPrinting)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapPrinting', vals)}
                                 options={['Plain/Unprinted', '1 Color', '2 Color', 'Full Color']}
-                                placeholder="Select or type Printing"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapPrinting`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapPrinting`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PRINT COLOUR</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapPrintColour || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapPrintColour', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapPrintColour)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapPrintColour', vals)}
                                 options={['Black', 'White', 'Pantone', 'Custom']}
-                                placeholder="Select or type Print Colour"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapPrintColour`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapPrintColour`]}
                               />
                             </div>
                             <div className="flex flex-col">
@@ -3275,46 +3269,42 @@ const getIpcLinkOptions = () => {
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">ANTI-STATIC</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapAntiStatic || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapAntiStatic', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapAntiStatic)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapAntiStatic', vals)}
                                 options={['Standard', 'Anti-Static (ESD Safe)']}
-                                placeholder="Select or type Anti-Static"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapAntiStatic`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapAntiStatic`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">FOOD GRADE</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapFoodGrade || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapFoodGrade', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapFoodGrade)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapFoodGrade', vals)}
                                 options={['Standard', 'FDA Approved Food Grade']}
-                                placeholder="Select or type Food Grade"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapFoodGrade`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapFoodGrade`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">RECYCLABLE</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapRecyclable || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapRecyclable', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapRecyclable)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapRecyclable', vals)}
                                 options={['Standard', 'Recyclable Symbol Printed', 'Compostable']}
-                                placeholder="Select or type Recyclable"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapRecyclable`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapRecyclable`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">CLARITY</label>
-                              <SearchableDropdown
-                                value={material.polybagPolybagFlapClarity || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapClarity', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.polybagPolybagFlapClarity)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapClarity', vals)}
                                 options={['Clear', 'Frosted/Matte', 'Opaque White', 'Opaque Black', 'Tinted']}
-                                placeholder="Select or type Clarity"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapClarity`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapClarity`]}
                               />
                             </div>
                           </div>
@@ -3361,57 +3351,52 @@ const getIpcLinkOptions = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">ABSORPTION CAPACITY</label>
-                              <SearchableDropdown
-                                value={material.silicaGelDesiccantAbsorptionCapacity || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantAbsorptionCapacity', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.silicaGelDesiccantAbsorptionCapacity)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantAbsorptionCapacity', vals)}
                                 options={['20% of own weight', '30% of own weight', '40% of own weight']}
-                                placeholder="Select or type Absorption Capacity"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantAbsorptionCapacity`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantAbsorptionCapacity`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">INDICATING TYPE</label>
-                              <SearchableDropdown
-                                value={material.silicaGelDesiccantIndicatingType || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantIndicatingType', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.silicaGelDesiccantIndicatingType)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantIndicatingType', vals)}
                                 options={['Non-Indicating', 'Blue (Cobalt)', 'Orange (Cobalt-free)']}
-                                placeholder="Select or type Indicating Type"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantIndicatingType`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantIndicatingType`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PACKET MATERIAL</label>
-                              <SearchableDropdown
-                                value={material.silicaGelDesiccantPacketMaterial || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantPacketMaterial', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.silicaGelDesiccantPacketMaterial)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantPacketMaterial', vals)}
                                 options={['Tyvek', 'Non-Woven', 'Cotton Paper', 'OPP Film']}
-                                placeholder="Select or type Packet Material"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantPacketMaterial`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantPacketMaterial`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PACKET SIZE</label>
-                              <SearchableDropdown
-                                value={material.silicaGelDesiccantPacketSize || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantPacketSize', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.silicaGelDesiccantPacketSize)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantPacketSize', vals)}
                                 options={['25x35mm', '30x50mm', '50x70mm', 'Custom']}
-                                placeholder="Select or type Packet Size"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantPacketSize`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantPacketSize`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">FOOD SAFE</label>
-                              <SearchableDropdown
-                                value={material.silicaGelDesiccantFoodSafe || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantFoodSafe', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.silicaGelDesiccantFoodSafe)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantFoodSafe', vals)}
                                 options={['FDA Compliant', 'Food Contact Safe']}
-                                placeholder="Select or type Food Safe"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantFoodSafe`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantFoodSafe`]}
                               />
                             </div>
                           </div>
@@ -3458,48 +3443,42 @@ const getIpcLinkOptions = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">STRETCH %</label>
-                              <SearchableDropdown
-                                value={material.stretchWrapStretchPercent || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'stretchWrapStretchPercent', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.stretchWrapStretchPercent)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'stretchWrapStretchPercent', vals)}
                                 options={['100%', '150%', '200%', '250%', '300%']}
-                                placeholder="Select or type Stretch %"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_stretchWrapStretchPercent`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_stretchWrapStretchPercent`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">CORE SIZE</label>
-                              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                <SearchableDropdown
-                                  value={material.stretchWrapCoreSize || ''}
-                                  onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'stretchWrapCoreSize', selectedValue)}
-                                  options={['38mm', '50mm (hand)', '76mm (machine)']}
-                                  placeholder="Select or type"
-                                  style={{ paddingRight: '50px' }}
-                                />
-                                <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>CM</span>
-                              </div>
+                              <TestingRequirementsInput
+                                value={asArray(material.stretchWrapCoreSize)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'stretchWrapCoreSize', vals)}
+                                options={['38mm', '50mm (hand)', '76mm (machine)']}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_stretchWrapCoreSize`]}
+                              />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">UV STABILIZED</label>
-                              <SearchableDropdown
-                                value={material.stretchWrapUvStabilized || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'stretchWrapUvStabilized', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.stretchWrapUvStabilized)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'stretchWrapUvStabilized', vals)}
                                 options={['Standard', 'UV Protected']}
-                                placeholder="Select or type UV Stabilized"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_stretchWrapUvStabilized`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_stretchWrapUvStabilized`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">VCI (Anti-Corrosion)</label>
-                              <SearchableDropdown
-                                value={material.stretchWrapVci || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'stretchWrapVci', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.stretchWrapVci)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'stretchWrapVci', vals)}
                                 options={['Standard', 'VCI Film']}
-                                placeholder="Select or type VCI (Anti-Corrosion)"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_stretchWrapVci`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_stretchWrapVci`]}
                               />
                             </div>
                           </div>
@@ -3546,24 +3525,22 @@ const getIpcLinkOptions = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">COLOUR</label>
-                              <SearchableDropdown
-                                value={material.tapeColour || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'tapeColour', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.tapeColour)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'tapeColour', vals)}
                                 options={['Clear/Transparent', 'Brown/Tan', 'White', 'Black', 'Custom Color']}
-                                placeholder="Select or type Colour"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_tapeColour`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_tapeColour`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">ADHESIVE TYPE</label>
-                              <SearchableDropdown
-                                value={material.tapeAdhesiveType || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'tapeAdhesiveType', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.tapeAdhesiveType)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'tapeAdhesiveType', vals)}
                                 options={['Acrylic (general)', 'Hot Melt (strong)', 'Solvent/Rubber (economy)', 'Water-Activated (paper)']}
-                                placeholder="Select or type Adhesive Type"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_tapeAdhesiveType`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_tapeAdhesiveType`]}
                               />
                             </div>
                             <div className="flex flex-col">
@@ -3589,57 +3566,52 @@ const getIpcLinkOptions = () => {
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PRINTING</label>
-                              <SearchableDropdown
-                                value={material.tapePrinting || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'tapePrinting', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.tapePrinting)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'tapePrinting', vals)}
                                 options={['Plain/Unprinted', '1 Color', '2 Color', 'Full Color']}
-                                placeholder="Select or type Printing"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_tapePrinting`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_tapePrinting`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PRINT REPEAT</label>
-                              <SearchableDropdown
-                                value={material.tapePrintRepeat || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'tapePrintRepeat', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.tapePrintRepeat)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'tapePrintRepeat', vals)}
                                 options={['Continuous repeat distance (e.g., every 6 inches)']}
-                                placeholder="Select or type Print Repeat"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_tapePrintRepeat`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_tapePrintRepeat`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">CORE SIZE</label>
-                              <SearchableDropdown
-                                value={material.tapeCoreSize || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'tapeCoreSize', selectedValue)}
-                                options={['3" core', '1" core', '1.5" core', 'Custom']}
-                                placeholder="Select or type Core Size"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_tapeCoreSize`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                              <TestingRequirementsInput
+                                value={asArray(material.tapeCoreSize)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'tapeCoreSize', vals)}
+                                options={['3\" core', '1\" core', '1.5\" core', 'Custom']}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_tapeCoreSize`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">NOISE LEVEL</label>
-                              <SearchableDropdown
-                                value={material.tapeNoiseLevel || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'tapeNoiseLevel', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.tapeNoiseLevel)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'tapeNoiseLevel', vals)}
                                 options={['Standard (noisy)', 'Low Noise/Quiet']}
-                                placeholder="Select or type Noise Level"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_tapeNoiseLevel`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_tapeNoiseLevel`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">TEMPERATURE RANGE</label>
-                              <SearchableDropdown
-                                value={material.tapeTemperatureRange || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'tapeTemperatureRange', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.tapeTemperatureRange)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'tapeTemperatureRange', vals)}
                                 options={['Standard', 'Cold Temperature', 'High Temperature']}
-                                placeholder="Select or type Temperature Range"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_tapeTemperatureRange`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_tapeTemperatureRange`]}
                               />
                             </div>
                           </div>
@@ -3707,101 +3679,92 @@ const getIpcLinkOptions = () => {
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PAPER GSM</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxPaperGsm || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxPaperGsm', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxPaperGsm)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxPaperGsm', vals)}
                                 options={['150/120/180 GSM', '180/150/200 GSM', '200/150/250 GSM']}
-                                placeholder="Select or type Paper GSM"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxPaperGsm`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxPaperGsm`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">FLUTE TYPE</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxFluteType || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxFluteType', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxFluteType)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxFluteType', vals)}
                                 options={['A Flute (5mm)', 'B Flute (3mm)', 'C Flute (4mm)', 'E Flute (1.5mm)', 'F Flute (0.8mm)', 'BC Double Wall', 'EB Double Wall']}
-                                placeholder="Select or type Flute Type"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxFluteType`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxFluteType`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">ECT (Edge Crush Test)</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxEct || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxEct', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxEct)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxEct', vals)}
                                 options={['32 ECT', '44 ECT', '48 ECT', '52 ECT']}
-                                placeholder="Select or type ECT"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxEct`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxEct`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PRINTING</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxPrinting || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxPrinting', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxPrinting)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxPrinting', vals)}
                                 options={['Plain/Unprinted', '1 Color', '2 Color', 'Full Color (Flexo/Litho Laminated)']}
-                                placeholder="Select or type Printing"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxPrinting`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxPrinting`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PRINT CONTENT</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxPrintContent || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxPrintContent', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxPrintContent)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxPrintContent', vals)}
                                 options={['Shipping Marks', 'Brand Logo', 'Handling Instructions', 'Barcode']}
-                                placeholder="Select or type Print Content"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxPrintContent`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxPrintContent`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">PRINT COLOUR</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxPrintColour || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxPrintColour', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxPrintColour)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxPrintColour', vals)}
                                 options={['Black', 'Blue', 'Red', 'Pantone', 'Process (CMYK)']}
-                                placeholder="Select or type Print Colour"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxPrintColour`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxPrintColour`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">COATING/TREATMENT</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxCoatingTreatment || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxCoatingTreatment', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxCoatingTreatment)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxCoatingTreatment', vals)}
                                 options={['None', 'Wax Coated (moisture)', 'PE Laminated', 'Water Resistant']}
-                                placeholder="Select or type Coating/Treatment"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxCoatingTreatment`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxCoatingTreatment`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">HAND HOLES</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxHandHoles || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxHandHoles', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxHandHoles)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxHandHoles', vals)}
                                 options={['None', 'Punched Hand Holes', 'Die-Cut Hand Holes']}
-                                placeholder="Select or type Hand Holes"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxHandHoles`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxHandHoles`]}
                               />
                             </div>
                             <div className="flex flex-col">
                               <label className="text-sm font-semibold text-gray-700 mb-2">CERTIFICATION</label>
-                              <SearchableDropdown
-                                value={material.cartonBoxCertification || ''}
-                                onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'cartonBoxCertification', selectedValue)}
+                              <TestingRequirementsInput
+                                value={asArray(material.cartonBoxCertification)}
+                                onChange={(vals) => handlePackagingMaterialChange(materialIndex, 'cartonBoxCertification', vals)}
                                 options={['FSC Certified', 'ISO Certified', 'None']}
-                                placeholder="Select or type Certification"
-                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_cartonBoxCertification`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                                style={{ padding: '10px 14px', height: '44px' }}
+                                placeholder="Type to search or select..."
+                                error={errors?.[`packaging_material_${materialIndex}_cartonBoxCertification`]}
                               />
                             </div>
                           </div>
