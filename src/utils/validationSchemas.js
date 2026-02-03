@@ -577,7 +577,7 @@ export const PACKAGING_MATERIAL_SCHEMAS = {
     required: ['silicaGelDesiccantType', 'silicaGelDesiccantForm', 'silicaGelDesiccantUnitSize', 'silicaGelDesiccantColor', 'silicaGelDesiccantPlacement', 'silicaGelDesiccantQuantity', 'silicaGelDesiccantCasepackLogic', 'silicaGelDesiccantSurplus', 'silicaGelDesiccantWastage'],
     advanced: ['silicaGelDesiccantAbsorptionCapacity', 'silicaGelDesiccantIndicatingType', 'silicaGelDesiccantPacketMaterial', 'silicaGelDesiccantPacketSize', 'silicaGelDesiccantFoodSafe']
   },
-  'STRETCH~WRAP': {
+  'SHRINK TAPE': {
     required: ['stretchWrapType', 'stretchWrapMaterial', 'stretchWrapWidth', 'stretchWrapThicknessGauge', 'stretchWrapCling', 'stretchWrapColor', 'stretchWrapQuantity', 'stretchWrapSurplus', 'stretchWrapWastage'],
     advanced: []
   },

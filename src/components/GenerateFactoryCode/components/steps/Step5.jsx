@@ -376,7 +376,7 @@ const getIpcLinkOptions = () => {
                 <SearchableDropdown
                   value={material.packagingMaterialType || ''}
                   onChange={(selectedValue) => handlePackagingMaterialChange(materialIndex, 'packagingMaterialType', selectedValue)}
-                  options={['CARTON BOX', 'CORNER PROTECTORS', 'EDGE PROTECTORS', 'FOAM INSERT', 'PALLET STRAP', 'DIVIDER', 'TAPE', 'POLYBAG~POLYBAG-FLAP', 'POLYBAG~Bale', 'SILICA GEL DESICCANT', 'STRETCH~WRAP', 'VOID~FILL']}
+                  options={['CARTON BOX', 'CORNER PROTECTORS', 'EDGE PROTECTORS', 'FOAM INSERT', 'PALLET STRAP', 'DIVIDER', 'TAPE', 'POLYBAG~POLYBAG-FLAP', 'POLYBAG~Bale', 'SILICA GEL DESICCANT', 'SHRINK TAPE', 'VOID~FILL']}
                   placeholder="Select or type Material Type"
                   style={{ width: '280px' }}
                   className={errors?.[`packaging_material_${materialIndex}_packagingMaterialType`] ? 'border-red-600' : ''}
@@ -1739,8 +1739,8 @@ const getIpcLinkOptions = () => {
                     </>
                   )}
 
-                  {/* Specific Fields for STRETCH~WRAP */}
-                  {material.packagingMaterialType === 'STRETCH~WRAP' && (
+                  {/* Specific Fields for SHRINK TAPE */}
+                  {material.packagingMaterialType === 'SHRINK TAPE' && (
                     <>
                       <div className="flex flex-col">
                         <label className={`text-sm font-semibold mb-2 ${errors?.[`packaging_material_${materialIndex}_stretchWrapType`] ? 'text-red-600' : 'text-gray-700'}`}>TYPE <span className="text-red-500">*</span></label>
@@ -2436,8 +2436,8 @@ const getIpcLinkOptions = () => {
 
                 
 
-                  {/* Surplus & For Section - Special handling for CARTON BOX, CORNER PROTECTORS, EDGE PROTECTORS, FOAM INSERT, PALLET STRAP, POLYBAG~Bale, POLYBAG~POLYBAG-FLAP, SILICA GEL DESICCANT, STRETCH~WRAP, TAPE, VOID~FILL, and DIVIDER with absolute % signs */}
-                  {(material.packagingMaterialType === 'CARTON BOX' || material.packagingMaterialType === 'CORNER PROTECTORS' || material.packagingMaterialType === 'EDGE PROTECTORS' || material.packagingMaterialType === 'FOAM INSERT' || material.packagingMaterialType === 'PALLET STRAP' || material.packagingMaterialType === 'POLYBAG~Bale' || material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' || material.packagingMaterialType === 'SILICA GEL DESICCANT' || material.packagingMaterialType === 'STRETCH~WRAP' || material.packagingMaterialType === 'TAPE' || material.packagingMaterialType === 'VOID~FILL' || material.packagingMaterialType === 'DIVIDER') ? (
+                  {/* Surplus & For Section - Special handling for CARTON BOX, CORNER PROTECTORS, EDGE PROTECTORS, FOAM INSERT, PALLET STRAP, POLYBAG~Bale, POLYBAG~POLYBAG-FLAP, SILICA GEL DESICCANT, SHRINK TAPE, TAPE, VOID~FILL, and DIVIDER with absolute % signs */}
+                  {(material.packagingMaterialType === 'CARTON BOX' || material.packagingMaterialType === 'CORNER PROTECTORS' || material.packagingMaterialType === 'EDGE PROTECTORS' || material.packagingMaterialType === 'FOAM INSERT' || material.packagingMaterialType === 'PALLET STRAP' || material.packagingMaterialType === 'POLYBAG~Bale' || material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' || material.packagingMaterialType === 'SILICA GEL DESICCANT' || material.packagingMaterialType === 'SHRINK TAPE' || material.packagingMaterialType === 'TAPE' || material.packagingMaterialType === 'VOID~FILL' || material.packagingMaterialType === 'DIVIDER') ? (
                     <>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
                         <div className="flex flex-col flex-1">
@@ -2454,7 +2454,7 @@ const getIpcLinkOptions = () => {
                                 material.packagingMaterialType === 'POLYBAG~Bale' ? (material.polybagBaleSurplus || '') :
                                 material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' ? (material.polybagPolybagFlapSurplus || '') :
                                 material.packagingMaterialType === 'SILICA GEL DESICCANT' ? (material.silicaGelDesiccantSurplus || '') :
-                                material.packagingMaterialType === 'STRETCH~WRAP' ? (material.stretchWrapSurplus || '') :
+                                material.packagingMaterialType === 'SHRINK TAPE' ? (material.stretchWrapSurplus || '') :
                                 material.packagingMaterialType === 'TAPE' ? (material.tapeSurplus || '') :
                                 material.packagingMaterialType === 'VOID~FILL' ? (material.voidFillSurplus || '') :
                                 (material.dividerSurplus || '')
@@ -2477,7 +2477,7 @@ const getIpcLinkOptions = () => {
                                   handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapSurplus', numericValue);
                                 } else if (material.packagingMaterialType === 'SILICA GEL DESICCANT') {
                                   handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantSurplus', numericValue);
-                                } else if (material.packagingMaterialType === 'STRETCH~WRAP') {
+                                } else if (material.packagingMaterialType === 'SHRINK TAPE') {
                                   handlePackagingMaterialChange(materialIndex, 'stretchWrapSurplus', numericValue);
                                 } else if (material.packagingMaterialType === 'TAPE') {
                                   handlePackagingMaterialChange(materialIndex, 'tapeSurplus', numericValue);
@@ -2496,7 +2496,7 @@ const getIpcLinkOptions = () => {
                                 (material.packagingMaterialType === 'POLYBAG~Bale' && errors?.[`packaging_material_${materialIndex}_polybagBaleSurplus`]) ||
                                 (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapSurplus`]) ||
                                 (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantSurplus`]) ||
-                                (material.packagingMaterialType === 'STRETCH~WRAP' && errors?.[`packaging_material_${materialIndex}_stretchWrapSurplus`]) ||
+                                (material.packagingMaterialType === 'SHRINK TAPE' && errors?.[`packaging_material_${materialIndex}_stretchWrapSurplus`]) ||
                                 (material.packagingMaterialType === 'TAPE' && errors?.[`packaging_material_${materialIndex}_tapeSurplus`]) ||
                                 (material.packagingMaterialType === 'VOID~FILL' && errors?.[`packaging_material_${materialIndex}_voidFillSurplus`]) ||
                                 (material.packagingMaterialType === 'DIVIDER' && errors?.[`packaging_material_${materialIndex}_dividerSurplus`])
@@ -2506,9 +2506,9 @@ const getIpcLinkOptions = () => {
                             />
                             <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
                           </div>
-                          {(material.packagingMaterialType === 'CARTON BOX' && errors?.[`packaging_material_${materialIndex}_cartonBoxSurplus`]) || (material.packagingMaterialType === 'CORNER PROTECTORS' && errors?.[`packaging_material_${materialIndex}_cornerProtectorSurplus`]) || (material.packagingMaterialType === 'EDGE PROTECTORS' && errors?.[`packaging_material_${materialIndex}_edgeProtectorSurplus`]) || (material.packagingMaterialType === 'FOAM INSERT' && errors?.[`packaging_material_${materialIndex}_foamInsertSurplus`]) || (material.packagingMaterialType === 'PALLET STRAP' && errors?.[`packaging_material_${materialIndex}_palletStrapSurplus`]) || (material.packagingMaterialType === 'POLYBAG~Bale' && errors?.[`packaging_material_${materialIndex}_polybagBaleSurplus`]) || (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapSurplus`]) || (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantSurplus`]) || (material.packagingMaterialType === 'STRETCH~WRAP' && errors?.[`packaging_material_${materialIndex}_stretchWrapSurplus`]) || (material.packagingMaterialType === 'TAPE' && errors?.[`packaging_material_${materialIndex}_tapeSurplus`]) || (material.packagingMaterialType === 'VOID~FILL' && errors?.[`packaging_material_${materialIndex}_voidFillSurplus`]) || (material.packagingMaterialType === 'DIVIDER' && errors?.[`packaging_material_${materialIndex}_dividerSurplus`]) ? (
+                          {(material.packagingMaterialType === 'CARTON BOX' && errors?.[`packaging_material_${materialIndex}_cartonBoxSurplus`]) || (material.packagingMaterialType === 'CORNER PROTECTORS' && errors?.[`packaging_material_${materialIndex}_cornerProtectorSurplus`]) || (material.packagingMaterialType === 'EDGE PROTECTORS' && errors?.[`packaging_material_${materialIndex}_edgeProtectorSurplus`]) || (material.packagingMaterialType === 'FOAM INSERT' && errors?.[`packaging_material_${materialIndex}_foamInsertSurplus`]) || (material.packagingMaterialType === 'PALLET STRAP' && errors?.[`packaging_material_${materialIndex}_palletStrapSurplus`]) || (material.packagingMaterialType === 'POLYBAG~Bale' && errors?.[`packaging_material_${materialIndex}_polybagBaleSurplus`]) || (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapSurplus`]) || (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantSurplus`]) || (material.packagingMaterialType === 'SHRINK TAPE' && errors?.[`packaging_material_${materialIndex}_stretchWrapSurplus`]) || (material.packagingMaterialType === 'TAPE' && errors?.[`packaging_material_${materialIndex}_tapeSurplus`]) || (material.packagingMaterialType === 'VOID~FILL' && errors?.[`packaging_material_${materialIndex}_voidFillSurplus`]) || (material.packagingMaterialType === 'DIVIDER' && errors?.[`packaging_material_${materialIndex}_dividerSurplus`]) ? (
                             <span className="text-red-600 text-xs mt-1">
-                              {(material.packagingMaterialType === 'CARTON BOX' && errors[`packaging_material_${materialIndex}_cartonBoxSurplus`]) || (material.packagingMaterialType === 'CORNER PROTECTORS' && errors[`packaging_material_${materialIndex}_cornerProtectorSurplus`]) || (material.packagingMaterialType === 'EDGE PROTECTORS' && errors[`packaging_material_${materialIndex}_edgeProtectorSurplus`]) || (material.packagingMaterialType === 'FOAM INSERT' && errors[`packaging_material_${materialIndex}_foamInsertSurplus`]) || (material.packagingMaterialType === 'PALLET STRAP' && errors[`packaging_material_${materialIndex}_palletStrapSurplus`]) || (material.packagingMaterialType === 'POLYBAG~Bale' && errors[`packaging_material_${materialIndex}_polybagBaleSurplus`]) || (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors[`packaging_material_${materialIndex}_polybagPolybagFlapSurplus`]) || (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors[`packaging_material_${materialIndex}_silicaGelDesiccantSurplus`]) || (material.packagingMaterialType === 'STRETCH~WRAP' && errors[`packaging_material_${materialIndex}_stretchWrapSurplus`]) || (material.packagingMaterialType === 'TAPE' && errors[`packaging_material_${materialIndex}_tapeSurplus`]) || (material.packagingMaterialType === 'VOID~FILL' && errors[`packaging_material_${materialIndex}_voidFillSurplus`]) || (material.packagingMaterialType === 'DIVIDER' && errors[`packaging_material_${materialIndex}_dividerSurplus`])}
+                              {(material.packagingMaterialType === 'CARTON BOX' && errors[`packaging_material_${materialIndex}_cartonBoxSurplus`]) || (material.packagingMaterialType === 'CORNER PROTECTORS' && errors[`packaging_material_${materialIndex}_cornerProtectorSurplus`]) || (material.packagingMaterialType === 'EDGE PROTECTORS' && errors[`packaging_material_${materialIndex}_edgeProtectorSurplus`]) || (material.packagingMaterialType === 'FOAM INSERT' && errors[`packaging_material_${materialIndex}_foamInsertSurplus`]) || (material.packagingMaterialType === 'PALLET STRAP' && errors[`packaging_material_${materialIndex}_palletStrapSurplus`]) || (material.packagingMaterialType === 'POLYBAG~Bale' && errors[`packaging_material_${materialIndex}_polybagBaleSurplus`]) || (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors[`packaging_material_${materialIndex}_polybagPolybagFlapSurplus`]) || (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors[`packaging_material_${materialIndex}_silicaGelDesiccantSurplus`]) || (material.packagingMaterialType === 'SHRINK TAPE' && errors[`packaging_material_${materialIndex}_stretchWrapSurplus`]) || (material.packagingMaterialType === 'TAPE' && errors[`packaging_material_${materialIndex}_tapeSurplus`]) || (material.packagingMaterialType === 'VOID~FILL' && errors[`packaging_material_${materialIndex}_voidFillSurplus`]) || (material.packagingMaterialType === 'DIVIDER' && errors[`packaging_material_${materialIndex}_dividerSurplus`])}
                             </span>
                           ) : null}
                         </div>
@@ -2526,7 +2526,7 @@ const getIpcLinkOptions = () => {
                                 material.packagingMaterialType === 'POLYBAG~Bale' ? (material.polybagBaleWastage || '') :
                                 material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' ? (material.polybagPolybagFlapWastage || '') :
                                 material.packagingMaterialType === 'SILICA GEL DESICCANT' ? (material.silicaGelDesiccantWastage || '') :
-                                material.packagingMaterialType === 'STRETCH~WRAP' ? (material.stretchWrapWastage || '') :
+                                material.packagingMaterialType === 'SHRINK TAPE' ? (material.stretchWrapWastage || '') :
                                 material.packagingMaterialType === 'TAPE' ? (material.tapeWastage || '') :
                                 material.packagingMaterialType === 'VOID~FILL' ? (material.voidFillWastage || '') :
                                 (material.dividerWastage || '')
@@ -2549,7 +2549,7 @@ const getIpcLinkOptions = () => {
                                   handlePackagingMaterialChange(materialIndex, 'polybagPolybagFlapWastage', numericValue);
                                 } else if (material.packagingMaterialType === 'SILICA GEL DESICCANT') {
                                   handlePackagingMaterialChange(materialIndex, 'silicaGelDesiccantWastage', numericValue);
-                                } else if (material.packagingMaterialType === 'STRETCH~WRAP') {
+                                } else if (material.packagingMaterialType === 'SHRINK TAPE') {
                                   handlePackagingMaterialChange(materialIndex, 'stretchWrapWastage', numericValue);
                                 } else if (material.packagingMaterialType === 'TAPE') {
                                   handlePackagingMaterialChange(materialIndex, 'tapeWastage', numericValue);
@@ -2568,7 +2568,7 @@ const getIpcLinkOptions = () => {
                                 (material.packagingMaterialType === 'POLYBAG~Bale' && errors?.[`packaging_material_${materialIndex}_polybagBaleWastage`]) ||
                                 (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapWastage`]) ||
                                 (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantWastage`]) ||
-                                (material.packagingMaterialType === 'STRETCH~WRAP' && errors?.[`packaging_material_${materialIndex}_stretchWrapWastage`]) ||
+                                (material.packagingMaterialType === 'SHRINK TAPE' && errors?.[`packaging_material_${materialIndex}_stretchWrapWastage`]) ||
                                 (material.packagingMaterialType === 'TAPE' && errors?.[`packaging_material_${materialIndex}_tapeWastage`]) ||
                                 (material.packagingMaterialType === 'VOID~FILL' && errors?.[`packaging_material_${materialIndex}_voidFillWastage`]) ||
                                 (material.packagingMaterialType === 'DIVIDER' && errors?.[`packaging_material_${materialIndex}_dividerWastage`])
@@ -2578,9 +2578,9 @@ const getIpcLinkOptions = () => {
                             />
                             <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
                           </div>
-                          {(material.packagingMaterialType === 'CARTON BOX' && errors?.[`packaging_material_${materialIndex}_cartonBoxWastage`]) || (material.packagingMaterialType === 'CORNER PROTECTORS' && errors?.[`packaging_material_${materialIndex}_cornerProtectorWastage`]) || (material.packagingMaterialType === 'EDGE PROTECTORS' && errors?.[`packaging_material_${materialIndex}_edgeProtectorWastage`]) || (material.packagingMaterialType === 'FOAM INSERT' && errors?.[`packaging_material_${materialIndex}_foamInsertWastage`]) || (material.packagingMaterialType === 'PALLET STRAP' && errors?.[`packaging_material_${materialIndex}_palletStrapWastage`]) || (material.packagingMaterialType === 'POLYBAG~Bale' && errors?.[`packaging_material_${materialIndex}_polybagBaleWastage`]) || (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapWastage`]) || (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantWastage`]) || (material.packagingMaterialType === 'STRETCH~WRAP' && errors?.[`packaging_material_${materialIndex}_stretchWrapWastage`]) || (material.packagingMaterialType === 'TAPE' && errors?.[`packaging_material_${materialIndex}_tapeWastage`]) || (material.packagingMaterialType === 'VOID~FILL' && errors?.[`packaging_material_${materialIndex}_voidFillWastage`]) || (material.packagingMaterialType === 'DIVIDER' && errors?.[`packaging_material_${materialIndex}_dividerWastage`]) ? (
+                          {(material.packagingMaterialType === 'CARTON BOX' && errors?.[`packaging_material_${materialIndex}_cartonBoxWastage`]) || (material.packagingMaterialType === 'CORNER PROTECTORS' && errors?.[`packaging_material_${materialIndex}_cornerProtectorWastage`]) || (material.packagingMaterialType === 'EDGE PROTECTORS' && errors?.[`packaging_material_${materialIndex}_edgeProtectorWastage`]) || (material.packagingMaterialType === 'FOAM INSERT' && errors?.[`packaging_material_${materialIndex}_foamInsertWastage`]) || (material.packagingMaterialType === 'PALLET STRAP' && errors?.[`packaging_material_${materialIndex}_palletStrapWastage`]) || (material.packagingMaterialType === 'POLYBAG~Bale' && errors?.[`packaging_material_${materialIndex}_polybagBaleWastage`]) || (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors?.[`packaging_material_${materialIndex}_polybagPolybagFlapWastage`]) || (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors?.[`packaging_material_${materialIndex}_silicaGelDesiccantWastage`]) || (material.packagingMaterialType === 'SHRINK TAPE' && errors?.[`packaging_material_${materialIndex}_stretchWrapWastage`]) || (material.packagingMaterialType === 'TAPE' && errors?.[`packaging_material_${materialIndex}_tapeWastage`]) || (material.packagingMaterialType === 'VOID~FILL' && errors?.[`packaging_material_${materialIndex}_voidFillWastage`]) || (material.packagingMaterialType === 'DIVIDER' && errors?.[`packaging_material_${materialIndex}_dividerWastage`]) ? (
                             <span className="text-red-600 text-xs mt-1">
-                              {(material.packagingMaterialType === 'CARTON BOX' && errors[`packaging_material_${materialIndex}_cartonBoxWastage`]) || (material.packagingMaterialType === 'CORNER PROTECTORS' && errors[`packaging_material_${materialIndex}_cornerProtectorWastage`]) || (material.packagingMaterialType === 'EDGE PROTECTORS' && errors[`packaging_material_${materialIndex}_edgeProtectorWastage`]) || (material.packagingMaterialType === 'FOAM INSERT' && errors[`packaging_material_${materialIndex}_foamInsertWastage`]) || (material.packagingMaterialType === 'PALLET STRAP' && errors[`packaging_material_${materialIndex}_palletStrapWastage`]) || (material.packagingMaterialType === 'POLYBAG~Bale' && errors[`packaging_material_${materialIndex}_polybagBaleWastage`]) || (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors[`packaging_material_${materialIndex}_polybagPolybagFlapWastage`]) || (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors[`packaging_material_${materialIndex}_silicaGelDesiccantWastage`]) || (material.packagingMaterialType === 'STRETCH~WRAP' && errors[`packaging_material_${materialIndex}_stretchWrapWastage`]) || (material.packagingMaterialType === 'TAPE' && errors[`packaging_material_${materialIndex}_tapeWastage`]) || (material.packagingMaterialType === 'VOID~FILL' && errors[`packaging_material_${materialIndex}_voidFillWastage`]) || (material.packagingMaterialType === 'DIVIDER' && errors[`packaging_material_${materialIndex}_dividerWastage`])}
+                              {(material.packagingMaterialType === 'CARTON BOX' && errors[`packaging_material_${materialIndex}_cartonBoxWastage`]) || (material.packagingMaterialType === 'CORNER PROTECTORS' && errors[`packaging_material_${materialIndex}_cornerProtectorWastage`]) || (material.packagingMaterialType === 'EDGE PROTECTORS' && errors[`packaging_material_${materialIndex}_edgeProtectorWastage`]) || (material.packagingMaterialType === 'FOAM INSERT' && errors[`packaging_material_${materialIndex}_foamInsertWastage`]) || (material.packagingMaterialType === 'PALLET STRAP' && errors[`packaging_material_${materialIndex}_palletStrapWastage`]) || (material.packagingMaterialType === 'POLYBAG~Bale' && errors[`packaging_material_${materialIndex}_polybagBaleWastage`]) || (material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' && errors[`packaging_material_${materialIndex}_polybagPolybagFlapWastage`]) || (material.packagingMaterialType === 'SILICA GEL DESICCANT' && errors[`packaging_material_${materialIndex}_silicaGelDesiccantWastage`]) || (material.packagingMaterialType === 'SHRINK TAPE' && errors[`packaging_material_${materialIndex}_stretchWrapWastage`]) || (material.packagingMaterialType === 'TAPE' && errors[`packaging_material_${materialIndex}_tapeWastage`]) || (material.packagingMaterialType === 'VOID~FILL' && errors[`packaging_material_${materialIndex}_voidFillWastage`]) || (material.packagingMaterialType === 'DIVIDER' && errors[`packaging_material_${materialIndex}_dividerWastage`])}
                             </span>
                           ) : null}
                         </div>
@@ -2613,7 +2613,7 @@ const getIpcLinkOptions = () => {
                   </div>
                   )}
 
-                  {/* Approval Against - Special handling for CARTON BOX, CORNER PROTECTORS, EDGE PROTECTORS, FOAM INSERT, PALLET STRAP, POLYBAG~Bale, POLYBAG~POLYBAG-FLAP, SILICA GEL DESICCANT, STRETCH~WRAP, TAPE, VOID~FILL, and DIVIDER */}
+                  {/* Approval Against - Special handling for CARTON BOX, CORNER PROTECTORS, EDGE PROTECTORS, FOAM INSERT, PALLET STRAP, POLYBAG~Bale, POLYBAG~POLYBAG-FLAP, SILICA GEL DESICCANT, SHRINK TAPE, TAPE, VOID~FILL, and DIVIDER */}
                   {material.packagingMaterialType === 'CARTON BOX' ? (
                     <div className="flex flex-col">
                       <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
@@ -2694,7 +2694,7 @@ const getIpcLinkOptions = () => {
                         placeholder="Select or type Approval"
                       />
                     </div>
-                  ) : material.packagingMaterialType === 'STRETCH~WRAP' ? (
+                  ) : material.packagingMaterialType === 'SHRINK TAPE' ? (
                     <div className="flex flex-col">
                       <label className="text-sm font-semibold text-gray-700 mb-2">APPROVAL</label>
                       <SearchableDropdown
@@ -3307,8 +3307,8 @@ const getIpcLinkOptions = () => {
                     </div>
                   )}
 
-                  {/* STRETCH~WRAP - Advance Data Button and Fields */}
-                  {material.packagingMaterialType === 'STRETCH~WRAP' && (
+                  {/* SHRINK TAPE - Advance Data Button and Fields */}
+                  {material.packagingMaterialType === 'SHRINK TAPE' && (
                     <div className="col-span-full w-full" style={{ marginTop: '20px' }}>
                       <button
                         type="button"
