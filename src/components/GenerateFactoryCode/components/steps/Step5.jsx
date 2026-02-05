@@ -8,8 +8,6 @@ const Step5 = ({
   errors,
   handlePackagingChange,
   handlePackagingMaterialChange,
-  handlePackagingMaterialSizeChange,
-  handlePackagingWorkOrderChange,
   addPackagingMaterial,
   removePackagingMaterial
 }) => {
@@ -34,21 +32,6 @@ const Step5 = ({
     }
     prevMaterialsLengthRef.current = currentMaterialsLength;
   }, [formData.packaging?.materials?.length]);
-
-  // Get list of all component names from Step 1 (selected SKU's products/components)
-  // Step 1 only edits products[0].components and never sets product.name; product names
-  // come from Step 0 (sku.product). So we always show all components from this SKU's Step 1.
-  const getComponentOptionsForSelectedProduct = () => {
-    const names = [];
-    (formData.products || []).forEach((product) => {
-      (product.components || []).forEach((component) => {
-        if (component?.productComforter) {
-          names.push(component.productComforter);
-        }
-      });
-    });
-    return [...new Set(names)];
-  };
 
   // Build list of all products and subproducts for header dropdown
   const getAllProductOptions = () => {
@@ -264,147 +247,8 @@ const getIpcLinkOptions = () => {
               )}
             </div>
 
-            {/* Basic Info: Components, Material Description, Consumption, Unit, Work Order, Placement */}
-            <div style={{ marginBottom: '24px' }}>
-              <div className="flex flex-wrap items-start gap-4">
-              <div className="flex flex-col">
-                <label className={`text-sm font-semibold mb-2 ${errors?.[`packaging_material_${materialIndex}_components`] ? 'text-red-600' : 'text-gray-700'}`}>COMPONENTS *</label>
-                <SearchableDropdown
-                  value={material.components || ''}
-                  onChange={(selectedValue) =>
-                    handlePackagingMaterialChange(materialIndex, 'components', selectedValue || '')
-                  }
-                  options={getComponentOptionsForSelectedProduct()}
-                  placeholder="Select or type component"
-                  strictMode={false}
-                  className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_components`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                  style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                />
-                {errors?.[`packaging_material_${materialIndex}_components`] && <span className="text-red-600 text-xs mt-1">{errors[`packaging_material_${materialIndex}_components`]}</span>}
-              </div>
-
-              <div className="flex flex-col">
-                <label className={`text-sm font-semibold mb-2 ${errors?.[`packaging_material_${materialIndex}_materialDescription`] ? 'text-red-600' : 'text-gray-700'}`}>MATERIAL DESCRIPTION *</label>
-                <input
-                  type="text"
-                  value={material.materialDescription || ''}
-                  onChange={(e) => handlePackagingMaterialChange(materialIndex, 'materialDescription', e.target.value)}
-                  className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_materialDescription`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                  style={{ padding: '10px 14px', width: '180px', height: '44px' }}
-                  placeholder="e.g., Corrugated Box"
-                />
-                {errors?.[`packaging_material_${materialIndex}_materialDescription`] && <span className="text-red-600 text-xs mt-1">{errors[`packaging_material_${materialIndex}_materialDescription`]}</span>}
-              </div>
-
-              <div className="flex flex-col">
-                  <label className={`text-sm font-semibold mb-2 ${errors?.[`packaging_material_${materialIndex}_netConsumptionPerPc`] ? 'text-red-600' : 'text-gray-700'}`}>CONS. PER PC *</label>
-                <input
-                  type="number"
-                    step="0.01"
-                  value={material.netConsumptionPerPc}
-                  onChange={(e) => handlePackagingMaterialChange(materialIndex, 'netConsumptionPerPc', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_netConsumptionPerPc`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                    style={{ padding: '10px 14px', width: '110px', height: '44px' }}
-                    placeholder="0.5"
-                  />
-                {errors?.[`packaging_material_${materialIndex}_netConsumptionPerPc`] && <span className="text-red-600 text-xs mt-1">{errors[`packaging_material_${materialIndex}_netConsumptionPerPc`]}</span>}
-            </div>
-
-              <div className="flex flex-col">
-                  <label className={`text-sm font-semibold mb-2 ${errors?.[`packaging_material_${materialIndex}_unit`] ? 'text-red-600' : 'text-gray-700'}`}>UNIT *</label>
-                <select
-                  value={material.unit}
-                  onChange={(e) => handlePackagingMaterialChange(materialIndex, 'unit', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_unit`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                    style={{ padding: '10px 14px', width: '100px', height: '44px' }}
-                  >
-                    <option value="CM">CM</option>
-                    <option value="KGS">KGS</option>
-                </select>
-                {errors?.[`packaging_material_${materialIndex}_unit`] && <span className="text-red-600 text-xs mt-1">{errors[`packaging_material_${materialIndex}_unit`]}</span>}
-              </div>
-
-              <div className="flex flex-col">
-                  <label className={`text-sm font-semibold mb-2 ${errors?.[`packaging_material_${materialIndex}_workOrder`] ? 'text-red-600' : 'text-gray-700'}`}>WORK ORDER *</label>
-                <input
-                    type="text"
-                    value={material.workOrders[0].workOrder}
-                    onChange={(e) => handlePackagingWorkOrderChange(materialIndex, 0, 'workOrder', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_workOrder`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                    style={{ padding: '10px 14px', width: '150px', height: '44px' }}
-                  />
-                {errors?.[`packaging_material_${materialIndex}_workOrder`] && <span className="text-red-600 text-xs mt-1">{errors[`packaging_material_${materialIndex}_workOrder`]}</span>}
-              </div>
-
-                <div className="flex flex-col" style={{ flexGrow: 1, minWidth: '250px' }}>
-                <label className={`text-sm font-semibold mb-2 ${errors?.[`packaging_material_${materialIndex}_placement`] ? 'text-red-600' : 'text-gray-700'}`}>PLACEMENT *</label>
-                <input
-                  type="text"
-                  value={material.placement}
-                  onChange={(e) => handlePackagingMaterialChange(materialIndex, 'placement', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_placement`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                    style={{ padding: '10px 14px', height: '44px' }}
-                    placeholder="1 ON THE CENTER OF THE LARGER SIDE..."
-                />
-                {errors?.[`packaging_material_${materialIndex}_placement`] && <span className="text-red-600 text-xs mt-1">{errors[`packaging_material_${materialIndex}_placement`]}</span>}
-              </div>
-            </div>
-
-              {/* SIZE Row */}
-              <div className="flex flex-wrap items-start gap-4 mt-8" style={{marginTop: '20px'}}>
-                  <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">WIDTH</label>
-                    <input
-                      type="number"
-                      value={material.size.width}
-                      onChange={(e) => handlePackagingMaterialSizeChange(materialIndex, 'width', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_sizeWidth`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                    style={{ padding: '10px 14px', width: '100px', height: '44px' }}
-                      placeholder="52"
-                    />
-                  </div>
-
-                  <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">LENGTH</label>
-                    <input
-                      type="number"
-                      value={material.size.length}
-                      onChange={(e) => handlePackagingMaterialSizeChange(materialIndex, 'length', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_sizeLength`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                    style={{ padding: '10px 14px', width: '100px', height: '44px' }}
-                    placeholder="48"
-                  />
-                  </div>
-
-                  <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">HEIGHT</label>
-                    <input
-                      type="number"
-                      value={material.size.height}
-                      onChange={(e) => handlePackagingMaterialSizeChange(materialIndex, 'height', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_sizeHeight`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                    style={{ padding: '10px 14px', width: '100px', height: '44px' }}
-                    placeholder="52"
-                  />
-                  </div>
-
-                  <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">UNIT</label>
-                    <select
-                      value={material.size.unit}
-                      onChange={(e) => handlePackagingMaterialSizeChange(materialIndex, 'unit', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`packaging_material_${materialIndex}_sizeUnit`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                    style={{ padding: '10px 14px', width: '120px', height: '44px' }}
-                    >
-                      <option value="CM">CM</option>
-                      <option value="KGS">KGS</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-            {/* CATEGORY SELECTOR & CONDITIONAL FIELDS */}
-            <div className="w-full mt-6 pt-6 border-t border-gray-100">
+            {/* Only packaging material type fields remain */}
+            <div className="w-full">
               <div className="flex flex-col" style={{ width: '280px', marginBottom: '24px' }}>
                 <label className="text-sm font-bold text-gray-800 mb-2">
                   PACKAGING MATERIAL TYPE <span className="text-red-600">*</span>
