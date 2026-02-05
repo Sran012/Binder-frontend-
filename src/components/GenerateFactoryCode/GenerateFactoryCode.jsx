@@ -174,6 +174,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           referenceImage: null
         }],
         packaging: {
+          toBeShipped: '',
           type: 'STANDARD',
           casepackQty: '',
           qtyToBePacked: 'AS_PER_PO',
@@ -333,6 +334,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     }],
     // Step 5 - Packaging
     packaging: {
+      toBeShipped: '',
       type: 'STANDARD',
       casepackQty: '',
       qtyToBePacked: 'AS_PER_PO',
@@ -730,6 +732,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       referenceImage: null
     }],
     packaging: {
+      toBeShipped: '',
       type: 'STANDARD',
       casepackQty: '',
       qtyToBePacked: 'AS_PER_PO',
@@ -2982,19 +2985,17 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     const packaging = stepData?.packaging || {};
     
     // === HEADER FIELDS ===
+    if (isEmpty(packaging.toBeShipped)) {
+      newErrors['packaging_toBeShipped'] = 'To be shipped is required';
+    }
     if (isEmpty(packaging.productSelection)) {
-      newErrors['packaging_productSelection'] = 'Product is required';
+      newErrors['packaging_productSelection'] = 'Product (IPC) is required';
     }
     if (isEmpty(packaging.type)) {
-      newErrors['packaging_type'] = 'Type is required';
+      newErrors['packaging_type'] = 'Master pack is required';
     }
     if (isEmpty(packaging.casepackQty)) {
       newErrors['packaging_casepackQty'] = 'Casepack Qty is required';
-    }
-    
-    // If ASSORTED type, require the link
-    if (packaging.type === 'ASSORTED (LINK IPC#)' && isEmpty(packaging.assortedSkuLink)) {
-      newErrors['packaging_assortedSkuLink'] = 'IPC Link is required for ASSORTED type';
     }
     
     // === PACKAGING MATERIALS ===

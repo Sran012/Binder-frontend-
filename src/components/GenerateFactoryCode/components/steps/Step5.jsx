@@ -1,7 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
 import SearchableDropdown from '../SearchableDropdown';
 import { TestingRequirementsInput } from '@/components/ui/testing-requirements-input';
+import { cn } from '@/lib/utils';
 
 const Step5 = ({
   formData,
@@ -13,6 +15,9 @@ const Step5 = ({
 }) => {
   const prevMaterialsLengthRef = useRef(formData.packaging?.materials?.length || 0);
   const isInitialMountRef = useRef(true);
+  const [ipcDropdownOpen, setIpcDropdownOpen] = useState(false);
+  const [ipcSearchTerm, setIpcSearchTerm] = useState('');
+  const ipcDropdownRef = useRef(null);
 
   useEffect(() => {
     if (isInitialMountRef.current) {
@@ -32,28 +37,6 @@ const Step5 = ({
     }
     prevMaterialsLengthRef.current = currentMaterialsLength;
   }, [formData.packaging?.materials?.length]);
-
-  // Build list of all products and subproducts for header dropdown
-  const getAllProductOptions = () => {
-    const names = [];
-    (formData.skus || []).forEach((sku) => {
-      if (sku.product) {
-        names.push(sku.product);
-      }
-      (sku.subproducts || []).forEach((sub) => {
-        if (sub.product) {
-          names.push(sub.product);
-        }
-      });
-    });
-    // Also include products from Step 1 (for safety / backwards compatibility)
-    (formData.products || []).forEach((product) => {
-      if (product.name) {
-        names.push(product.name);
-      }
-    });
-    return [...new Set(names)];
-  };
 
   // Normalize values for chip-style multi-select fields.
   // Keeps backward compatibility if old data stored a single string.
@@ -90,24 +73,49 @@ const Step5 = ({
     };
   };
 
-  // All IPC codes created in Step 0 (from localStorage + current formData.skus)
-const getIpcLinkOptions = () => {
-  const codes = new Set();
-  // From current session SKUs
-  (formData.skus || []).forEach((sku) => {
-    if (sku.ipcCode) codes.add(sku.ipcCode);
-  });
-  // From localStorage (all previous Step 0 saves)
-  try {
-    const existing = JSON.parse(localStorage.getItem('ipcCodes') || '[]');
-    existing.forEach((batch) => {
-      (batch.skus || []).forEach((s) => {
-        if (s.ipcCode) codes.add(s.ipcCode);
+  // IPC options from this session only: IPCs created in Step 0 for this runtime (main + subproducts, with images)
+  const getIpcOptionsWithImages = () => {
+    const options = [];
+    (formData.skus || []).forEach((sku) => {
+      const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode || '';
+      if (baseIpc) {
+        options.push({
+          value: baseIpc,
+          label: baseIpc,
+          imagePreview: sku.imagePreview || null,
+        });
+      }
+      (sku.subproducts || []).forEach((sub, idx) => {
+        const spIpc = `${baseIpc}/SP${idx + 1}`;
+        options.push({
+          value: spIpc,
+          label: spIpc,
+          imagePreview: sub.imagePreview || null,
+        });
       });
     });
-  } catch (_) {}
-  return [...codes].sort();
-};
+    return options;
+  };
+
+  const ipcOptionsWithImages = getIpcOptionsWithImages();
+  const filteredIpcOptions = ipcSearchTerm.trim()
+    ? ipcOptionsWithImages.filter(
+        (o) =>
+          o.label.toLowerCase().includes(ipcSearchTerm.toLowerCase())
+      )
+    : ipcOptionsWithImages;
+
+  // Click outside to close IPC dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ipcDropdownRef.current && !ipcDropdownRef.current.contains(e.target)) {
+        setIpcDropdownOpen(false);
+        setIpcSearchTerm('');
+      }
+    };
+    if (ipcDropdownOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [ipcDropdownOpen]);
 
   return (
 <div className="w-full">
@@ -124,24 +132,112 @@ const getIpcLinkOptions = () => {
         <h3 className="text-sm font-bold text-gray-800" style={{ marginBottom: '16px' }}>PACKAGING HEADER</h3>
         
         <div className="flex flex-wrap items-start gap-4">
-          {/* PRODUCT */}
-          <div className="flex flex-col" style={{ width: '250px' }}>
-            <label className={`text-sm font-semibold mb-2 ${errors?.packaging_productSelection ? 'text-red-600' : 'text-gray-700'}`}>PRODUCT <span className="text-red-500">*</span></label>
+          {/* TO BE SHIPPED */}
+          <div className="flex flex-col" style={{ width: '220px' }}>
+            <label className={`text-sm font-semibold mb-2 ${errors?.packaging_toBeShipped ? 'text-red-600' : 'text-gray-700'}`}>TO BE SHIPPED <span className="text-red-500">*</span></label>
             <SearchableDropdown
-              value={formData.packaging.productSelection || ''}
-              onChange={(selectedValue) => handlePackagingChange('productSelection', selectedValue || '')}
-              options={getAllProductOptions()}
-              placeholder="Select or type product"
+              value={formData.packaging.toBeShipped || ''}
+              onChange={(selectedValue) => handlePackagingChange('toBeShipped', selectedValue || '')}
+              options={['Merged', 'Standalone']}
+              placeholder="Select or type"
               strictMode={false}
-              className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.packaging_productSelection ? 'border-red-600' : 'border-[#e5e7eb]'}`}
+              className={cn(
+                'border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none',
+                errors?.packaging_toBeShipped ? 'border-red-600' : 'border-[#e5e7eb]'
+              )}
               style={{ padding: '10px 14px', height: '44px' }}
             />
+            {errors?.packaging_toBeShipped && <span className="text-red-600 text-xs mt-1">{errors.packaging_toBeShipped}</span>}
+          </div>
+
+          {/* PRODUCT (IPC with images) */}
+          <div className="flex flex-col" style={{ width: '280px' }}>
+            <label className={`text-sm font-semibold mb-2 ${errors?.packaging_productSelection ? 'text-red-600' : 'text-gray-700'}`}>PRODUCT <span className="text-red-500">*</span></label>
+            <div ref={ipcDropdownRef} className="relative w-full">
+              <input
+                type="text"
+                value={ipcDropdownOpen ? ipcSearchTerm : (formData.packaging.productSelection || '')}
+                onChange={(e) => {
+                  setIpcSearchTerm(e.target.value);
+                  if (!ipcDropdownOpen) setIpcDropdownOpen(true);
+                }}
+                onFocus={() => {
+                  setIpcDropdownOpen(true);
+                  setIpcSearchTerm(formData.packaging.productSelection || '');
+                }}
+                placeholder="Select or type IPC"
+                className={cn(
+                  'border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none w-full',
+                  errors?.packaging_productSelection ? 'border-red-600' : 'border-[#e5e7eb]'
+                )}
+                style={{ padding: '10px 14px', paddingRight: '2.25rem', height: '44px' }}
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIpcDropdownOpen(!ipcDropdownOpen);
+                  if (!ipcDropdownOpen) setIpcSearchTerm(formData.packaging.productSelection || '');
+                  else setIpcSearchTerm('');
+                }}
+                aria-label="Open IPC options"
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded border-0 bg-transparent text-gray-500 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <ChevronDown className={cn('h-4 w-4 transition-transform', ipcDropdownOpen && 'rotate-180')} />
+              </button>
+              {ipcDropdownOpen && (
+                <div
+                  className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg"
+                  style={{ top: '100%', left: 0 }}
+                >
+                  {filteredIpcOptions.length === 0 ? (
+                    <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                      {ipcOptionsWithImages.length === 0
+                        ? 'No IPC codes. Complete Step 0 to generate IPCs.'
+                        : 'No matching IPC.'}
+                    </div>
+                  ) : filteredIpcOptions.map((opt, index) => (
+                    <div
+                      key={`${opt.value}-${index}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handlePackagingChange('productSelection', opt.value);
+                        setIpcDropdownOpen(false);
+                        setIpcSearchTerm('');
+                      }}
+                      className="flex items-center gap-3 cursor-pointer px-3 py-2.5 text-sm border-b border-gray-100 last:border-b-0 hover:bg-indigo-50 transition-colors"
+                    >
+                      <div
+                        className="flex-shrink-0 w-10 h-10 rounded border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center"
+                        style={{ minWidth: '40px' }}
+                      >
+                        {opt.imagePreview ? (
+                          <img
+                            src={opt.imagePreview}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeWidth="1.5" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" strokeWidth="1.5" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="font-medium text-gray-800 truncate">{opt.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             {errors?.packaging_productSelection && <span className="text-red-600 text-xs mt-1">{errors.packaging_productSelection}</span>}
           </div>
 
-          {/* TYPE */}
+          {/* MASTER PACK */}
           <div className="flex flex-col">
-            <label className={`text-sm font-semibold mb-2 ${errors?.packaging_type ? 'text-red-600' : 'text-gray-700'}`}>TYPE <span className="text-red-500">*</span></label>
+            <label className={`text-sm font-semibold mb-2 ${errors?.packaging_type ? 'text-red-600' : 'text-gray-700'}`}>MASTER PACK <span className="text-red-500">*</span></label>
             <select
               value={formData.packaging.type}
               onChange={(e) => handlePackagingChange('type', e.target.value)}
@@ -149,7 +245,7 @@ const getIpcLinkOptions = () => {
               style={{ padding: '10px 14px', width: '200px', height: '44px' }}
             >
               <option value="STANDARD">STANDARD</option>
-              <option value="ASSORTED">ASSORTED (LINK IPC#)</option>
+              <option value="ASSORTED">ASSORTED</option>
             </select>
             {errors?.packaging_type && <span className="text-red-600 text-xs mt-1">{errors.packaging_type}</span>}
           </div>
@@ -173,51 +269,6 @@ const getIpcLinkOptions = () => {
               <span className="text-red-600 text-xs mt-1">{errors.packaging_casepackQty}</span>
             )}
           </div>
-
-          {/* IPC Link for Assorted */}
-          {/* {formData.packaging.type === 'ASSORTED' && (
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold text-gray-700 mb-2">
-                LINK IPC# <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.packaging.assortedSkuLink}
-                onChange={(e) => handlePackagingChange('assortedSkuLink', e.target.value)}
-                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${
-                  errors?.packaging_assortedSkuLink ? 'border-red-600' : 'border-[#e5e7eb]'
-                }`}
-                style={{ padding: '10px 14px', width: '150px', height: '44px' }}
-                placeholder="IPC-123"
-              />
-              {errors?.packaging_assortedSkuLink && (
-                <span className="text-red-600 text-xs mt-1">{errors.packaging_assortedSkuLink}</span>
-              )}
-            </div>
-          )} */}
-
-                    {/* IPC Link for Assorted */}
-                    {formData.packaging.type === 'ASSORTED' && (
-            <div className="flex flex-col" style={{ minWidth: '320px', width: '100%', maxWidth: '420px' }}>
-              <label className="text-sm font-semibold text-gray-700 mb-2">
-                LINK IPC# <span className="text-red-600">*</span>
-              </label>
-              <SearchableDropdown
-                value={formData.packaging.assortedSkuLink || ''}
-                onChange={(selectedValue) => handlePackagingChange('assortedSkuLink', selectedValue || '')}
-                options={getIpcLinkOptions()}
-                placeholder="Select or type IPC code"
-                strictMode={false}
-                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${
-                  errors?.packaging_assortedSkuLink ? 'border-red-600' : 'border-[#e5e7eb]'
-                }`}
-                style={{ padding: '10px 14px', height: '44px', minWidth: '300px' }}
-              />
-              {errors?.packaging_assortedSkuLink && (
-                <span className="text-red-600 text-xs mt-1">{errors.packaging_assortedSkuLink}</span>
-              )}
-            </div>
-          )}
 
       </div>
         </div>
