@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import SearchableDropdown from '../SearchableDropdown';
+import { PRODUCT_SUBPRODUCT_DROPDOWN_OPTIONS } from '../../data/productSubproductData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PercentInput } from '@/components/ui/percent-input';
@@ -202,7 +203,7 @@ const Step0 = ({
                 <SearchableDropdown
                   value={sku.product || ''}
                   onChange={(value) => handleProductChange(skuIndex, value)}
-                  options={[]}
+                  options={PRODUCT_SUBPRODUCT_DROPDOWN_OPTIONS}
                   placeholder="Select or type product"
                   strictMode={false}
                   className={errors[`product_${skuIndex}`] ? 'border-destructive' : ''}
@@ -375,7 +376,7 @@ const Step0 = ({
                         <SearchableDropdown
                           value={subproduct.subproduct || ''}
                           onChange={(value) => handleSubproductChange(skuIndex, subproductIndex, 'subproduct', value)}
-                          options={[]}
+                          options={PRODUCT_SUBPRODUCT_DROPDOWN_OPTIONS}
                           placeholder="Select or type subproduct"
                           strictMode={false}
                           className={errors[`subproduct_${skuIndex}_${subproductIndex}`] ? 'border-destructive' : ''}
