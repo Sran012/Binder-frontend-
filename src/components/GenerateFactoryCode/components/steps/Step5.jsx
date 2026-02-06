@@ -456,11 +456,27 @@ const Step5 = ({
           {errors.packaging_leftover_ipc}
         </div>
       )}
-      {/* All filled extra packs: show whenever we have any (so blocks stay visible after save) */}
-      {extraPacks.length > 0 && (
+      {/* Extra packs:
+          - Never show EMPTY packs on initial load
+          - Show the newly opened pack when leftover error exists (after Save)
+          - Always keep showing packs that have real data filled
+      */}
+      {(() => {
+        const packHasData = (pack) => {
+          if (!pack) return false;
+          const sel = Array.isArray(pack.productSelection) ? pack.productSelection : (pack.productSelection ? [pack.productSelection] : []);
+          if (sel.length > 0) return true;
+          const mats = Array.isArray(pack.materials) ? pack.materials : [];
+          return mats.some((m) => (m?.packagingMaterialType || '').toString().trim() !== '');
+        };
+        const packsToRender = errors?.packaging_leftover_ipc ? extraPacks : extraPacks.filter(packHasData);
+        if (packsToRender.length === 0) return null;
+        return (
         <div className="mt-10 space-y-8 overflow-visible">
-          <h3 className="text-lg font-bold text-gray-800">Leftover packs</h3>
-          {extraPacks.map((pack, extraIndex) => {
+          {errors?.packaging_leftover_ipc && (
+            <h3 className="text-lg font-bold text-gray-800">Leftover packs</h3>
+          )}
+          {packsToRender.map((pack, extraIndex) => {
             const leftoverOptions = getLeftover(extraIndex - 1);
             const packSelection = Array.isArray(pack.productSelection) ? pack.productSelection : (pack.productSelection ? [pack.productSelection] : []);
             const isExtraStandalone = (pack.toBeShipped || formData.packaging?.toBeShipped || '').toLowerCase() === 'standalone';
@@ -614,7 +630,8 @@ const Step5 = ({
             );
           })}
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

@@ -2287,6 +2287,10 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const handleSaveStep4 = () => {
     const result = validateStep5();
     if (!result.isValid) {
+      // If leftover IPC exists, open exactly one new leftover block on Save
+      if (result.shouldAddExtraPack) {
+        addExtraPack();
+      }
       setStep4SaveStatus('error');
       setTimeout(() => setStep4SaveStatus('idle'), 3000);
       showValidationErrorsPopup(result.errors);
@@ -2982,6 +2986,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     const newErrors = {};
     const stepData = getSelectedSkuStepData();
     const packaging = stepData?.packaging || {};
+    let shouldAddExtraPack = false;
     
     // === HEADER FIELDS ===
     if (isEmpty(packaging.toBeShipped)) {
@@ -3041,12 +3046,12 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       const lastPackSelection = lastPack ? (Array.isArray(lastPack.productSelection) ? lastPack.productSelection : (lastPack.productSelection ? [lastPack.productSelection] : [])) : [];
       // Add at most ONE leftover block per save: only when no blocks yet, or when the last block has at least one product selected (so user filled it and there is still leftover).
       const shouldAddBlock = extraPacks.length === 0 || lastPackSelection.length > 0;
-      if (shouldAddBlock) addExtraPack();
+      if (shouldAddBlock) shouldAddExtraPack = true;
     }
 
     setErrors(newErrors);
     const isValid = Object.keys(newErrors).length === 0;
-    return { isValid, errors: newErrors };
+    return { isValid, errors: newErrors, shouldAddExtraPack };
   };
 
   // Validate only artwork materials for a given component (for per-component Save)
