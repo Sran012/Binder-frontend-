@@ -69,6 +69,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     skus: [{
       sku: '',
       product: '',
+      setOf: '',
       poQty: '',
       overagePercentage: '',
       deliveryDueDate: '',
@@ -793,6 +794,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       skus: [...prev.skus, {
         sku: '',
         product: '',
+        setOf: '',
         poQty: '',
         overagePercentage: '',
         deliveryDueDate: '',

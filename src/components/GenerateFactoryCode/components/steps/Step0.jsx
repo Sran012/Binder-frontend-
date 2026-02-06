@@ -208,6 +208,17 @@ const Step0 = ({
                   className={errors[`product_${skuIndex}`] ? 'border-destructive' : ''}
                 />
               </Field>
+
+              {/* SET OF */}
+              <Field label="SET OF" width="sm">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={sku.setOf ?? ''}
+                  onChange={(e) => handleSkuChange(skuIndex, 'setOf', e.target.value.replace(/\D/g, ''))}
+                  placeholder="1"
+                />
+              </Field>
             </div>
 
             {/* Row 2: PO QTY, Overage %, Delivery Date */}
