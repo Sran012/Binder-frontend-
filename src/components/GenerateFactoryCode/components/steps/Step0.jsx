@@ -109,17 +109,20 @@ const Step0 = ({
       
       {/* IPO Code (if from Internal Purchase Order) or Buyer Code */}
       <div style={{ marginBottom: '12px' }}>
-        <div className="flex flex-col w-field-md">
+        <div className={cn('flex flex-col', formData.ipoCode ? 'w-fit max-w-full' : 'w-field-md')}>
           {formData.ipoCode ? (
             <>
               <label className="text-sm font-semibold text-foreground mb-2">
                 IPO CODE
               </label>
               <div
-                className="border-input h-11 w-full rounded-md border bg-card text-sm font-medium text-foreground flex items-center shadow-xs"
+                className="border-input rounded-md border bg-card text-sm font-medium text-foreground shadow-xs"
                 style={{
-                  paddingLeft: '1.25rem',
-                  paddingRight: '0.75rem',
+                  padding: '0.5rem 1rem 0.5rem ',
+                  width: 'fit-content',
+                  maxWidth: '100%',
+                  overflowWrap: 'break-word',
+                  wordBreak: 'break-word',
                 }}
               >
                 {formData.ipoCode}
