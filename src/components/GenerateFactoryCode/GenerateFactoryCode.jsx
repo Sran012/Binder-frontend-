@@ -69,6 +69,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     skus: [{
       sku: '',
       product: '',
+      setOf: '',
       poQty: '',
       overagePercentage: '',
       deliveryDueDate: '',
@@ -174,14 +175,16 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           referenceImage: null
         }],
         packaging: {
+          toBeShipped: '',
           type: 'STANDARD',
           casepackQty: '',
           qtyToBePacked: 'AS_PER_PO',
           customQty: '',
-          productSelection: '',
+          productSelection: [],
           isAssortedPack: false,
           assortedSkuLink: '',
           artworkAndPackaging: '',
+          extraPacks: [],
           materials: [{
             srNo: 1,
             product: '',
@@ -333,14 +336,16 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     }],
     // Step 5 - Packaging
     packaging: {
+      toBeShipped: '',
       type: 'STANDARD',
       casepackQty: '',
       qtyToBePacked: 'AS_PER_PO',
       customQty: '',
-      productSelection: '',
+      productSelection: [],
       isAssortedPack: false,
       assortedSkuLink: '',
       artworkAndPackaging: '',
+      extraPacks: [],
       materials: [{
         srNo: 1,
         product: '',
@@ -350,25 +355,21 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         unit: '',
         casepack: '',
         placement: '',
-        // Size fields (conditional for CUSHION/FILLER/TOTE BAG)
         size: {
           width: '',
           length: '',
           height: '',
           unit: '',
         },
-        // Work orders (two sets)
         workOrders: [
           { workOrder: 'Packaging', wastage: '', for: '' },
           { workOrder: '', wastage: '', for: '' },
         ],
-        // Calculated fields
         totalNetConsumption: '',
         totalWastage: '',
         calculatedUnit: '',
         overage: '',
         grossConsumption: '',
-        // New conditional fields for Part 5
         packagingMaterialType: '',
         noOfPlys: '',
         jointType: '',
@@ -730,14 +731,16 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       referenceImage: null
     }],
     packaging: {
+      toBeShipped: '',
       type: 'STANDARD',
       casepackQty: '',
       qtyToBePacked: 'AS_PER_PO',
       customQty: '',
-      productSelection: '',
+      productSelection: [],
       isAssortedPack: false,
       assortedSkuLink: '',
       artworkAndPackaging: '',
+      extraPacks: [],
       materials: [{
         srNo: 1,
         product: '',
@@ -791,6 +794,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       skus: [...prev.skus, {
         sku: '',
         product: '',
+        setOf: '',
         poQty: '',
         overagePercentage: '',
         deliveryDueDate: '',
@@ -2285,6 +2289,10 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const handleSaveStep4 = () => {
     const result = validateStep5();
     if (!result.isValid) {
+      // If leftover IPC exists, open exactly one new leftover block on Save
+      if (result.shouldAddExtraPack) {
+        addExtraPack();
+      }
       setStep4SaveStatus('error');
       setTimeout(() => setStep4SaveStatus('idle'), 3000);
       showValidationErrorsPopup(result.errors);
@@ -2322,14 +2330,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       const updatedSkus = formData.skus.map((sku, skuIndex) => {
         const ipcNumber = skuIndex + 1;
         
-        // Generate IPC code - if subproducts exist, add SP{quantity}
-        let ipcCode;
-        if (sku.subproducts && sku.subproducts.length > 0) {
-          const subproductQuantity = sku.subproducts.length;
-          ipcCode = `CHD/${buyerCode}/PO-${poSrNo}/IPC-${ipcNumber}/SP${subproductQuantity}`;
-        } else {
-          ipcCode = `CHD/${buyerCode}/PO-${poSrNo}/IPC-${ipcNumber}`;
-        }
+        // Generate IPC code - main is always IPC-{digit}, no SP; subproducts use IPC-{digit}/SP-{n}
+        const ipcCode = `CHD/${buyerCode}/PO-${poSrNo}/IPC-${ipcNumber}`;
         
         // Update subproducts with the same IPC code as the main product
         const updatedSubproducts = sku.subproducts?.map((subproduct) => {
@@ -2980,21 +2982,21 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     const newErrors = {};
     const stepData = getSelectedSkuStepData();
     const packaging = stepData?.packaging || {};
+    let shouldAddExtraPack = false;
     
     // === HEADER FIELDS ===
-    if (isEmpty(packaging.productSelection)) {
-      newErrors['packaging_productSelection'] = 'Product is required';
+    if (isEmpty(packaging.toBeShipped)) {
+      newErrors['packaging_toBeShipped'] = 'To be shipped is required';
+    }
+    const mainSelection = Array.isArray(packaging.productSelection) ? packaging.productSelection : (packaging.productSelection ? [packaging.productSelection] : []);
+    if (mainSelection.length === 0) {
+      newErrors['packaging_productSelection'] = 'Product (IPC) is required';
     }
     if (isEmpty(packaging.type)) {
-      newErrors['packaging_type'] = 'Type is required';
+      newErrors['packaging_type'] = 'Master pack is required';
     }
     if (isEmpty(packaging.casepackQty)) {
       newErrors['packaging_casepackQty'] = 'Casepack Qty is required';
-    }
-    
-    // If ASSORTED type, require the link
-    if (packaging.type === 'ASSORTED (LINK IPC#)' && isEmpty(packaging.assortedSkuLink)) {
-      newErrors['packaging_assortedSkuLink'] = 'IPC Link is required for ASSORTED type';
     }
     
     // === PACKAGING MATERIALS ===
@@ -3003,30 +3005,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       newErrors['packaging_no_materials'] = 'At least one packaging material is required';
     }
     
-    // Validate each packaging material - base + type-specific fields
+    // Validate each packaging material - only Packaging Material Type + type-specific fields (Component, Material Description, Net Consumption, Unit, Placement, Work Order were removed from form)
     materials.forEach((material, materialIndex) => {
       const errorPrefix = `packaging_material_${materialIndex}`;
-      
-      // === COMMON FIELDS ===
-      if (isEmpty(material.components)) {
-        newErrors[`${errorPrefix}_components`] = 'Component is required';
-      }
-      if (isEmpty(material.materialDescription)) {
-        newErrors[`${errorPrefix}_materialDescription`] = 'Material Description is required';
-      }
-      if (isEmpty(material.netConsumptionPerPc)) {
-        newErrors[`${errorPrefix}_netConsumptionPerPc`] = 'Net Consumption per Pc is required';
-      }
-      if (isEmpty(material.unit)) {
-        newErrors[`${errorPrefix}_unit`] = 'Unit is required';
-      }
-      if (isEmpty(material.placement)) {
-        newErrors[`${errorPrefix}_placement`] = 'Placement is required';
-      }
-      const workOrderVal = material.workOrders?.[0]?.workOrder;
-      if (isEmpty(workOrderVal)) {
-        newErrors[`${errorPrefix}_workOrder`] = 'Work Order is required';
-      }
       
       // === PACKAGING MATERIAL TYPE ===
       const packagingType = material.packagingMaterialType?.toString().trim();
@@ -3041,10 +3022,32 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         }
       }
     });
-    
+
+    // === LEFTOVER IPC (dynamic: only add next block on save when there are unassigned IPCs) ===
+    const allIpcValues = [];
+    (formData.skus || []).forEach((sku) => {
+      const baseIpc = sku.ipcCode?.replace(/\/SP-?\d+$/i, '') || sku.ipcCode || '';
+      if (baseIpc) allIpcValues.push(baseIpc);
+      (sku.subproducts || []).forEach((_, idx) => allIpcValues.push(`${baseIpc}/SP-${idx + 1}`));
+    });
+    const extraPacks = packaging.extraPacks || [];
+    const selectedIpcs = new Set([
+      ...mainSelection,
+      ...extraPacks.flatMap((p) => (Array.isArray(p.productSelection) ? p.productSelection : (p.productSelection ? [p.productSelection] : []))),
+    ]);
+    const leftover = allIpcValues.filter((v) => !selectedIpcs.has(v));
+    if (leftover.length > 0) {
+      newErrors['packaging_leftover_ipc'] = 'Please complete leftover IPC';
+      const lastPack = extraPacks[extraPacks.length - 1];
+      const lastPackSelection = lastPack ? (Array.isArray(lastPack.productSelection) ? lastPack.productSelection : (lastPack.productSelection ? [lastPack.productSelection] : [])) : [];
+      // Add at most ONE leftover block per save: only when no blocks yet, or when the last block has at least one product selected (so user filled it and there is still leftover).
+      const shouldAddBlock = extraPacks.length === 0 || lastPackSelection.length > 0;
+      if (shouldAddBlock) shouldAddExtraPack = true;
+    }
+
     setErrors(newErrors);
     const isValid = Object.keys(newErrors).length === 0;
-    return { isValid, errors: newErrors };
+    return { isValid, errors: newErrors, shouldAddExtraPack };
   };
 
   // Validate only artwork materials for a given component (for per-component Save)
@@ -3427,12 +3430,27 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       // - POLYBAG~POLYBAG-FLAP: polybagPolybagFlapWidth/polybagPolybagFlapLength/polybagPolybagFlapGaugeThickness -> polybagPolybagFlapDimensions
       const formatDim = (...parts) => parts.filter((p) => String(p || '').trim() !== '').join(' x ');
       const mDim = updatedMaterials[materialIndex];
+      // If carton box stiffener is required, carton dimensions are L x W (no height).
+      if (field === 'cartonBoxStiffenerRequired') {
+        if (value === 'YES') {
+          updatedMaterials[materialIndex].cartonBoxHeight = '';
+          updatedMaterials[materialIndex].cartonBoxDimensions = formatDim(
+            mDim.cartonBoxLength,
+            mDim.cartonBoxWidth
+          );
+        } else {
+          updatedMaterials[materialIndex].cartonBoxDimensions = formatDim(
+            mDim.cartonBoxLength,
+            mDim.cartonBoxWidth,
+            mDim.cartonBoxHeight
+          );
+        }
+      }
       if (['cartonBoxLength', 'cartonBoxWidth', 'cartonBoxHeight'].includes(field)) {
-        updatedMaterials[materialIndex].cartonBoxDimensions = formatDim(
-          mDim.cartonBoxLength,
-          mDim.cartonBoxWidth,
-          mDim.cartonBoxHeight
-        );
+        updatedMaterials[materialIndex].cartonBoxDimensions =
+          mDim.cartonBoxStiffenerRequired === 'YES'
+            ? formatDim(mDim.cartonBoxLength, mDim.cartonBoxWidth)
+            : formatDim(mDim.cartonBoxLength, mDim.cartonBoxWidth, mDim.cartonBoxHeight);
       }
       if (['foamInsertLength', 'foamInsertWidth', 'foamInsertHeight'].includes(field)) {
         updatedMaterials[materialIndex].foamInsertDimensions = formatDim(
@@ -3661,6 +3679,144 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         };
       });
     }
+  };
+
+  // Default material object for packaging / extra packs
+  const getDefaultPackagingMaterial = () => ({
+    srNo: 1,
+    product: '',
+    components: '',
+    materialDescription: '',
+    netConsumptionPerPc: '',
+    unit: '',
+    casepack: '',
+    placement: '',
+    size: { width: '', length: '', height: '', unit: '' },
+    workOrders: [
+      { workOrder: 'Packaging', wastage: '', for: '' },
+      { workOrder: '', wastage: '', for: '' },
+    ],
+    totalNetConsumption: '',
+    totalWastage: '',
+    calculatedUnit: '',
+    overage: '',
+    grossConsumption: '',
+    packagingMaterialType: '',
+    noOfPlys: '',
+    jointType: '',
+    burstingStrength: '',
+    surplus: '',
+    surplusForSection: '',
+    approvalAgainst: '',
+    remarks: '',
+    guage: '',
+    printingRef: null,
+    gummingQuality: '',
+    punchHoles: '',
+    flapSize: '',
+    guageGsm: '',
+    rollWidth: '',
+    rollWidthUnit: '',
+    tapeWidth: '',
+    tapeWidthUnit: '',
+    polybagBalePolybagCount: '',
+    polybagBaleAssdQtyByIpc: {},
+  });
+
+  const getDefaultExtraPack = () => ({
+    toBeShipped: '',
+    productSelection: [],
+    type: 'STANDARD',
+    casepackQty: '',
+    materials: [getDefaultPackagingMaterial()],
+  });
+
+  const addExtraPack = () => {
+    setStep4Saved(false);
+    setStep4SaveStatus('idle');
+    updateSelectedSkuStepData((stepData) => {
+      const existing = stepData.packaging || {};
+      const keepMaterials = existing.materials && existing.materials.length > 0;
+      return {
+        ...stepData,
+        packaging: {
+          ...existing,
+          materials: keepMaterials ? existing.materials : [getDefaultPackagingMaterial()],
+          extraPacks: [...(existing.extraPacks || []), getDefaultExtraPack()],
+        },
+      };
+    });
+  };
+
+  const handleExtraPackChange = (extraIndex, field, value) => {
+    setStep4Saved(false);
+    setStep4SaveStatus('idle');
+    updateSelectedSkuStepData((stepData) => {
+      const extraPacks = [...(stepData.packaging.extraPacks || [])];
+      if (!extraPacks[extraIndex]) return stepData;
+      extraPacks[extraIndex] = { ...extraPacks[extraIndex], [field]: value };
+      return {
+        ...stepData,
+        packaging: { ...stepData.packaging, extraPacks },
+      };
+    });
+    const errorKey = `packaging_extra_${extraIndex}_${field}`;
+    if (errors[errorKey]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[errorKey];
+        return next;
+      });
+    }
+  };
+
+  const handleExtraPackMaterialChange = (extraIndex, materialIndex, field, value) => {
+    setStep4Saved(false);
+    setStep4SaveStatus('idle');
+    updateSelectedSkuStepData((stepData) => {
+      const extraPacks = [...(stepData.packaging.extraPacks || [])];
+      if (!extraPacks[extraIndex] || !extraPacks[extraIndex].materials) return stepData;
+      const materials = [...extraPacks[extraIndex].materials];
+      const defaultMaterial = getDefaultPackagingMaterial();
+      materials[materialIndex] = { ...defaultMaterial, ...materials[materialIndex], [field]: value };
+      extraPacks[extraIndex] = { ...extraPacks[extraIndex], materials };
+      return {
+        ...stepData,
+        packaging: { ...stepData.packaging, extraPacks },
+      };
+    });
+  };
+
+  const addExtraPackMaterial = (extraIndex) => {
+    setStep4Saved(false);
+    setStep4SaveStatus('idle');
+    updateSelectedSkuStepData((stepData) => {
+      const extraPacks = [...(stepData.packaging.extraPacks || [])];
+      if (!extraPacks[extraIndex]) return stepData;
+      const materials = [...(extraPacks[extraIndex].materials || []), getDefaultPackagingMaterial()];
+      materials.forEach((m, i) => { m.srNo = i + 1; });
+      extraPacks[extraIndex] = { ...extraPacks[extraIndex], materials };
+      return {
+        ...stepData,
+        packaging: { ...stepData.packaging, extraPacks },
+      };
+    });
+  };
+
+  const removeExtraPackMaterial = (extraIndex, materialIndex) => {
+    setStep4Saved(false);
+    setStep4SaveStatus('idle');
+    updateSelectedSkuStepData((stepData) => {
+      const extraPacks = [...(stepData.packaging.extraPacks || [])];
+      if (!extraPacks[extraIndex] || (extraPacks[extraIndex].materials?.length || 0) <= 1) return stepData;
+      const materials = extraPacks[extraIndex].materials.filter((_, i) => i !== materialIndex);
+      materials.forEach((m, i) => { m.srNo = i + 1; });
+      extraPacks[extraIndex] = { ...extraPacks[extraIndex], materials };
+      return {
+        ...stepData,
+        packaging: { ...stepData.packaging, extraPacks },
+      };
+    });
   };
 
   // Check if product requires size fields (CUSHION/FILLER/TOTE BAG)
@@ -4251,13 +4407,18 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     }
     
     // Merge selected SKU's step data with main formData
+    const packaging = stepData.packaging || formData.packaging;
+    // Ensure main block always has at least one material so it never disappears
+    const packagingSafe = packaging && (!packaging.materials || packaging.materials.length === 0)
+      ? { ...packaging, materials: [getDefaultPackagingMaterial()] }
+      : packaging;
     return {
       ...formData,
       products: stepData.products || [],
       rawMaterials: stepData.rawMaterials || [],
       consumptionMaterials: stepData.consumptionMaterials || [],
       artworkMaterials: stepData.artworkMaterials || [],
-      packaging: stepData.packaging || formData.packaging,
+      packaging: packagingSafe,
       // Also include SKU-specific data for calculations
       poQty: (() => {
         const parsed = parseSelectedSku();
@@ -4360,10 +4521,13 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               errors={errors}
               handlePackagingChange={handlePackagingChange}
               handlePackagingMaterialChange={handlePackagingMaterialChange}
-              handlePackagingMaterialSizeChange={handlePackagingMaterialSizeChange}
-              handlePackagingWorkOrderChange={handlePackagingWorkOrderChange}
               addPackagingMaterial={addPackagingMaterial}
               removePackagingMaterial={removePackagingMaterial}
+              addExtraPack={addExtraPack}
+              handleExtraPackChange={handleExtraPackChange}
+              handleExtraPackMaterialChange={handleExtraPackMaterialChange}
+              addExtraPackMaterial={addExtraPackMaterial}
+              removeExtraPackMaterial={removeExtraPackMaterial}
             />
           );
         default:
@@ -4651,7 +4815,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                       </svg>
                     )}
                         <span style={{ fontWeight: '600' }}>
-                          {skuItem.ipcCode ? skuItem.ipcCode.replace(/\/SP\d+$/i, '') : `SKU #${index + 1}`}
+                          {skuItem.ipcCode ? (skuItem.ipcCode || '').replace(/\/SP-?\d+$/i, '') : `SKU #${index + 1}`}
                         </span>
                   </div>
                   <div style={{ 
@@ -4754,7 +4918,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                                   </svg>
                                 )}
                                 <span style={{ fontWeight: '600', fontSize: '12px' }}>
-                                  {skuItem.ipcCode ? `${skuItem.ipcCode.replace(/\/SP\d+$/i, '')}/SP${subproductIndex + 1}` : `/SP${subproductIndex + 1}`}
+                                  {skuItem.ipcCode ? `${(skuItem.ipcCode || '').replace(/\/SP-?\d+$/i, '')}/SP-${subproductIndex + 1}` : `/SP-${subproductIndex + 1}`}
                                 </span>
                   </div>
                   <div style={{ 
@@ -4802,7 +4966,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                 <FormCard className="rounded-xl border-border bg-card" style={{ padding: '20px 18px' }}>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {generatedIPCCodes.map((sku, idx) => {
-                      const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode;
+                      const baseIpc = sku.ipcCode?.replace(/\/SP-?\d+$/i, '') || sku.ipcCode;
                       return (
                         <div key={idx} style={{ marginBottom: idx === generatedIPCCodes.length - 1 ? 0 : '12px' }}>
                           <div className="text-sm font-semibold text-foreground">
@@ -4812,7 +4976,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                             <div className="text-sm text-muted-foreground" style={{ marginLeft: '16px', marginTop: '6px' }}>
                               {sku.subproducts.map((sp, spIdx) => (
                                 <div key={spIdx} style={{ marginTop: spIdx === 0 ? 0 : '4px' }}>
-                                  Subproduct {spIdx + 1}: <span className="text-foreground">{baseIpc}/SP{spIdx + 1}</span>
+                                  Subproduct {spIdx + 1}: <span className="text-foreground">{baseIpc}/SP-{spIdx + 1}</span>
                                 </div>
                               ))}
                             </div>
@@ -5010,11 +5174,11 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">All IPC Codes</h4>
               <div className="flex flex-wrap gap-3">
                 {formData.skus?.map((sku, idx) => {
-                  const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode || '';
+                  const baseIpc = sku.ipcCode?.replace(/\/SP-?\d+$/i, '') || sku.ipcCode || '';
                   const items = [];
                   if (baseIpc) items.push({ label: `SKU ${idx + 1}`, code: baseIpc });
                   (sku.subproducts || []).forEach((sp, spIdx) => {
-                    items.push({ label: `SKU ${idx + 1} SP${spIdx + 1}`, code: `${baseIpc}/SP${spIdx + 1}` });
+                    items.push({ label: `SKU ${idx + 1} SP-${spIdx + 1}`, code: `${baseIpc}/SP-${spIdx + 1}` });
                   });
                   return items.map((item, i) => (
                     <span
@@ -5035,7 +5199,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               <p className="text-sm text-muted-foreground mb-4">Assign each product and subproduct to a shipping group. Items in the same group ship together.</p>
               <div className="space-y-4 rounded-xl border border-border p-5 bg-white">
                 {formData.skus?.map((sku, idx) => {
-                  const baseIpc = sku.ipcCode?.replace(/\/SP\d+$/i, '') || sku.ipcCode || '';
+                  const baseIpc = sku.ipcCode?.replace(/\/SP-?\d+$/i, '') || sku.ipcCode || '';
                   const maxGroup = Math.max(1, ...Object.values(shippingGroups));
                   return (
                     <div key={idx} className="space-y-3">
@@ -5059,7 +5223,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                           className="flex items-center gap-4 p-3 pl-8 rounded-lg border border-border bg-muted/10"
                         >
                           <span className="text-sm flex-1">{sp.subproduct || `Subproduct ${spIdx + 1}`}</span>
-                          <span className="text-xs text-muted-foreground font-mono">{baseIpc}/SP{spIdx + 1}</span>
+                          <span className="text-xs text-muted-foreground font-mono">{baseIpc}/SP-{spIdx + 1}</span>
                           <select
                             value={shippingGroups[`${idx}-sp-${spIdx}`] ?? 1}
                             onChange={(e) => setShippingGroups(prev => ({ ...prev, [`${idx}-sp-${spIdx}`]: parseInt(e.target.value) }))}

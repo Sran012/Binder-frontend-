@@ -129,12 +129,7 @@ export const CUTTING_MACHINE_TYPES = {
 export const CUTTING_APPROVAL_OPTIONS = [
   '1st PC',
   'SELF',
-  'BUYER\'S',
-  'PROTO',
-  'FIT',
-  'SIZE SET',
-  'PP',
-  'TOP SAMPLE'
+  'BUYER\'S'
 ];
 
 // Nesting options

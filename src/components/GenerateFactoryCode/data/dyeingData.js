@@ -284,12 +284,7 @@ export const REFERENCE_TYPE_OPTIONS = [
 // Approval options (common across all dyeing types)
 export const DYEING_APPROVAL_OPTIONS = [
   'SELF',
-  'BUYER\'S',
-  'PROTO',
-  'FIT',
-  'SIZE SET',
-  'PP',
-  'TOP SAMPLE'
+  'BUYER\'S'
 ];
 
 // Helper function to parse color ref string into array of options

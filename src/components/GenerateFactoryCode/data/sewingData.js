@@ -125,12 +125,7 @@ export const SEWING_THREAD_TYPE_OPTIONS = [
 export const SEWING_APPROVAL_OPTIONS = [
   '1st PC',
   'SELF',
-  'BUYER\'S',
-  'PROTO',
-  'FIT',
-  'SIZE SET',
-  'PP',
-  'TOP SAMPLE'
+  'BUYER\'S'
 ];
 
 // Helper function to get stitch type for a sewing machine type

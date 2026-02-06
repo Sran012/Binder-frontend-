@@ -105,12 +105,7 @@ export const KNITTING_MACHINE_TYPES = {
 export const KNITTING_APPROVAL_OPTIONS = [
   '1st PC',
   'SELF',
-  'BUYER\'S',
-  'PROTO',
-  'FIT',
-  'SIZE SET',
-  'PP',
-  'TOP SAMPLE'
+  'BUYER\'S'
 ];
 
 // Helper function to get variants for a knitting machine type
