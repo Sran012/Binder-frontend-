@@ -206,12 +206,7 @@ export const PRINTING_TYPES = {
 // Approval options (common across all printing types)
 export const PRINTING_APPROVAL_OPTIONS = [
   'SELF',
-  'BUYER\'S',
-  'PROTO',
-  'FIT',
-  'SIZE SET',
-  'PP',
-  'TOP SAMPLE'
+  'BUYER\'S'
 ];
 
 // Helper function to get variants for a printing type

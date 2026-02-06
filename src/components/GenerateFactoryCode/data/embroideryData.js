@@ -9,7 +9,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '1-20',
     stitchCount: 'Numeric',
     hoopFrameSize: 'Frame Size',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'DORI/CORD': {
     variants: ['Cord Work', 'Cording', 'Gimp', 'Soutache'],
@@ -17,7 +17,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: 'Cord Colors',
     stitchCount: 'Length (m)',
     hoopFrameSize: 'Frame Size',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'HAND EMBROIDERY': {
     variants: ['Phulkari', 'Bagh', 'Chope', 'Sainchi'],
@@ -25,7 +25,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '1-20',
     stitchCount: 'N/A',
     hoopFrameSize: 'N/A',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'MULTI THREAD, ZARDOZI': {
     variants: ['Zardozi', 'Dabka', 'Bullion', 'Metallic', 'Gota', 'Mukaish'],
@@ -33,7 +33,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: 'Multiple',
     stitchCount: 'N/A',
     hoopFrameSize: 'Frame Size',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'SINGLE THREAD': {
     variants: ['Surface Embroidery', 'Crewel', 'Freestyle'],
@@ -41,7 +41,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '1-10',
     stitchCount: 'N/A',
     hoopFrameSize: 'Hoop Size',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'COUCHING': {
     variants: ['Basic Couching', 'Bokhara', 'Romanian', 'Goldwork'],
@@ -49,7 +49,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: 'Base + Couching',
     stitchCount: 'Cord Length',
     hoopFrameSize: 'Frame Size',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'PIN TUCKING': {
     variants: ['Machine Pin Tuck', 'Twin Needle', 'Corded Tuck'],
@@ -57,7 +57,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '1-2',
     stitchCount: 'Tuck Count',
     hoopFrameSize: 'N/A',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'PLEATING': {
     variants: ['Machine Pleating', 'Crystal', 'Box', 'Knife', 'Accordion'],
@@ -65,7 +65,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: 'N/A',
     stitchCount: 'Pleat Count',
     hoopFrameSize: 'Panel Size',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'SINGLE HEAD': {
     variants: ['Single Needle', 'Multi-Needle (6-15)', 'Tajima', 'Brother', 'SWF'],
@@ -73,7 +73,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '1-15',
     stitchCount: '100-500000',
     hoopFrameSize: 'Hoop Size',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'MULTI HEAD': {
     variants: ['4-Head to 56-Head', 'Bridge Type', 'Barudan', 'Tajima', 'SWF'],
@@ -81,7 +81,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '1-15 per head',
     stitchCount: '100-500000',
     hoopFrameSize: 'Hoop Size',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'SCHIFFLEY': {
     variants: ['Schiffli Frame', 'Automat', 'Lace Machine'],
@@ -89,7 +89,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '1-12',
     stitchCount: 'Per Repeat',
     hoopFrameSize: 'Frame Width',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'APPLIQUE': {
     variants: ['Cut Applique', 'Raw Edge', 'Turned Edge', 'Reverse', 'Laser Cut'],
@@ -97,7 +97,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '2-10',
     stitchCount: 'Stitch Around',
     hoopFrameSize: 'Hoop/Frame',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'CHIKANKARI': {
     variants: ['Shadow Work', 'Jaali', 'Tepchi', 'Murri', 'Phanda', 'Bakhiya'],
@@ -105,7 +105,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: '1-3',
     stitchCount: 'N/A',
     hoopFrameSize: 'N/A',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   },
   'OTHERS': {
     variants: ['Cutwork', 'Hardanger', 'Broderie Anglaise', 'Specialized'],
@@ -113,7 +113,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
     threadColors: 'Variable',
     stitchCount: 'Variable',
     hoopFrameSize: 'Various',
-    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S', 'PROTO', 'FIT', 'SIZE SET', 'PP', 'TOP SAMPLE']
+    approvalOptions: ['1st PC', 'SELF', 'BUYER\'S']
   }
 };
 
@@ -121,12 +121,7 @@ export const EMBROIDERY_MACHINE_TYPES = {
 export const EMBROIDERY_APPROVAL_OPTIONS = [
   '1st PC',
   'SELF',
-  'BUYER\'S',
-  'PROTO',
-  'FIT',
-  'SIZE SET',
-  'PP',
-  'TOP SAMPLE'
+  'BUYER\'S'
 ];
 
 // Helper function to get variants for an embroidery machine type

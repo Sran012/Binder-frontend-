@@ -201,12 +201,7 @@ export const KNOT_TYPE_OPTIONS = [
 export const CARPET_APPROVAL_OPTIONS = [
   '1st PC',
   'SELF',
-  'BUYER\'S',
-  'PROTO',
-  'FIT',
-  'SIZE SET',
-  'PP',
-  'TOP SAMPLE'
+  'BUYER\'S'
 ];
 
 // Helper function to get variants for a machine type
