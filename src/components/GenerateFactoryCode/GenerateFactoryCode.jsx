@@ -3434,12 +3434,27 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       // - POLYBAG~POLYBAG-FLAP: polybagPolybagFlapWidth/polybagPolybagFlapLength/polybagPolybagFlapGaugeThickness -> polybagPolybagFlapDimensions
       const formatDim = (...parts) => parts.filter((p) => String(p || '').trim() !== '').join(' x ');
       const mDim = updatedMaterials[materialIndex];
+      // If carton box stiffener is required, carton dimensions are L x W (no height).
+      if (field === 'cartonBoxStiffenerRequired') {
+        if (value === 'YES') {
+          updatedMaterials[materialIndex].cartonBoxHeight = '';
+          updatedMaterials[materialIndex].cartonBoxDimensions = formatDim(
+            mDim.cartonBoxLength,
+            mDim.cartonBoxWidth
+          );
+        } else {
+          updatedMaterials[materialIndex].cartonBoxDimensions = formatDim(
+            mDim.cartonBoxLength,
+            mDim.cartonBoxWidth,
+            mDim.cartonBoxHeight
+          );
+        }
+      }
       if (['cartonBoxLength', 'cartonBoxWidth', 'cartonBoxHeight'].includes(field)) {
-        updatedMaterials[materialIndex].cartonBoxDimensions = formatDim(
-          mDim.cartonBoxLength,
-          mDim.cartonBoxWidth,
-          mDim.cartonBoxHeight
-        );
+        updatedMaterials[materialIndex].cartonBoxDimensions =
+          mDim.cartonBoxStiffenerRequired === 'YES'
+            ? formatDim(mDim.cartonBoxLength, mDim.cartonBoxWidth)
+            : formatDim(mDim.cartonBoxLength, mDim.cartonBoxWidth, mDim.cartonBoxHeight);
       }
       if (['foamInsertLength', 'foamInsertWidth', 'foamInsertHeight'].includes(field)) {
         updatedMaterials[materialIndex].foamInsertDimensions = formatDim(
