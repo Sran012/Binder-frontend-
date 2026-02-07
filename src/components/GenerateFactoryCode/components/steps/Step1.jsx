@@ -71,7 +71,7 @@ const Step1 = ({
   return (
     <div className="w-full">
       {/* Header */}
-      <div style={{ marginBottom: '24px' }} className="flex justify-between items-start gap-4">
+      <div style={{ marginBottom: '24px' }} className="flex justify-between items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">PART-1 CUT &amp; SEW SPEC</h2>
           <p className="text-sm text-muted-foreground">Enter cutting and sewing specifications for components</p>

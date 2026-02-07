@@ -4639,11 +4639,11 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         setCurrentStep(0);
         setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
       }}
-      className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      className="shrink-0 p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors flex items-center justify-center"
       title="Save and return to IPC list"
       aria-label="Save and return to IPC list"
     >
-      <X className="w-5 h-5" />
+      <X className="w-8 h-8" />
     </button>
   );
 

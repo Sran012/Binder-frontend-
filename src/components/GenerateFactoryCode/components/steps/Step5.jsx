@@ -160,7 +160,7 @@ const Step5 = ({
   return (
 <div className="w-full">
       {/* Header with proper spacing */}
-      <div style={{ marginBottom: '28px' }} className="flex justify-between items-start gap-4">
+      <div style={{ marginBottom: '28px' }} className="flex justify-between items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">PACKAGING</h2>
           <p className="text-sm text-gray-600">Configure packaging specifications and materials</p>
