@@ -823,6 +823,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       updatedSkus[skuIndex].subproducts.push({
         subproduct: '',
         buyerSku: '',
+        setOf: '',
         poQty: '',
         overagePercentage: '',
         deliveryDueDate: '',
@@ -1075,6 +1076,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       if (!sku.product?.trim()) {
         newErrors[`product_${skuIndex}`] = 'Product is required';
       }
+      if (!sku.setOf?.trim()) {
+        newErrors[`setOf_${skuIndex}`] = 'Set of is required';
+      }
       if (!sku.poQty) {
         newErrors[`poQty_${skuIndex}`] = 'PO Qty is required';
       }
@@ -1090,6 +1094,12 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         sku.subproducts.forEach((subproduct, subIndex) => {
           if (!subproduct.subproduct?.trim()) {
             newErrors[`subproduct_${skuIndex}_${subIndex}`] = 'Subproduct name is required';
+          }
+          if (!subproduct.buyerSku?.trim()) {
+            newErrors[`subproduct_${skuIndex}_${subIndex}_buyerSku`] = 'Buyer SKU is required';
+          }
+          if (!subproduct.setOf?.trim()) {
+            newErrors[`subproduct_${skuIndex}_${subIndex}_setOf`] = 'Set of is required';
           }
           if (!subproduct.poQty) {
             newErrors[`subproduct_${skuIndex}_${subIndex}_poQty`] = 'Subproduct PO Qty is required';
