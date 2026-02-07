@@ -4458,8 +4458,13 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         console.error('onNavigateToIPO is not defined!');
       }
     } else if (stepIndex === -4) {
-      // Back to IPC Selector
+      // Back to IPC Selector (IPC list)
       setFlowPhase('ipcSelector');
+      setCurrentStep(0);
+      setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+    } else if (stepIndex === -5) {
+      // Back to IPC Creation (step0)
+      setFlowPhase('step0');
       setCurrentStep(0);
       setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
     } else if (stepIndex >= 0 && stepIndex <= currentStep) {
@@ -4625,7 +4630,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   // Vertical progress bar on left - circular progress for Cut/Raw/Artwork (shown ONLY in ipcFlow)
   const renderVerticalProgressBar = () => {
     return (
-      <div className="shrink-0 w-12 flex flex-col items-center py-2 ml-2 mr-6">
+      <div className="shrink-0 w-14 flex flex-col items-center py-4 px-1 ml-2 mr-8">
         {ipcFlowStepLabels.map((label, i) => {
           const isDone = i < currentStep;
           const isCurrent = i === currentStep;
@@ -4635,17 +4640,17 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                 type="button"
                 onClick={() => { setCurrentStep(i); setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100); }}
                 className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all cursor-pointer',
+                  'w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all cursor-pointer',
                   isDone ? 'bg-primary text-primary-foreground' : isCurrent ? 'bg-primary text-primary-foreground outline outline-2 outline-ring/60 outline-offset-2' : 'bg-muted text-muted-foreground'
                 )}
                 title={`Go to ${label}`}
               >
                 {isDone ? '✓' : i}
               </button>
-              <div className={cn('text-[9px] mt-1 text-center leading-tight', isDone || isCurrent ? 'text-primary font-medium' : 'text-muted-foreground')} style={{ maxWidth: 40 }}>
+              <div className={cn('text-[10px] mt-2 text-center leading-tight', isDone || isCurrent ? 'text-primary font-medium' : 'text-muted-foreground')} style={{ maxWidth: 44 }}>
                 {label.split(' ')[0]}
               </div>
-              {i < ipcFlowTotalSteps && <div className={cn('w-0.5 h-3 my-0.5', i < currentStep ? 'bg-primary' : 'bg-border')} />}
+              {i < ipcFlowTotalSteps && <div className={cn('w-0.5 h-5 my-2', i < currentStep ? 'bg-primary' : 'bg-border')} />}
             </div>
           );
         })}
@@ -4837,6 +4842,16 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
             IPO
           </button>
 
+          {/* IPC Creation - always shown after IPO, clickable (goes to step0 when not there) */}
+          <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+          {flowPhase === 'step0' ? (
+            <span className="rounded-lg bg-accent px-3 py-1.5 font-semibold text-foreground">IPC Creation</span>
+          ) : (
+            <button type="button" onClick={() => handleBreadcrumbClick(-5)} className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground">
+              IPC Creation
+            </button>
+          )}
+
           {flowPhase === 'ipcSelector' && (
             <>
               <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
@@ -4848,6 +4863,17 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
               <button type="button" onClick={() => handleBreadcrumbClick(-4)} className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground">
                 IPC Selector
+              </button>
+              <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+              <button type="button" onClick={() => handleBreadcrumbClick(-4)} className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground truncate max-w-[140px]" title="Back to IPC list">
+                {(() => {
+                  const p = parseSelectedSku();
+                  const sku = formData.skus?.[p.skuIndex];
+                  if (p.type === 'subproduct' && sku?.subproducts?.[p.subproductIndex]) {
+                    return `${(sku.ipcCode || 'IPC').replace(/\/SP-?\d+$/i, '')}/SP-${p.subproductIndex + 1}`;
+                  }
+                  return sku?.ipcCode || `IPC-${p.skuIndex + 1}`;
+                })()}
               </button>
               <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
               <span className="rounded-lg bg-accent px-3 py-1.5 font-semibold text-foreground">{ipcFlowStepLabels[currentStep] || 'Step'}</span>
@@ -4863,18 +4889,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               <span className="rounded-lg bg-accent px-3 py-1.5 font-semibold text-foreground">Packaging</span>
             </>
           )}
-          {flowPhase === 'step0' && Array.from({ length: currentStep + 1 }, (_, i) => (
-            <span key={`crumb-${i}`} className="inline-flex items-center ml-2 sm:ml-3">
-              <span className="text-foreground/60 text-xs sm:text-sm" style={{ marginRight: 8 }}>›</span>
-              <button
-                type="button"
-                onClick={() => handleBreadcrumbClick(i)}
-                className={i === currentStep ? "rounded-lg bg-accent px-3 py-1.5 font-semibold text-foreground" : "rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"}
-              >
-                {`Step ${i}`}
-              </button>
-            </span>
-          ))}
         </div>
         
         <div className="mt-6">

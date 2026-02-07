@@ -100,7 +100,7 @@ const Step0 = ({
       {/* Header Section */}
       <div style={{ marginBottom: '12px' }}>
         <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-1">
-          PART-0 PRODUCT SPEC
+          PRODUCT SPEC
         </h2>
         <p className="text-sm text-muted-foreground">
           Enter product specification details
