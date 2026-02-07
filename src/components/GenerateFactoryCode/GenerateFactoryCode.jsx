@@ -4604,10 +4604,28 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     );
   };
 
-  // Vertical progress bar on left - circular progress for Cut/Raw/Artwork (shown ONLY in ipcFlow, after selecting IPC)
+  // Close button for step header (save and return to IPC list)
+  const renderStepCloseButton = () => (
+    <button
+      type="button"
+      onClick={() => {
+        saveToLocalStorage(formData);
+        setFlowPhase('ipcSelector');
+        setCurrentStep(0);
+        setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      }}
+      className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      title="Save and return to IPC list"
+      aria-label="Save and return to IPC list"
+    >
+      <X className="w-5 h-5" />
+    </button>
+  );
+
+  // Vertical progress bar on left - circular progress for Cut/Raw/Artwork (shown ONLY in ipcFlow)
   const renderVerticalProgressBar = () => {
     return (
-      <div className="shrink-0 w-14 flex flex-col items-center py-2 border-r border-border pr-3 mr-4">
+      <div className="shrink-0 w-12 flex flex-col items-center py-2 ml-2 mr-6">
         {ipcFlowStepLabels.map((label, i) => {
           const isDone = i < currentStep;
           const isCurrent = i === currentStep;
@@ -4646,6 +4664,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           <Step5
             formData={mergedFormData}
             errors={errors}
+            renderHeaderAction={renderStepCloseButton()}
             handlePackagingChange={handlePackagingChange}
             handlePackagingMaterialChange={handlePackagingMaterialChange}
             addPackagingMaterial={addPackagingMaterial}
@@ -4677,6 +4696,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                 showSaveMessage={showSaveMessage && currentStep === 0}
                 isSaved={step1Saved}
                 onValidationFail={showValidationErrorsPopup}
+                renderHeaderAction={renderStepCloseButton()}
               />
             );
           case 1:
@@ -4684,6 +4704,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               <Step2
                 formData={mergedFormData}
                 errors={errors}
+                renderHeaderAction={renderStepCloseButton()}
                 handleRawMaterialChange={handleRawMaterialChange}
                 handleWorkOrderChange={handleWorkOrderChange}
                 addWorkOrder={addWorkOrder}
@@ -4703,6 +4724,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               <Step4
                 formData={mergedFormData}
                 errors={errors}
+                renderHeaderAction={renderStepCloseButton()}
                 handleArtworkMaterialChange={handleArtworkMaterialChange}
                 addArtworkMaterial={addArtworkMaterial}
                 removeArtworkMaterial={removeArtworkMaterial}
@@ -4855,32 +4877,13 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           ))}
         </div>
         
-        {/* Title row: h1 on left, X (close) on right - X below breadcrumb, visible in ipcFlow or packaging */}
-        <div className="flex justify-between items-start gap-4 mt-6">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-1">
-              Generate Factory Code
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Complete all steps to generate a factory code
-            </p>
-          </div>
-          {(flowPhase === 'ipcFlow' || flowPhase === 'packaging') && (
-            <button
-              type="button"
-              onClick={() => {
-                saveToLocalStorage(formData);
-                setFlowPhase('ipcSelector');
-                setCurrentStep(0);
-                setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-              }}
-              className="shrink-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Save and return to IPC list"
-              aria-label="Save and return to IPC list"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+        <div className="mt-6">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-1">
+            Generate Factory Code
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Complete all steps to generate a factory code
+          </p>
         </div>
       </div>
 
@@ -5280,18 +5283,11 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                 <Button type="button" onClick={handleNext}>Next →</Button>
               </div>
             ) : flowPhase === 'ipcFlow' && currentStep === 0 ? (
-              // Cut (ipcFlow step 0): Save + Prev + Next
-              <div className="flex justify-between items-center" style={{ marginTop: '32px' }}>
-                <div className="flex gap-3">
-                  <Button type="button" variant="outline" onClick={handleSaveStep1} className={`min-w-[90px] ${step1Saved ? 'text-green-600 hover:text-green-700' : ''}`}>
-                    {step1Saved ? 'Saved' : 'Save'}
-                  </Button>
-                </div>
-                <div className="flex gap-3">
-                  {showSaveMessage && <span className="text-red-600 text-sm font-medium">Save first</span>}
-                  <Button type="button" variant="outline" onClick={handlePrevious}>← Previous</Button>
-                  <Button type="button" onClick={handleNext}>Next →</Button>
-                </div>
+              // Cut (ipcFlow step 0): Step1 has Save + Add Component; nav only Prev + Next
+              <div className="flex justify-end items-center gap-3" style={{ marginTop: '32px' }}>
+                {showSaveMessage && <span className="text-red-600 text-sm font-medium">Save first</span>}
+                <Button type="button" variant="outline" onClick={handlePrevious}>← Previous</Button>
+                <Button type="button" onClick={handleNext}>Next →</Button>
               </div>
             ) : currentStep === 3 ? (
               // Artwork / Labelling step: Save + Add Material on left, Save first + Prev/Next on right (same template as Step1)

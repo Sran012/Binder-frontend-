@@ -148,6 +148,7 @@ import {
 const Step2 = ({
   formData,
   errors,
+  renderHeaderAction,
   handleRawMaterialChange,
   handleWorkOrderChange,
   addWorkOrder,
@@ -364,9 +365,12 @@ const Step2 = ({
   return (
     <div className="w-full">
       {/* Header with proper spacing */}
-      <div style={{ marginBottom: '28px' }}>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">PART-2 RAW MATERIAL SOURCING</h2>
-        <p className="text-sm text-gray-600">Bill of material & work order</p>
+      <div style={{ marginBottom: '28px' }} className="flex justify-between items-start gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">PART-2 RAW MATERIAL SOURCING</h2>
+          <p className="text-sm text-gray-600">Bill of material & work order</p>
+        </div>
+        {renderHeaderAction}
       </div>
 
       {/* Component Selection - OUTSIDE form border */}
