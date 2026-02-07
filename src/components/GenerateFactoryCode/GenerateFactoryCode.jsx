@@ -30,11 +30,14 @@ import ValidationErrorsDialog from './components/ValidationErrorsDialog';
 import { Button } from '@/components/ui/button';
 import { FormCard } from '@/components/ui/form-layout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 
 const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCreation, onNavigateToIPO }) => {
   const scrollContainerRef = useRef(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedSku, setSelectedSku] = useState('product_0'); // Format: 'product_0' or 'subproduct_0_1'
+  const [flowPhase, setFlowPhase] = useState('step0'); // 'step0' | 'ipcSelector' | 'ipcFlow' | 'packaging'
   const [showIPCPopup, setShowIPCPopup] = useState(false);
   const [generatedIPCCodes, setGeneratedIPCCodes] = useState([]);
   const [step2ComponentErrorsDialog, setStep2ComponentErrorsDialog] = useState({
@@ -51,6 +54,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const [step4SaveStatus, setStep4SaveStatus] = useState('idle'); // 'idle' | 'success' | 'error'
   const [showSaveMessage, setShowSaveMessage] = useState(false); // Show "save first" message
   const [saveMessage, setSaveMessage] = useState(''); // Message to display
+  const [showPackagingBlockPrompt, setShowPackagingBlockPrompt] = useState(false); // "Fill all IPCs" when user clicks Proceed to Packaging
   const [showFactoryCodePopup, setShowFactoryCodePopup] = useState(false);
   const [showConsumptionSheet, setShowConsumptionSheet] = useState(false);
   const [shippingGroups, setShippingGroups] = useState({}); // { "0-product": 1, "0-sp-0": 2, ... } -> itemId -> groupNum
@@ -504,6 +508,10 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
   const totalSteps = 4;
 
+  // IPC-First: Per-IPC steps (0=Cut, 1=Raw, 2=Artwork)
+  const ipcFlowTotalSteps = 2;
+  const ipcFlowStepLabels = ['Cut & Sew Spec', 'Raw Material', 'Artwork & Labeling'];
+
   // Step labels for progress bar
   const stepLabels = [
     'Product Spec',
@@ -823,6 +831,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       updatedSkus[skuIndex].subproducts.push({
         subproduct: '',
         buyerSku: '',
+        setOf: '',
         poQty: '',
         overagePercentage: '',
         deliveryDueDate: '',
@@ -1075,6 +1084,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       if (!sku.product?.trim()) {
         newErrors[`product_${skuIndex}`] = 'Product is required';
       }
+      if (!sku.setOf?.trim()) {
+        newErrors[`setOf_${skuIndex}`] = 'Set of is required';
+      }
       if (!sku.poQty) {
         newErrors[`poQty_${skuIndex}`] = 'PO Qty is required';
       }
@@ -1090,6 +1102,12 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         sku.subproducts.forEach((subproduct, subIndex) => {
           if (!subproduct.subproduct?.trim()) {
             newErrors[`subproduct_${skuIndex}_${subIndex}`] = 'Subproduct name is required';
+          }
+          if (!subproduct.buyerSku?.trim()) {
+            newErrors[`subproduct_${skuIndex}_${subIndex}_buyerSku`] = 'Buyer SKU is required';
+          }
+          if (!subproduct.setOf?.trim()) {
+            newErrors[`subproduct_${skuIndex}_${subIndex}_setOf`] = 'Set of is required';
           }
           if (!subproduct.poQty) {
             newErrors[`subproduct_${skuIndex}_${subIndex}_poQty`] = 'Subproduct PO Qty is required';
@@ -3023,26 +3041,28 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       }
     });
 
-    // === LEFTOVER IPC (dynamic: only add next block on save when there are unassigned IPCs) ===
-    const allIpcValues = [];
-    (formData.skus || []).forEach((sku) => {
-      const baseIpc = sku.ipcCode?.replace(/\/SP-?\d+$/i, '') || sku.ipcCode || '';
-      if (baseIpc) allIpcValues.push(baseIpc);
-      (sku.subproducts || []).forEach((_, idx) => allIpcValues.push(`${baseIpc}/SP-${idx + 1}`));
-    });
-    const extraPacks = packaging.extraPacks || [];
-    const selectedIpcs = new Set([
-      ...mainSelection,
-      ...extraPacks.flatMap((p) => (Array.isArray(p.productSelection) ? p.productSelection : (p.productSelection ? [p.productSelection] : []))),
-    ]);
-    const leftover = allIpcValues.filter((v) => !selectedIpcs.has(v));
-    if (leftover.length > 0) {
-      newErrors['packaging_leftover_ipc'] = 'Please complete leftover IPC';
-      const lastPack = extraPacks[extraPacks.length - 1];
-      const lastPackSelection = lastPack ? (Array.isArray(lastPack.productSelection) ? lastPack.productSelection : (lastPack.productSelection ? [lastPack.productSelection] : [])) : [];
-      // Add at most ONE leftover block per save: only when no blocks yet, or when the last block has at least one product selected (so user filled it and there is still leftover).
-      const shouldAddBlock = extraPacks.length === 0 || lastPackSelection.length > 0;
-      if (shouldAddBlock) shouldAddExtraPack = true;
+    // === LEFTOVER IPC: only when main block has Product selected AND there are IPCs not in main block ===
+    // Leftover block shows ONLY if user selected some IPCs in main block but not all - i.e. leftover IPCs exist.
+    if (mainSelection.length > 0) {
+      const allIpcValues = [];
+      (formData.skus || []).forEach((sku) => {
+        const baseIpc = sku.ipcCode?.replace(/\/SP-?\d+$/i, '') || sku.ipcCode || '';
+        if (baseIpc) allIpcValues.push(baseIpc);
+        (sku.subproducts || []).forEach((_, idx) => allIpcValues.push(`${baseIpc}/SP-${idx + 1}`));
+      });
+      const extraPacks = packaging.extraPacks || [];
+      const selectedIpcs = new Set([
+        ...mainSelection,
+        ...extraPacks.flatMap((p) => (Array.isArray(p.productSelection) ? p.productSelection : (p.productSelection ? [p.productSelection] : []))),
+      ]);
+      const leftover = allIpcValues.filter((v) => !selectedIpcs.has(v));
+      if (leftover.length > 0) {
+        newErrors['packaging_leftover_ipc'] = 'Please complete leftover IPC';
+        const lastPack = extraPacks[extraPacks.length - 1];
+        const lastPackSelection = lastPack ? (Array.isArray(lastPack.productSelection) ? lastPack.productSelection : (lastPack.productSelection ? [lastPack.productSelection] : [])) : [];
+        const shouldAddBlock = extraPacks.length === 0 || lastPackSelection.length > 0;
+        if (shouldAddBlock) shouldAddExtraPack = true;
+      }
     }
 
     setErrors(newErrors);
@@ -3951,9 +3971,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
             delete newErrors[fieldKey];
           }
         }
-      } else if (fieldKey.includes('machineType') && workOrder?.workOrder === 'WEAVING') {
+      } else if (fieldKey.includes('machineType') && workOrder?.workOrder) {
         if (!value?.trim()) {
-          newErrors[fieldKey] = 'Machine Type is required';
+          newErrors[fieldKey] = workOrder.workOrder === 'CUTTING' ? 'Tool type is required' : 'Machine Type is required';
         } else {
           delete newErrors[fieldKey];
         }
@@ -4233,23 +4253,67 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     return Array.from(componentMap.values());
   };
 
-  // Reset selected SKU when going back to step 0
+  // Reset selected SKU when going back to step 0 (only in step0 flow, not ipcFlow)
   useEffect(() => {
+    if (flowPhase === 'ipcFlow') return;
     if (currentStep === 0) {
       setSelectedSku(0);
     } else if (currentStep > 0 && formData.skus && formData.skus.length > 0) {
-      // Ensure selectedSku is valid when moving to steps 1-5
-      if (selectedSku >= formData.skus.length) {
+      if (typeof selectedSku === 'number' && selectedSku >= formData.skus.length) {
         setSelectedSku(0);
       }
     }
-  }, [currentStep, formData.skus?.length]);
+  }, [currentStep, formData.skus?.length, flowPhase]);
+
+  // Reset step saved states when switching IPC (selectedSku changes in ipcFlow)
+  const prevSelectedSkuRef = useRef(selectedSku);
+  useEffect(() => {
+    if (flowPhase === 'ipcFlow' && prevSelectedSkuRef.current !== selectedSku) {
+      prevSelectedSkuRef.current = selectedSku;
+      setStep1Saved(false);
+      setStep2SavedComponents(new Set());
+      setStep3Saved(false);
+    } else {
+      prevSelectedSkuRef.current = selectedSku;
+    }
+  }, [selectedSku, flowPhase]);
 
 
   const handleNext = () => {
-    console.log('handleNext called - currentStep:', currentStep);
-    
-    // Check if Step-0 needs to be saved
+    console.log('handleNext called - currentStep:', currentStep, 'flowPhase:', flowPhase);
+
+    // IPC-First: handle ipcFlow (Cut/Raw/Artwork) separately
+    if (flowPhase === 'ipcFlow') {
+      if (currentStep === 0) {
+        if (!step1Saved) { setShowSaveMessage(true); setSaveMessage('Save first'); return; }
+        const r1 = validateStep1();
+        if (!r1.isValid) { showValidationErrorsPopup(r1.errors); return; }
+        setShowSaveMessage(false);
+      } else if (currentStep === 1) {
+        const stepData = getSelectedSkuStepData();
+        const componentsWithMaterials = new Set();
+        (stepData?.rawMaterials || []).forEach(m => { if (m.componentName) componentsWithMaterials.add(m.componentName); });
+        const unsaved = Array.from(componentsWithMaterials).filter(c => !step2SavedComponents.has(c));
+        if (unsaved.length > 0) { setShowSaveMessage(true); setSaveMessage('Save first'); return; }
+        setShowSaveMessage(false);
+      } else if (currentStep === 2) {
+        if (!step3Saved) { setShowSaveMessage(true); setSaveMessage('Save first'); return; }
+        const r3 = validateStep4();
+        if (!r3.isValid) { showValidationErrorsPopup(r3.errors); return; }
+        setShowSaveMessage(false);
+      }
+      if (currentStep < ipcFlowTotalSteps) {
+        setCurrentStep(currentStep + 1);
+        setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      } else {
+        setFlowPhase('ipcSelector');
+        setCurrentStep(0);
+        setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      }
+      return;
+    }
+
+    // Step-0 flow
     if (currentStep === 0) {
       if (!step0Saved) {
         setShowSaveMessage(true);
@@ -4335,8 +4399,11 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     }
     
     if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-      // Scroll to top after step change
+      if (flowPhase === 'step0' && currentStep === 0) {
+        setFlowPhase('ipcSelector');
+      } else {
+        setCurrentStep(currentStep + 1);
+      }
       setTimeout(() => {
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4346,9 +4413,23 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   };
 
   const handlePrevious = () => {
+    if (flowPhase === 'ipcFlow') {
+      if (currentStep > 0) {
+        setCurrentStep(currentStep - 1);
+      } else {
+        setFlowPhase('ipcSelector');
+        setCurrentStep(0);
+      }
+      setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      return;
+    }
+    if (flowPhase === 'packaging') {
+      setFlowPhase('ipcSelector');
+      setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      return;
+    }
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
-      // Scroll to top after step change
       setTimeout(() => {
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4372,13 +4453,23 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         console.error('onNavigateToCodeCreation is not defined!');
       }
     } else if (stepIndex === -3) {
-      // IPO clicked - navigate to IPO screen
-      console.log('Calling onNavigateToIPO');
+      // IPO clicked - save first, then navigate to IPO screen
+      saveToLocalStorage(formData);
       if (onNavigateToIPO) {
         onNavigateToIPO();
       } else {
         console.error('onNavigateToIPO is not defined!');
       }
+    } else if (stepIndex === -4) {
+      // Back to IPC Selector (IPC list)
+      setFlowPhase('ipcSelector');
+      setCurrentStep(0);
+      setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+    } else if (stepIndex === -5) {
+      // Back to IPC Creation (step0)
+      setFlowPhase('step0');
+      setCurrentStep(0);
+      setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
     } else if (stepIndex >= 0 && stepIndex <= currentStep) {
       // Only allow navigation to steps that have been visited
       setCurrentStep(stepIndex);
@@ -4397,7 +4488,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
   // Get merged formData with selected SKU's step data for steps 1-5
   const getMergedFormData = () => {
-    if (currentStep === 0) {
+    if (flowPhase === 'step0') {
       return formData;
     }
     
@@ -4439,105 +4530,263 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     };
   };
 
-  const renderStepContent = () => {
-    try {
-      const mergedFormData = getMergedFormData();
-      
-      switch (currentStep) {
-        case 0:
+  // IPC Selector screen - pick one IPC to fill Cut / Raw / Artwork
+  const renderIPCSelectorScreen = () => {
+    const ipcItems = [];
+    (formData.skus || []).forEach((sku, idx) => {
+      ipcItems.push({ id: `product_${idx}`, type: 'product', sku, skuIndex: idx, subproductIndex: null });
+      (sku.subproducts || []).forEach((sp, spIdx) => {
+        ipcItems.push({ id: `subproduct_${idx}_${spIdx}`, type: 'subproduct', sku, subproduct: sp, skuIndex: idx, subproductIndex: spIdx });
+      });
+    });
+
+    const getIpcCompletion = (itemId) => {
+      const parts = itemId.split('_');
+      let stepData = null;
+      if (parts[0] === 'product' && parts[1]) {
+        stepData = formData.skus?.[parseInt(parts[1])]?.stepData;
+      } else if (parts[0] === 'subproduct' && parts[1] !== undefined && parts[2] !== undefined) {
+        stepData = formData.skus?.[parseInt(parts[1])]?.subproducts?.[parseInt(parts[2])]?.stepData;
+      }
+      // Cut: only true if at least one component has productComforter filled (not just default empty component)
+      const hasCut = (stepData?.products?.[0]?.components || []).some(c => c?.productComforter?.trim());
+      const hasRaw = (stepData?.rawMaterials?.length || 0) > 0;
+      const hasArt = (stepData?.artworkMaterials?.filter(m => m?.materialDescription?.trim()).length || 0) > 0;
+      return { cut: hasCut, raw: hasRaw, artwork: hasArt };
+    };
+
+    return (
+      <div className="w-full max-w-2xl mx-auto" style={{ padding: '24px 0' }}>
+        <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-2">Select SKU to proceed</h2>
+        <p className="text-sm text-muted-foreground mb-6">Choose an SKU to fill Cut & Sew, Raw Material, and Artwork</p>
+        <div className="flex flex-col gap-4">
+          {ipcItems.map((item) => {
+            const comp = getIpcCompletion(item.id);
+            const label = item.type === 'product'
+              ? (item.sku.ipcCode || `IPC-${item.skuIndex + 1}`)
+              : `${(item.sku.ipcCode || 'IPC').replace(/\/SP-?\d+$/i, '')}/SP-${item.subproductIndex + 1}`;
+            const sublabel = item.type === 'product'
+              ? `${item.sku.sku || ''} - ${item.sku.product || ''}`
+              : `${item.sku.sku || ''} - ${item.subproduct.subproduct || ''}`;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setShowPackagingBlockPrompt(false);
+                  setSelectedSku(item.id);
+                  setFlowPhase('ipcFlow');
+                  setCurrentStep(0);
+                  setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+                }}
+                className={cn(
+                  'w-full flex items-center justify-between gap-4 rounded-xl border text-left transition-colors',
+                  'border-border hover:bg-muted/50 hover:border-primary/50'
+                )}
+                style={{ padding: '20px 24px' }}
+              >
+                <div>
+                  <div className="font-semibold text-foreground">{label}</div>
+                  <div className="text-sm text-muted-foreground truncate">{sublabel}</div>
+                </div>
+                <div className="flex gap-3 text-xs shrink-0">
+                  <span className={comp.cut ? 'text-green-600 font-medium' : 'text-muted-foreground'}>Cut {comp.cut ? '✓' : '○'}</span>
+                  <span className={comp.raw ? 'text-green-600 font-medium' : 'text-muted-foreground'}>Raw {comp.raw ? '✓' : '○'}</span>
+                  <span className={comp.artwork ? 'text-green-600 font-medium' : 'text-muted-foreground'}>Artwork {comp.artwork ? '✓' : '○'}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex flex-col items-start gap-3" style={{ marginTop: '32px' }}>
+          {showPackagingBlockPrompt && ipcItems.some((item) => {
+            const comp = getIpcCompletion(item.id);
+            return !comp.cut || !comp.raw || !comp.artwork;
+          }) && (
+            <p className="text-sm text-amber-600 font-medium">Fill all IPCs (Cut, Raw, Artwork) to continue for packaging</p>
+          )}
+          <Button
+            type="button"
+            onClick={() => {
+              const allComplete = ipcItems.every((item) => {
+                const comp = getIpcCompletion(item.id);
+                return comp.cut && comp.raw && comp.artwork;
+              });
+              if (!allComplete) {
+                setShowPackagingBlockPrompt(true);
+                return;
+              }
+              setShowPackagingBlockPrompt(false);
+              setFlowPhase('packaging');
+              setSelectedSku('product_0');
+              setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+            }}
+          >
+            Proceed to Packaging →
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // Close button for step header (save and return to IPC list)
+  const renderStepCloseButton = () => (
+    <button
+      type="button"
+      onClick={() => {
+        saveToLocalStorage(formData);
+        setFlowPhase('ipcSelector');
+        setCurrentStep(0);
+        setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      }}
+      className="shrink-0 p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors flex items-center justify-center"
+      title="Save and return to IPC list"
+      aria-label="Save and return to IPC list"
+    >
+      <X className="w-8 h-8" />
+    </button>
+  );
+
+  // Vertical progress bar on left - circular progress for Cut/Raw/Artwork (shown ONLY in ipcFlow)
+  const renderVerticalProgressBar = () => {
+    return (
+      <div className="shrink-0 w-14 flex flex-col items-center py-4 px-1 ml-2 mr-8" style={{ marginTop: '7px' }}>
+        {ipcFlowStepLabels.map((label, i) => {
+          const isDone = i < currentStep;
+          const isCurrent = i === currentStep;
           return (
-            <Step0 
-              formData={formData} 
-              errors={errors} 
-              handleInputChange={handleInputChange}
-              handleSkuChange={handleSkuChange}
-              handleSkuImageChange={handleSkuImageChange}
-              addSku={addSku}
-              removeSku={removeSku}
-              addSubproduct={addSubproduct}
-              removeSubproduct={removeSubproduct}
-              handleSubproductChange={handleSubproductChange}
-              handleSubproductImageChange={handleSubproductImageChange}
-              validateStep0={validateStep0}
-              handleSave={handleSaveStep0}
-              handleNext={handleNext}
-              showSaveMessage={showSaveMessage && currentStep === 0}
-              isSaved={step0Saved}
-              onValidationFail={showValidationErrorsPopup}
-            />
-          );
-        case 1:
-          return (
-            <Step1
-              formData={mergedFormData}
-              errors={errors}
-              addComponent={addComponent}
-              removeComponent={removeComponent}
-              handleComponentChange={handleComponentChange}
-              handleComponentCuttingSizeChange={handleComponentCuttingSizeChange}
-              handleComponentSewSizeChange={handleComponentSewSizeChange}
-              validateStep1={validateStep1}
-              handleSave={handleSaveStep1}
-              handleNext={handleNext}
-              showSaveMessage={showSaveMessage && currentStep === 1}
-              isSaved={step1Saved}
-              onValidationFail={showValidationErrorsPopup}
-            />
-          );
-        case 2:
-          return (
-            <Step2
-              formData={mergedFormData}
-              errors={errors}
-              handleRawMaterialChange={handleRawMaterialChange}
-              handleWorkOrderChange={handleWorkOrderChange}
-              addWorkOrder={addWorkOrder}
-              removeWorkOrder={removeWorkOrder}
-              addRawMaterialWithType={addRawMaterialWithType}
-              handleSave={(componentName) => handleSaveStep2(componentName)}
-              savedComponents={step2SavedComponents}
-              removeRawMaterial={removeRawMaterial}
-              validateField={validateField}
-              validateStep2={validateStep2}
-              validateComponentMaterials={validateComponentMaterials}
-              onValidationFail={showValidationErrorsPopup}
-            />
-          );
-        case 3:
-          return (
-            <Step4
-              formData={mergedFormData}
-              errors={errors}
-              handleArtworkMaterialChange={handleArtworkMaterialChange}
-              addArtworkMaterial={addArtworkMaterial}
-              removeArtworkMaterial={removeArtworkMaterial}
-              step3SelectedComponentRef={step3SelectedComponentRef}
-            />
-          );
-        case 4:
-          return (
-            <Step5
-              formData={mergedFormData}
-              errors={errors}
-              handlePackagingChange={handlePackagingChange}
-              handlePackagingMaterialChange={handlePackagingMaterialChange}
-              addPackagingMaterial={addPackagingMaterial}
-              removePackagingMaterial={removePackagingMaterial}
-              addExtraPack={addExtraPack}
-              handleExtraPackChange={handleExtraPackChange}
-              handleExtraPackMaterialChange={handleExtraPackMaterialChange}
-              addExtraPackMaterial={addExtraPackMaterial}
-              removeExtraPackMaterial={removeExtraPackMaterial}
-            />
-          );
-        default:
-          return (
-            <div className="w-full">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Step {currentStep}</h2>
-              <p className="text-sm text-gray-600 mb-8">This step will be implemented later</p>
+            <div key={i} className="flex flex-col items-center">
+              <button
+                type="button"
+                onClick={() => { setCurrentStep(i); setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100); }}
+                className={cn(
+                  'w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all cursor-pointer',
+                  isDone ? 'bg-primary text-primary-foreground' : isCurrent ? 'bg-primary text-primary-foreground outline outline-2 outline-ring/60 outline-offset-2' : 'bg-muted text-muted-foreground'
+                )}
+                title={`Go to ${label}`}
+              >
+                {isDone ? '✓' : i + 1}
+              </button>
+              <div className={cn('text-[10px] mt-2 text-center leading-tight', isDone || isCurrent ? 'text-primary font-medium' : 'text-muted-foreground')} style={{ maxWidth: 44 }}>
+                {label.split(' ')[0]}
+              </div>
+              {i < ipcFlowTotalSteps && <div className={cn('w-0.5 h-5 my-2', i < currentStep ? 'bg-primary' : 'bg-border')} />}
             </div>
           );
+        })}
+      </div>
+    );
+  };
+
+  const renderStepContent = () => {
+    try {
+      if (flowPhase === 'ipcSelector') {
+        return renderIPCSelectorScreen();
       }
+      if (flowPhase === 'packaging') {
+        const mergedFormData = getMergedFormData();
+        return (
+          <Step5
+            formData={mergedFormData}
+            errors={errors}
+            renderHeaderAction={renderStepCloseButton()}
+            handlePackagingChange={handlePackagingChange}
+            handlePackagingMaterialChange={handlePackagingMaterialChange}
+            addPackagingMaterial={addPackagingMaterial}
+            removePackagingMaterial={removePackagingMaterial}
+            addExtraPack={addExtraPack}
+            handleExtraPackChange={handleExtraPackChange}
+            handleExtraPackMaterialChange={handleExtraPackMaterialChange}
+            addExtraPackMaterial={addExtraPackMaterial}
+            removeExtraPackMaterial={removeExtraPackMaterial}
+          />
+        );
+      }
+      if (flowPhase === 'ipcFlow') {
+        const mergedFormData = getMergedFormData();
+        switch (currentStep) {
+          case 0:
+            return (
+              <Step1
+                formData={mergedFormData}
+                errors={errors}
+                addComponent={addComponent}
+                removeComponent={removeComponent}
+                handleComponentChange={handleComponentChange}
+                handleComponentCuttingSizeChange={handleComponentCuttingSizeChange}
+                handleComponentSewSizeChange={handleComponentSewSizeChange}
+                validateStep1={validateStep1}
+                handleSave={handleSaveStep1}
+                handleNext={handleNext}
+                showSaveMessage={showSaveMessage && currentStep === 0}
+                isSaved={step1Saved}
+                onValidationFail={showValidationErrorsPopup}
+                renderHeaderAction={renderStepCloseButton()}
+              />
+            );
+          case 1:
+            return (
+              <Step2
+                formData={mergedFormData}
+                errors={errors}
+                renderHeaderAction={renderStepCloseButton()}
+                handleRawMaterialChange={handleRawMaterialChange}
+                handleWorkOrderChange={handleWorkOrderChange}
+                addWorkOrder={addWorkOrder}
+                removeWorkOrder={removeWorkOrder}
+                addRawMaterialWithType={addRawMaterialWithType}
+                handleSave={(componentName) => handleSaveStep2(componentName)}
+                savedComponents={step2SavedComponents}
+                removeRawMaterial={removeRawMaterial}
+                validateField={validateField}
+                validateStep2={validateStep2}
+                validateComponentMaterials={validateComponentMaterials}
+                onValidationFail={showValidationErrorsPopup}
+              />
+            );
+          case 2:
+            return (
+              <Step4
+                formData={mergedFormData}
+                errors={errors}
+                renderHeaderAction={renderStepCloseButton()}
+                handleArtworkMaterialChange={handleArtworkMaterialChange}
+                addArtworkMaterial={addArtworkMaterial}
+                removeArtworkMaterial={removeArtworkMaterial}
+                step3SelectedComponentRef={step3SelectedComponentRef}
+              />
+            );
+          default:
+            return (
+              <div className="w-full">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Step {currentStep}</h2>
+                <p className="text-sm text-gray-600 mb-8">This step will be implemented later</p>
+              </div>
+            );
+        }
+      }
+      // flowPhase === 'step0'
+      return (
+        <Step0 
+          formData={formData} 
+          errors={errors} 
+          handleInputChange={handleInputChange}
+          handleSkuChange={handleSkuChange}
+          handleSkuImageChange={handleSkuImageChange}
+          addSku={addSku}
+          removeSku={removeSku}
+          addSubproduct={addSubproduct}
+          removeSubproduct={removeSubproduct}
+          handleSubproductChange={handleSubproductChange}
+          handleSubproductImageChange={handleSubproductImageChange}
+          validateStep0={validateStep0}
+          handleSave={handleSaveStep0}
+          handleNext={handleNext}
+          showSaveMessage={showSaveMessage && currentStep === 0}
+          isSaved={step0Saved}
+          onValidationFail={showValidationErrorsPopup}
+        />
+      );
     } catch (error) {
       console.error('Error rendering step:', error);
       return (
@@ -4574,7 +4823,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     >
       {!showConsumptionSheet && (
       <>
-      <div style={{ marginBottom: '40px' }}>
+      <div style={{ marginBottom: '40px' }} className="relative">
         <Button
           variant="outline"
           onClick={onBack}
@@ -4592,7 +4841,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           <button
             type="button"
             onClick={() => handleBreadcrumbClick(-1)}
-            className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="rounded-lg font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            style={{ padding: '8px 14px' }}
           >
             Departments
           </button>
@@ -4600,7 +4850,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           <button
             type="button"
             onClick={() => handleBreadcrumbClick(-2)}
-            className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="rounded-lg font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            style={{ padding: '8px 14px' }}
           >
             Code creation
           </button>
@@ -4608,107 +4859,73 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           <button
             type="button"
             onClick={() => handleBreadcrumbClick(-3)}
-            className="rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="rounded-lg font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
+            style={{ padding: '8px 14px' }}
           >
             IPO
           </button>
 
-          {Array.from({ length: currentStep + 1 }, (_, i) => (
-            <span
-              key={`crumb-${i}`}
-              className="inline-flex items-center ml-2 sm:ml-3"
-            >
-              <span
-                className="text-foreground/60 text-xs sm:text-sm"
-                style={{ marginRight: 8 }}
-              >
-                ›
-              </span>
-              <button
-                type="button"
-                onClick={() => handleBreadcrumbClick(i)}
-                className={
-                  i === currentStep
-                    ? "rounded-lg bg-accent px-3 py-1.5 font-semibold text-foreground"
-                    : "rounded-lg px-3 py-1.5 font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground"
-                }
-              >
-                {`Step ${i}`}
+          {/* IPC Creation - always shown after IPO, clickable (goes to step0 when not there) */}
+          <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+          {flowPhase === 'step0' ? (
+            <span className="rounded-lg bg-accent font-semibold text-foreground" style={{ padding: '8px 14px' }}>IPC Creation</span>
+          ) : (
+            <button type="button" onClick={() => handleBreadcrumbClick(-5)} className="rounded-lg font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground" style={{ padding: '8px 14px' }}>
+              IPC Creation
+            </button>
+          )}
+
+          {flowPhase === 'ipcSelector' && (
+            <>
+              <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+              <span className="rounded-lg bg-accent font-semibold text-foreground" style={{ padding: '8px 14px' }}>IPC Selector</span>
+            </>
+          )}
+          {flowPhase === 'ipcFlow' && (
+            <>
+              <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+              <button type="button" onClick={() => handleBreadcrumbClick(-4)} className="rounded-lg font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground" style={{ padding: '8px 14px' }}>
+                IPC Selector
               </button>
-            </span>
-          ))}
+              <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+              <button type="button" onClick={() => handleBreadcrumbClick(-4)} className="rounded-lg font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground truncate max-w-[140px]" title="Back to IPC list" style={{ padding: '8px 14px' }}>
+                {(() => {
+                  const p = parseSelectedSku();
+                  const sku = formData.skus?.[p.skuIndex];
+                  if (p.type === 'subproduct' && sku?.subproducts?.[p.subproductIndex]) {
+                    return `${(sku.ipcCode || 'IPC').replace(/\/SP-?\d+$/i, '')}/SP-${p.subproductIndex + 1}`;
+                  }
+                  return sku?.ipcCode || `IPC-${p.skuIndex + 1}`;
+                })()}
+              </button>
+              <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+              <span className="rounded-lg bg-accent font-semibold text-foreground" style={{ padding: '8px 14px' }}>{ipcFlowStepLabels[currentStep] || 'Step'}</span>
+            </>
+          )}
+          {flowPhase === 'packaging' && (
+            <>
+              <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+              <button type="button" onClick={() => handleBreadcrumbClick(-4)} className="rounded-lg font-medium text-primary transition-colors hover:bg-accent hover:text-accent-foreground" style={{ padding: '8px 14px' }}>
+                IPC Selector
+              </button>
+              <span className="px-1 text-foreground/60 text-xs sm:text-sm">›</span>
+              <span className="rounded-lg bg-accent font-semibold text-foreground" style={{ padding: '8px 14px' }}>Packaging</span>
+            </>
+          )}
         </div>
         
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-1">
-          Generate Factory Code
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Complete all steps to generate a factory code
-        </p>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="mb-10" style={{ marginBottom: '40px' }}>
-        <div className="flex justify-between items-center relative" style={{ marginTop: '20px', marginBottom: '24px' }}>
-          {/* Progress line behind the steps */}
-          <div
-            className="absolute left-0 right-0 rounded-full bg-border/70"
-            style={{ top: '20px', height: '4px', zIndex: 0 }}
-          />
-          <div
-            className="absolute left-0 rounded-full bg-primary transition-all duration-300"
-            style={{
-              top: '20px',
-              height: '4px',
-              width: `${((currentStep + 0.5) / (totalSteps + 1)) * 100}%`,
-              zIndex: 1,
-            }}
-          />
-          
-          {/* Step numbers */}
-          {Array.from({ length: totalSteps + 1 }, (_, i) => (
-            <div key={i} className="flex flex-col items-center flex-1 relative" style={{ zIndex: 2 }}>
-              <div 
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-base transition-all cursor-pointer ${
-                  i <= currentStep
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-muted text-muted-foreground'
-                } ${i === currentStep ? 'outline outline-2 outline-ring/60 outline-offset-2 shadow-md' : 'hover:scale-105'}`}
-                onClick={() => {
-                  // Allow direct navigation for testing - bypass validation
-                  setCurrentStep(i);
-                  // Scroll to top after step change
-                  setTimeout(() => {
-                    if (scrollContainerRef.current) {
-                      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  }, 100);
-                }}
-                title={`Go to ${stepLabels[i]}`}
-              >
-                {i < currentStep ? (
-                  <span aria-hidden="true" style={{ lineHeight: 1 }}>
-                    ✓
-                  </span>
-                ) : (
-                  i
-                )}
-              </div>
-              <div
-                className={`mt-3 text-center text-[10px] leading-tight ${
-                  i <= currentStep ? 'text-primary font-semibold' : 'text-muted-foreground'
-                }`}
-                style={{ width: '100%', maxWidth: '120px', wordWrap: 'break-word' }}
-              >
-                {stepLabels[i]}
-              </div>
-            </div>
-          ))}
+        <div className="mt-6">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-1">
+            Generate Factory Code
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Complete all steps to generate a factory code
+          </p>
         </div>
       </div>
 
-      {/* SKU Selector - Show only for steps 1-5 */}
-      {currentStep > 0 && formData.skus && formData.skus.length > 0 && (
+      {/* SKU Selector - Show only when NOT in ipcFlow (hidden during per-IPC Cut/Raw/Artwork) */}
+      {flowPhase !== 'ipcFlow' && currentStep > 0 && formData.skus && formData.skus.length > 0 && (
         <div style={{ 
           marginBottom: '24px', 
           padding: '20px', 
@@ -4995,7 +5212,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                 <Button
                   onClick={() => {
                     setShowIPCPopup(false);
-                    handleNext();
+                    setFlowPhase('ipcSelector');
+                    setSelectedSku(formData.skus?.length > 0 ? 'product_0' : 'product_0');
+                    setTimeout(() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 100);
                   }}
                   type="button"
                   variant="outline"
@@ -5021,15 +5240,22 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         </>
       ) : (
         <>
-          {/* Step Content */}
-          <div className="mb-8 mx-auto" style={{ maxWidth: '1000px' }}>
-            {renderStepContent()}
-          </div>
+          {/* Main content area: vertical progress bar (left, only in ipcFlow) + step content + nav */}
+          <div className={cn(
+            'mb-8',
+            flowPhase === 'ipcFlow' ? 'flex flex-row items-start gap-0' : ''
+          )}>
+            {flowPhase === 'ipcFlow' && renderVerticalProgressBar()}
+            <div className={cn(
+              'flex-1 min-w-0 flex flex-col',
+              flowPhase === 'ipcFlow' ? '' : 'mx-auto'
+            )} style={{ maxWidth: flowPhase === 'ipcFlow' ? undefined : '1000px' }}>
+              {renderStepContent()}
 
-          {/* Navigation Buttons */}
-          <div className="mx-auto" style={{ maxWidth: '1000px' }}>
-            {currentStep === totalSteps ? (
-              // Last step (Packaging): Save + Save first + Prev + Generate Factory Code (same template as step 3)
+          {/* Navigation Buttons - flowPhase-aware */}
+          <div className="">
+            {flowPhase === 'ipcSelector' ? null : flowPhase === 'packaging' ? (
+              // Packaging: Save + Prev + Generate Factory Code
               <div className="flex items-center justify-between" style={{ marginTop: '32px' }}>
                 <Button
                   type="button"
@@ -5040,7 +5266,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                   {step4SaveStatus === 'error' ? 'Not Saved' : step4Saved || step4SaveStatus === 'success' ? 'Saved' : 'Save'}
                 </Button>
                 <div className="flex items-center gap-3">
-                  {showSaveMessage && currentStep === totalSteps && (
+                  {showSaveMessage && flowPhase === 'packaging' && (
                     <span className="text-red-600 text-sm font-medium">Save first</span>
                   )}
                   <Button
@@ -5063,14 +5289,35 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
                   >
                     Generate Factory Code
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowConsumptionSheet(true)}
-                  >
-                    Consumption Sheet
+                </div>
+              </div>
+            ) : flowPhase === 'ipcFlow' && currentStep === 2 ? (
+              // Artwork (ipcFlow step 2): Save + Prev + Next
+              <div className="flex justify-between items-center" style={{ marginTop: '32px' }}>
+                <div className="flex gap-3">
+                  <Button type="button" variant="outline" onClick={handleSaveStep3} className={`min-w-[90px] ${step3SaveStatus === 'error' ? 'text-red-600 border-red-500 hover:text-red-700' : step3Saved || step3SaveStatus === 'success' ? 'text-green-600 hover:text-green-700' : ''}`}>
+                    {step3SaveStatus === 'error' ? 'Not Saved' : step3Saved || step3SaveStatus === 'success' ? 'Saved' : 'Save'}
                   </Button>
                 </div>
+                <div className="flex gap-3">
+                  {showSaveMessage && <span className="text-red-600 text-sm font-medium">Save first</span>}
+                  <Button type="button" variant="outline" onClick={handlePrevious}>← Previous</Button>
+                  <Button type="button" onClick={handleNext}>Next →</Button>
+                </div>
+              </div>
+            ) : flowPhase === 'ipcFlow' && currentStep === 1 ? (
+              // Raw Material (ipcFlow step 1): Prev + Next
+              <div className="flex justify-end items-center gap-3" style={{ marginTop: '32px' }}>
+                {showSaveMessage && <span className="text-red-600 text-sm font-medium">Save first</span>}
+                <Button type="button" variant="outline" onClick={handlePrevious}>← Previous</Button>
+                <Button type="button" onClick={handleNext}>Next →</Button>
+              </div>
+            ) : flowPhase === 'ipcFlow' && currentStep === 0 ? (
+              // Cut (ipcFlow step 0): Step1 has Save + Add Component; nav only Prev + Next
+              <div className="flex justify-end items-center gap-3" style={{ marginTop: '32px' }}>
+                {showSaveMessage && <span className="text-red-600 text-sm font-medium">Save first</span>}
+                <Button type="button" variant="outline" onClick={handlePrevious}>← Previous</Button>
+                <Button type="button" onClick={handleNext}>Next →</Button>
               </div>
             ) : currentStep === 3 ? (
               // Artwork / Labelling step: Save + Add Material on left, Save first + Prev/Next on right (same template as Step1)
@@ -5129,6 +5376,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               </div>
             )}
           </div>
+            </div>
+          </div>
         </>
       )}
 
@@ -5158,15 +5407,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           </DialogHeader>
 
           <div className="flex flex-col gap-6 overflow-y-auto px-6 py-6" style={{ maxHeight: 'calc(90vh - 160px)' }}>
-            {/* Derived consumption loading - hardcoded */}
-            <div
-              className="flex items-center gap-3 px-5 py-4 rounded-xl"
-              style={{ background: 'rgba(34 197 94 / 0.08)', border: '1px solid rgb(34 197 94 / 0.4)' }}
-            >
-              <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
-              <span className="text-sm font-medium text-foreground">
-                Derived consumption table is loading...
-              </span>
+            {/* Consumption Sheet */}
+            <div className="rounded-xl border border-border overflow-hidden">
+              <ConsumptionSheet formData={formData} />
             </div>
 
             {/* All IPC codes */}

@@ -99,8 +99,8 @@ const Step0 = ({
     <div className="w-full max-w-6xl mx-auto" style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Header Section */}
       <div style={{ marginBottom: '12px' }}>
-        <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-1">
-          PART-0 PRODUCT SPEC
+        <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">
+          PRODUCT SPEC
         </h2>
         <p className="text-sm text-muted-foreground">
           Enter product specification details
@@ -214,13 +214,20 @@ const Step0 = ({
               </Field>
 
               {/* SET OF */}
-              <Field label="SET OF" width="sm">
+              <Field
+                label="SET OF"
+                error={errors[`setOf_${skuIndex}`]}
+                required
+                width="sm"
+              >
                 <Input
                   type="text"
                   inputMode="numeric"
                   value={sku.setOf ?? ''}
                   onChange={(e) => handleSkuChange(skuIndex, 'setOf', e.target.value.replace(/\D/g, ''))}
                   placeholder="1"
+                  aria-invalid={errors[`setOf_${skuIndex}`] ? true : undefined}
+                  required
                 />
               </Field>
             </div>
@@ -354,11 +361,12 @@ const Step0 = ({
                       </Button>
                     </div>
 
-                    {/* SUBPRODUCT + ADD BUYER SKU - side by side */}
+                    {/* SUBPRODUCT + BUYER SKU + SET OF - side by side */}
                     <div className="flex flex-wrap" style={{ gap: '16px 12px', marginBottom: '16px' }}>
                     <Field
                         label="BUYER SKU"
                         error={errors[`subproduct_${skuIndex}_${subproductIndex}_buyerSku`]}
+                        required
                         width="md"
                       >
                         <SearchableDropdown
@@ -385,8 +393,22 @@ const Step0 = ({
                           className={errors[`subproduct_${skuIndex}_${subproductIndex}`] ? 'border-destructive' : ''}
                         />
                       </Field>
-
-                      
+                      <Field
+                        label="SET OF"
+                        error={errors[`subproduct_${skuIndex}_${subproductIndex}_setOf`]}
+                        required
+                        width="sm"
+                      >
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={subproduct.setOf ?? ''}
+                          onChange={(e) => handleSubproductChange(skuIndex, subproductIndex, 'setOf', e.target.value.replace(/\D/g, ''))}
+                          placeholder="1"
+                          aria-invalid={errors[`subproduct_${skuIndex}_${subproductIndex}_setOf`] ? true : undefined}
+                          required
+                        />
+                      </Field>
                     </div>
 
                     {/* Row: PO QTY, Overage %, Delivery Date */}

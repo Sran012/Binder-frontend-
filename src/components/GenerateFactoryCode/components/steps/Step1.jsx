@@ -19,6 +19,7 @@ const Step1 = ({
   showSaveMessage = false,
   isSaved: parentIsSaved = false,
   onValidationFail,
+  renderHeaderAction,
 }) => {
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'success' | 'error'
   const [isSaved, setIsSaved] = useState(parentIsSaved);
@@ -70,9 +71,12 @@ const Step1 = ({
   return (
     <div className="w-full">
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-1">PART-1 CUT &amp; SEW SPEC</h2>
-        <p className="text-sm text-muted-foreground">Enter cutting and sewing specifications for components</p>
+      <div style={{ marginBottom: '24px' }} className="flex justify-between items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">PART-1 CUT &amp; SEW SPEC</h2>
+          <p className="text-sm text-muted-foreground">Enter cutting and sewing specifications for components</p>
+        </div>
+        {renderHeaderAction}
       </div>
 
       {/* Components Section - Work with first product's components */}

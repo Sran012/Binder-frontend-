@@ -148,6 +148,7 @@ import {
 const Step2 = ({
   formData,
   errors,
+  renderHeaderAction,
   handleRawMaterialChange,
   handleWorkOrderChange,
   addWorkOrder,
@@ -364,9 +365,12 @@ const Step2 = ({
   return (
     <div className="w-full">
       {/* Header with proper spacing */}
-      <div style={{ marginBottom: '28px' }}>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">PART-2 RAW MATERIAL SOURCING</h2>
-        <p className="text-sm text-gray-600">Bill of material & work order</p>
+      <div style={{ marginBottom: '28px' }} className="flex justify-between items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">PART-2 RAW MATERIAL SOURCING</h2>
+          <p className="text-sm text-gray-600">Bill of material & work order</p>
+        </div>
+        {renderHeaderAction}
       </div>
 
       {/* Component Selection - OUTSIDE form border */}
@@ -8901,7 +8905,7 @@ const Step2 = ({
                       {/* Machine Type / Specific Type Dropdown */}
                       {(['WEAVING', 'TUFTING', 'KNITTING', 'EMBROIDERY', 'BRAIDING', 'CARPET', 'CUTTING'].includes(workOrder.workOrder)) && (
                         <div className="flex flex-col">
-                          <label className={`text-sm font-semibold mb-2 ${errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_machineType`] ? 'text-red-600' : 'text-gray-700'}`}>
+                          <label className="text-sm font-semibold mb-2 text-gray-700">
                             {workOrder.workOrder === 'CUTTING' ? 'TOOL TYPE *' : 'MACHINE TYPE *'}
                           </label>
                           <SearchableDropdown
