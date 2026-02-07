@@ -3041,26 +3041,28 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       }
     });
 
-    // === LEFTOVER IPC (dynamic: only add next block on save when there are unassigned IPCs) ===
-    const allIpcValues = [];
-    (formData.skus || []).forEach((sku) => {
-      const baseIpc = sku.ipcCode?.replace(/\/SP-?\d+$/i, '') || sku.ipcCode || '';
-      if (baseIpc) allIpcValues.push(baseIpc);
-      (sku.subproducts || []).forEach((_, idx) => allIpcValues.push(`${baseIpc}/SP-${idx + 1}`));
-    });
-    const extraPacks = packaging.extraPacks || [];
-    const selectedIpcs = new Set([
-      ...mainSelection,
-      ...extraPacks.flatMap((p) => (Array.isArray(p.productSelection) ? p.productSelection : (p.productSelection ? [p.productSelection] : []))),
-    ]);
-    const leftover = allIpcValues.filter((v) => !selectedIpcs.has(v));
-    if (leftover.length > 0) {
-      newErrors['packaging_leftover_ipc'] = 'Please complete leftover IPC';
-      const lastPack = extraPacks[extraPacks.length - 1];
-      const lastPackSelection = lastPack ? (Array.isArray(lastPack.productSelection) ? lastPack.productSelection : (lastPack.productSelection ? [lastPack.productSelection] : [])) : [];
-      // Add at most ONE leftover block per save: only when no blocks yet, or when the last block has at least one product selected (so user filled it and there is still leftover).
-      const shouldAddBlock = extraPacks.length === 0 || lastPackSelection.length > 0;
-      if (shouldAddBlock) shouldAddExtraPack = true;
+    // === LEFTOVER IPC: only when main block has Product selected AND there are IPCs not in main block ===
+    // Leftover block shows ONLY if user selected some IPCs in main block but not all - i.e. leftover IPCs exist.
+    if (mainSelection.length > 0) {
+      const allIpcValues = [];
+      (formData.skus || []).forEach((sku) => {
+        const baseIpc = sku.ipcCode?.replace(/\/SP-?\d+$/i, '') || sku.ipcCode || '';
+        if (baseIpc) allIpcValues.push(baseIpc);
+        (sku.subproducts || []).forEach((_, idx) => allIpcValues.push(`${baseIpc}/SP-${idx + 1}`));
+      });
+      const extraPacks = packaging.extraPacks || [];
+      const selectedIpcs = new Set([
+        ...mainSelection,
+        ...extraPacks.flatMap((p) => (Array.isArray(p.productSelection) ? p.productSelection : (p.productSelection ? [p.productSelection] : []))),
+      ]);
+      const leftover = allIpcValues.filter((v) => !selectedIpcs.has(v));
+      if (leftover.length > 0) {
+        newErrors['packaging_leftover_ipc'] = 'Please complete leftover IPC';
+        const lastPack = extraPacks[extraPacks.length - 1];
+        const lastPackSelection = lastPack ? (Array.isArray(lastPack.productSelection) ? lastPack.productSelection : (lastPack.productSelection ? [lastPack.productSelection] : [])) : [];
+        const shouldAddBlock = extraPacks.length === 0 || lastPackSelection.length > 0;
+        if (shouldAddBlock) shouldAddExtraPack = true;
+      }
     }
 
     setErrors(newErrors);
