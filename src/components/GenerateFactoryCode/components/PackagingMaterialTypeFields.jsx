@@ -1091,87 +1091,6 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                         </div>
                         {(errors?.[`${errorKeyPrefix}_polybagBaleQuantity`] || errors?.[`${errorKeyPrefix}_polybagBaleQuantityUnit`]) && <span className="text-red-600 text-xs mt-1">{errors[`${errorKeyPrefix}_polybagBaleQuantity`] || errors[`${errorKeyPrefix}_polybagBaleQuantityUnit`]}</span>}
                       </div>
-                      {/* INNER~CASEAPACK: Polybag count + per-IPC table (Casepack / Polybag = Inner QTY, ASSD / Inner = Required Material) */}
-                      {material.polybagBalePackagingType === 'INNER~CASEAPACK' && (
-                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 space-y-4">
-                          <div className="flex flex-col">
-                            <label className="text-sm font-semibold text-gray-700 mb-2">POLYBAG (count)</label>
-                            <input
-                              type="number"
-                              min={1}
-                              value={material.polybagBalePolybagCount ?? ''}
-                              onChange={(e) => onChange('polybagBalePolybagCount', e.target.value)}
-                              className={cn('border-2 rounded-lg text-sm bg-white text-gray-900 focus:border-indigo-500 focus:outline-none border-[#e5e7eb]')}
-                              style={{ padding: '10px 14px', height: '44px', width: '120px' }}
-                              placeholder="e.g. 3"
-                            />
-                          </div>
-                          <div className="flex flex-wrap gap-6 items-center rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm">
-                            <span className="font-semibold text-gray-700">Casepack:</span>
-                            <span className="text-gray-900">{casepack || '—'}</span>
-                            <span className="font-semibold text-gray-700">Inner QTY:</span>
-                            <span className="text-gray-900">{innerQty > 0 ? Math.round(innerQty * 100) / 100 : '—'}</span>
-                            <span className="font-semibold text-gray-700">Polybag:</span>
-                            <span className="text-gray-900">{polybagNum || '—'}</span>
-                          </div>
-                          {selectedIpcs.length > 0 && (
-                            <div className="rounded-xl border-2 border-gray-200 bg-white overflow-hidden">
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-sm border-collapse">
-                                  <thead>
-                                    <tr className="bg-gray-100 border-b border-gray-200">
-                                      <th className="text-left font-semibold text-gray-700 p-3">PO</th>
-                                      <th className="text-left font-semibold text-gray-700 p-3">IPC</th>
-                                      <th className="text-left font-semibold text-gray-700 p-3">IMAGE</th>
-                                      <th className="text-left font-semibold text-gray-700 p-3">ASSD QTY</th>
-                                      <th className="text-left font-semibold text-gray-700 p-3">INNER QTY</th>
-                                      <th className="text-left font-semibold text-gray-700 p-3">REQUIRED MATERIAL QTY</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {selectedIpcs.map((ipc) => {
-                                      const { poQty, imagePreview } = getPoQtyAndImageForIpc(skus, ipc);
-                                      const assd = parseFloat(String(assdByIpc[ipc] ?? '').trim()) || 0;
-                                      const reqMaterial = innerQty > 0 ? assd / innerQty : 0;
-                                      return (
-                                        <tr key={ipc} className="border-b border-gray-100 hover:bg-gray-50/50">
-                                          <td className="p-3 text-gray-900">{poQty !== '' && poQty !== undefined ? poQty : '—'}</td>
-                                          <td className="p-3 text-gray-900 font-medium">{ipc}</td>
-                                          <td className="p-2">
-                                            {imagePreview ? (
-                                              <img src={imagePreview} alt="" className="w-10 h-10 rounded border border-gray-200 object-cover" />
-                                            ) : (
-                                              <div className="w-10 h-10 rounded border border-gray-200 bg-gray-100 flex items-center justify-center text-gray-400">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" strokeWidth="1.5" /></svg>
-                                              </div>
-                                            )}
-                                          </td>
-                                          <td className="p-2">
-                                            <input
-                                              type="number"
-                                              min={0}
-                                              value={assdByIpc[ipc] ?? ''}
-                                              onChange={(e) => {
-                                                const next = { ...assdByIpc, [ipc]: e.target.value };
-                                                onChange('polybagBaleAssdQtyByIpc', next);
-                                              }}
-                                              className={cn('border-2 rounded-lg text-sm w-full max-w-[100px] bg-white text-gray-900 focus:border-indigo-500 focus:outline-none border-[#e5e7eb]')}
-                                              style={{ padding: '6px 10px' }}
-                                              placeholder="0"
-                                            />
-                                          </td>
-                                          <td className="p-3 text-gray-900">{innerQty > 0 ? Math.round(innerQty * 100) / 100 : '—'}</td>
-                                          <td className="p-3 text-gray-900 font-medium">{reqMaterial > 0 ? Math.round(reqMaterial * 100) / 100 : '—'}</td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </>
                   )}
 
@@ -2603,6 +2522,88 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       placeholder="Additional notes..."
                     ></textarea>
                   </div>
+
+                  {/* POLYBAG~Bale INNER~CASEAPACK: Polybag count + summary + per-IPC table - placed after Remarks */}
+                  {material.packagingMaterialType === 'POLYBAG~Bale' && material.polybagBalePackagingType === 'INNER~CASEAPACK' && (
+                    <div className="col-span-full" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '24px', padding: '24px', borderRadius: '12px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <label style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>POLYBAG (count)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={material.polybagBalePolybagCount ?? ''}
+                          onChange={(e) => onChange('polybagBalePolybagCount', e.target.value)}
+                          className={cn('border-2 rounded-lg text-sm bg-white text-gray-900 focus:border-indigo-500 focus:outline-none border-[#e5e7eb]')}
+                          style={{ padding: '10px 14px', height: '44px', width: '120px' }}
+                          placeholder="e.g. 3"
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', padding: '16px 20px', borderRadius: '8px', backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>Casepack:</span>
+                        <span style={{ fontSize: '14px', color: '#111827' }}>{casepack || '—'}</span>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151', marginLeft: '8px' }}>Inner QTY:</span>
+                        <span style={{ fontSize: '14px', color: '#111827' }}>{innerQty > 0 ? Math.round(innerQty * 100) / 100 : '—'}</span>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151', marginLeft: '8px' }}>Polybag:</span>
+                        <span style={{ fontSize: '14px', color: '#111827' }}>{polybagNum || '—'}</span>
+                      </div>
+                      {selectedIpcs.length > 0 && (
+                        <div style={{ borderRadius: '12px', border: '1px solid #e5e7eb', backgroundColor: '#ffffff', overflow: 'hidden' }}>
+                          <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
+                              <thead>
+                                <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '1px solid #e5e7eb' }}>
+                                  <th style={{ textAlign: 'left', fontWeight: 600, color: '#374151', padding: '14px 16px' }}>PO</th>
+                                  <th style={{ textAlign: 'left', fontWeight: 600, color: '#374151', padding: '14px 16px' }}>IPC</th>
+                                  <th style={{ textAlign: 'left', fontWeight: 600, color: '#374151', padding: '14px 16px' }}>IMAGE</th>
+                                  <th style={{ textAlign: 'left', fontWeight: 600, color: '#374151', padding: '14px 16px' }}>ASSD QTY</th>
+                                  <th style={{ textAlign: 'left', fontWeight: 600, color: '#374151', padding: '14px 16px' }}>INNER QTY</th>
+                                  <th style={{ textAlign: 'left', fontWeight: 600, color: '#374151', padding: '14px 16px' }}>REQUIRED MATERIAL QTY</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedIpcs.map((ipc) => {
+                                  const { poQty, imagePreview } = getPoQtyAndImageForIpc(skus, ipc);
+                                  const assd = parseFloat(String(assdByIpc[ipc] ?? '').trim()) || 0;
+                                  const reqMaterial = innerQty > 0 ? assd / innerQty : 0;
+                                  return (
+                                    <tr key={ipc} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                      <td style={{ padding: '14px 16px', color: '#111827' }}>{poQty !== '' && poQty !== undefined ? poQty : '—'}</td>
+                                      <td style={{ padding: '14px 16px', color: '#111827', fontWeight: 500 }}>{ipc}</td>
+                                      <td style={{ padding: '12px 16px' }}>
+                                        {imagePreview ? (
+                                          <img src={imagePreview} alt="" style={{ width: '40px', height: '40px', borderRadius: '6px', border: '1px solid #e5e7eb', objectFit: 'cover' }} />
+                                        ) : (
+                                          <div style={{ width: '40px', height: '40px', borderRadius: '6px', border: '1px solid #e5e7eb', backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                                            <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" strokeWidth="1.5" /></svg>
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td style={{ padding: '12px 16px' }}>
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          value={assdByIpc[ipc] ?? ''}
+                                          onChange={(e) => {
+                                            const next = { ...assdByIpc, [ipc]: e.target.value };
+                                            onChange('polybagBaleAssdQtyByIpc', next);
+                                          }}
+                                          className={cn('border-2 rounded-lg text-sm w-full bg-white text-gray-900 focus:border-indigo-500 focus:outline-none border-[#e5e7eb]')}
+                                          style={{ padding: '8px 12px', maxWidth: '100px' }}
+                                          placeholder="0"
+                                        />
+                                      </td>
+                                      <td style={{ padding: '14px 16px', color: '#111827' }}>{innerQty > 0 ? Math.round(innerQty * 100) / 100 : '—'}</td>
+                                      <td style={{ padding: '14px 16px', color: '#111827', fontWeight: 500 }}>{reqMaterial > 0 ? Math.round(reqMaterial * 100) / 100 : '—'}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* FOAM INSERT - Advance Data Button and Fields */}
                   {material.packagingMaterialType === 'FOAM INSERT' && (
