@@ -20,6 +20,30 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
   // Helper to get error key
   const getErrorKey = (fieldName) => errorPrefix ? `${errorPrefix}_${fieldName}` : `rawMaterial_${materialIndex}_${fieldName}`;
   const hasError = (fieldName) => !!errors[getErrorKey(fieldName)];
+  const toCount = (value) => {
+    const parsed = parseInt(value, 10);
+    if (Number.isNaN(parsed) || parsed < 0) return 0;
+    return parsed;
+  };
+  const getFileArray = (fieldName) => {
+    const value = material[fieldName];
+    if (Array.isArray(value)) return value;
+    if (value instanceof File) return [value];
+    return [];
+  };
+  const trimFileArrayToCount = (fieldName, count) => {
+    const current = getFileArray(fieldName);
+    if (current.length > count) {
+      handleChange(materialIndex, fieldName, current.slice(0, count));
+    } else if (count === 0 && current.length) {
+      handleChange(materialIndex, fieldName, []);
+    }
+  };
+  const updateFileArrayAtIndex = (fieldName, index, file) => {
+    const next = [...getFileArray(fieldName)];
+    next[index] = file;
+    handleChange(materialIndex, fieldName, next);
+  };
   if (!material.trimAccessory) {
     return null;
   }
@@ -514,36 +538,49 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                         />
                         {hasError('niwarMaterial') && <span className="text-red-600 text-xs mt-1">{errors[getErrorKey('niwarMaterial')]}</span>}
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-                        <div className="flex flex-col flex-1">
-                          <label className={`text-sm font-semibold mb-2 ${hasError('niwarColour') ? 'text-red-600' : 'text-gray-700'}`}>COLOUR *</label>
-                          <SearchableDropdown
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col gap-3">
+                        <div className="flex flex-col">
+                          <label className={`text-sm font-semibold mb-2 ${hasError('niwarColour') ? 'text-red-600' : 'text-gray-700'}`}>NO OF COLOURS *</label>
+                          <input
+                            type="number"
+                            min="0"
                             value={material.niwarColour || ''}
-                            onChange={(selectedValue) => handleChange(materialIndex, 'niwarColour', selectedValue)}
-                            options={['DTM', 'White', 'Black', 'Natural', 'Pantone TPX/TCX']}
-                            placeholder="Select or type"
+                            onChange={(e) => {
+                              const nextValue = e.target.value;
+                              handleChange(materialIndex, 'niwarColour', nextValue);
+                              trimFileArrayToCount('niwarColorReference', toCount(nextValue));
+                            }}
                             className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${hasError('niwarColour') ? 'border-red-600' : 'border-[#e5e7eb]'}`}
                             style={{ padding: '10px 14px', height: '44px' }}
+                            placeholder="Enter number of colours"
                           />
                           {hasError('niwarColour') && <span className="text-red-600 text-xs mt-1">{errors[getErrorKey('niwarColour')]}</span>}
                         </div>
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                          <input
-                            type="file"
-                            onChange={(e) => handleChange(materialIndex, 'niwarColorReference', e.target.files[0])}
-                            className="hidden"
-                            id={`upload-niwar-color-${materialIndex}`}
-                            accept="image/*"
-                          />
-                          <label
-                            htmlFor={`upload-niwar-color-${materialIndex}`}
-                            className={`border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 hover:bg-gray-50 ${hasError('niwarColorReference') ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px' }}
-                          >
-                            {material.niwarColorReference ? 'UPLOADED' : 'UPLOAD COLOR REFERENCE'}
-                          </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {Array.from({ length: toCount(material.niwarColour) }).map((_, index) => {
+                            const uploadId = `upload-niwar-color-${materialIndex}-${index}`;
+                            const file = getFileArray('niwarColorReference')[index];
+                            return (
+                              <div key={uploadId} className="flex flex-col">
+                                <input
+                                  type="file"
+                                  onChange={(e) => updateFileArrayAtIndex('niwarColorReference', index, e.target.files[0])}
+                                  className="hidden"
+                                  id={uploadId}
+                                  accept="image/*"
+                                />
+                                <label
+                                  htmlFor={uploadId}
+                                  className={`border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 hover:bg-gray-50 ${hasError('niwarColorReference') ? 'border-red-600' : 'border-[#e5e7eb]'}`}
+                                  style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                  {file ? `UPLOADED ${index + 1}` : `UPLOAD COLOR REF ${index + 1}`}
+                                </label>
+                              </div>
+                            );
+                          })}
                         </div>
+                        {hasError('niwarColorReference') && <span className="text-red-600 text-xs">{errors[getErrorKey('niwarColorReference')]}</span>}
                       </div>
                       <div className="flex flex-col">
                         <label className={`text-sm font-semibold mb-2 ${hasError('niwarWeavePattern') ? 'text-red-600' : 'text-gray-700'}`}>WEAVE PATTERN *</label>
@@ -4105,36 +4142,49 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                         />
                         {hasError('ribbingMaterial') && <span className="text-red-600 text-xs mt-1">{errors[getErrorKey('ribbingMaterial')]}</span>}
                       </div>
-                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-                        <div className="flex flex-col flex-1">
-                          <label className={`text-sm font-semibold mb-2 ${hasError('ribbingColour') ? 'text-red-600' : 'text-gray-700'}`}>COLOUR *</label>
-                          <SearchableDropdown
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col gap-3">
+                        <div className="flex flex-col">
+                          <label className={`text-sm font-semibold mb-2 ${hasError('ribbingColour') ? 'text-red-600' : 'text-gray-700'}`}>NO OF COLOURS *</label>
+                          <input
+                            type="number"
+                            min="0"
                             value={material.ribbingColour || ''}
-                            onChange={(selectedValue) => handleChange(materialIndex, 'ribbingColour', selectedValue)}
-                            options={['DTM', 'White', 'Black', 'Natural', 'Pantone TPX/TCX']}
-                            placeholder="Select or type"
+                            onChange={(e) => {
+                              const nextValue = e.target.value;
+                              handleChange(materialIndex, 'ribbingColour', nextValue);
+                              trimFileArrayToCount('ribbingColorReference', toCount(nextValue));
+                            }}
                             className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${hasError('ribbingColour') ? 'border-red-600' : 'border-[#e5e7eb]'}`}
                             style={{ padding: '10px 14px', height: '44px' }}
+                            placeholder="Enter number of colours"
                           />
                           {hasError('ribbingColour') && <span className="text-red-600 text-xs mt-1">{errors[getErrorKey('ribbingColour')]}</span>}
                         </div>
-                        <div className="flex flex-col">
-                          <label className="text-sm font-semibold text-gray-700 mb-2" style={{ visibility: 'hidden' }}>UPLOAD</label>
-                          <input
-                            type="file"
-                            onChange={(e) => handleChange(materialIndex, 'ribbingColorReference', e.target.files[0])}
-                            className="hidden"
-                            id={`upload-ribbing-color-${materialIndex}`}
-                            accept="image/*"
-                          />
-                          <label
-                            htmlFor={`upload-ribbing-color-${materialIndex}`}
-                            className={`border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 hover:bg-gray-50 ${hasError('ribbingColorReference') ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                            style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '150px' }}
-                          >
-                            {material.ribbingColorReference ? 'UPLOADED' : 'UPLOAD COLOR REFERENCE'}
-                          </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {Array.from({ length: toCount(material.ribbingColour) }).map((_, index) => {
+                            const uploadId = `upload-ribbing-color-${materialIndex}-${index}`;
+                            const file = getFileArray('ribbingColorReference')[index];
+                            return (
+                              <div key={uploadId} className="flex flex-col">
+                                <input
+                                  type="file"
+                                  onChange={(e) => updateFileArrayAtIndex('ribbingColorReference', index, e.target.files[0])}
+                                  className="hidden"
+                                  id={uploadId}
+                                  accept="image/*"
+                                />
+                                <label
+                                  htmlFor={uploadId}
+                                  className={`border-2 rounded-lg text-sm font-medium cursor-pointer transition-all bg-white text-gray-900 hover:bg-gray-50 ${hasError('ribbingColorReference') ? 'border-red-600' : 'border-[#e5e7eb]'}`}
+                                  style={{ padding: '10px 16px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                  {file ? `UPLOADED ${index + 1}` : `UPLOAD COLOR REF ${index + 1}`}
+                                </label>
+                              </div>
+                            );
+                          })}
                         </div>
+                        {hasError('ribbingColorReference') && <span className="text-red-600 text-xs">{errors[getErrorKey('ribbingColorReference')]}</span>}
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
                         <div className="flex flex-col flex-1">
