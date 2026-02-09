@@ -259,7 +259,7 @@ export const TRIM_ACCESSORY_SCHEMAS = {
 
 // ==================== FOAM SCHEMAS ====================
 export const FOAM_SCHEMAS = {
-  'EVA-form': {
+  'EVA-foam': {
     required: ['foamType', 'foamSubtype', 'foamVaContent', 'foamColour', 'foamThickness', 'foamShape', 'foamSheetPcs', 'foamGsm', 'foamLengthCm', 'foamWidthCm', 'foamKgsCns', 'foamYardageCns', 'foamTestingRequirements', 'foamSurplus', 'foamWastage', 'foamApproval', 'foamRemarks'],
     advanced: ['foamShoreHardness', 'foamCellStructure', 'foamCompressionSet', 'foamTensileStrength', 'foamElongation', 'foamWaterResistance', 'foamUvResistance', 'foamFireRetardant', 'foamSurfaceTexture', 'foamAntiSlip', 'foamInterlocking', 'foamCertification', 'foamDensity']
   },
@@ -291,7 +291,7 @@ export const FOAM_SCHEMAS = {
     required: ['foamMemoryType', 'foamMemorySubtype', 'foamMemoryGrade', 'foamMemoryColour', 'foamMemoryThickness', 'foamMemoryShape', 'foamMemorySheetPcs', 'foamMemoryGsm', 'foamMemoryLengthCm', 'foamMemoryWidthCm', 'foamMemoryKgsCns', 'foamMemoryYardageCns', 'foamMemoryTestingRequirements', 'foamMemorySurplus', 'foamMemoryWastage', 'foamMemoryApproval', 'foamMemoryRemarks'],
     advanced: ['foamMemoryIld', 'foamMemoryResponseTime', 'foamMemoryTemperatureSensitivity', 'foamMemoryActivationTemperature', 'foamMemoryCompressionSet', 'foamMemoryResilience', 'foamMemoryBreathability', 'foamMemoryInfusion', 'foamMemoryCoolingTechnology', 'foamMemoryFireRetardant', 'foamMemoryVocEmissions', 'foamMemoryDensity', 'foamMemoryCertification']
   },
-  'HR-form': {
+  'HR-foam': {
     required: ['foamHrType', 'foamHrSubtype', 'foamHrGrade', 'foamHrColour', 'foamHrThickness', 'foamHrShape', 'foamHrSheetPcs', 'foamHrGsm', 'foamHrLengthCm', 'foamHrWidthCm', 'foamHrKgsCns', 'foamHrYardageCns', 'foamHrTestingRequirements', 'foamHrSurplus', 'foamHrWastage', 'foamHrApproval', 'foamHrRemarks'],
     advanced: []
   }
