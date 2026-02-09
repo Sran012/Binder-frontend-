@@ -2446,7 +2446,7 @@ const Step3 = ({
                             className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                           />
                         </Field>
-                        <Field label="MATERIAL" width="sm">
+                        <Field label="MATERIAL DESCRIPTION" width="sm">
                           <SearchableDropdown
                             value={material.bucklesMaterial || ''}
                             onChange={(selectedValue) => handleConsumptionMaterialChange(materialIndex, 'bucklesMaterial', selectedValue)}
@@ -2757,19 +2757,6 @@ const Step3 = ({
                           placeholder="Select or type"
                           className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
                           style={{ padding: '10px 14px', height: '44px' }}
-                        />
-                      </div>
-
-                      {/* MULTISELECT - Empty field as per image */}
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">MULTISELECT</label>
-                        <input
-                          type="text"
-                          value={material.shoulderPadMultiselect || ''}
-                          onChange={(e) => handleConsumptionMaterialChange(materialIndex, 'shoulderPadMultiselect', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder=""
                         />
                       </div>
 

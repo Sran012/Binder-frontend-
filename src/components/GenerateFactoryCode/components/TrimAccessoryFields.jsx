@@ -3543,7 +3543,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={`border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none ${hasError('bucklesType') ? 'border-red-600' : ''}`}
                           />
                         </Field>
-                        <Field label="MATERIAL" required width="sm" error={errors[getErrorKey('bucklesMaterial')]}>
+                        <Field label="MATERIAL DESCRIPTION" required width="sm" error={errors[getErrorKey('bucklesMaterial')]}>
                           <SearchableDropdown
                             value={material.bucklesMaterial || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'bucklesMaterial', selectedValue)}
@@ -4010,19 +4010,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                         </div>
                       </div>
 
-                      {/* MULTISELECT - Empty field as per image */}
-                      <div className="flex flex-col">
-                        <label className="text-sm font-semibold text-gray-700 mb-2">MULTISELECT</label>
-                        <input
-                          type="text"
-                          value={material.shoulderPadMultiselect || ''}
-                          onChange={(e) => handleChange(materialIndex, 'shoulderPadMultiselect', e.target.value)}
-                          className="border-2 rounded-lg text-sm transition-all bg-white text-gray-900 border-[#e5e7eb] focus:border-indigo-500 focus:outline-none"
-                          style={{ padding: '10px 14px', height: '44px' }}
-                          placeholder=""
-                        />
-                      </div>
-
+                    
                       {/* QTY */}
                       <div className="flex flex-col">
                         <label className="text-sm font-semibold text-gray-700 mb-2">QTY</label>

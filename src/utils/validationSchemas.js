@@ -204,7 +204,7 @@ export const TRIM_ACCESSORY_SCHEMAS = {
     advanced: ['bucklesFunction', 'bucklesTensileStrength', 'bucklesSafety']
   },
   'SHOULDER PADS': {
-    required: ['shoulderPadType', 'shoulderPadMaterial', 'shoulderPadSize', 'shoulderPadThickness', 'shoulderPadShape', 'shoulderPadCovering', 'shoulderPadCoveringColour', 'shoulderPadAttachment', 'shoulderPadDensity', 'shoulderPadPlacement', 'shoulderPadMultiselect', 'shoulderPadQty', 'shoulderPadSurplus', 'shoulderPadWastage', 'shoulderPadApproval', 'shoulderPadRemarks'],
+    required: ['shoulderPadType', 'shoulderPadMaterial', 'shoulderPadSize', 'shoulderPadThickness', 'shoulderPadShape', 'shoulderPadCovering', 'shoulderPadCoveringColour', 'shoulderPadAttachment', 'shoulderPadDensity', 'shoulderPadPlacement', 'shoulderPadQty', 'shoulderPadSurplus', 'shoulderPadWastage', 'shoulderPadApproval', 'shoulderPadRemarks'],
     advanced: []
   },
   'RIBBING': {
