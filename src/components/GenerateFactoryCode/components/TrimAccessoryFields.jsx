@@ -575,34 +575,36 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             aria-invalid={hasError('niwarColour')}
                           />
                         </Field>
-                        <Field label="COLOR REFS" width="md" className="col-span-1 md:col-span-2 lg:col-span-5">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {Array.from({ length: toCount(material.niwarColour) }).map((_, index) => {
-                              const uploadId = 'upload-niwar-color-' + materialIndex + '-' + index;
-                              const file = getFileArray('niwarColorReference')[index];
-                              return (
-                                <div key={uploadId} className="flex flex-col">
-                                  <input
-                                    type="file"
-                                    onChange={(e) => updateFileArrayAtIndex('niwarColorReference', index, e.target.files[0])}
-                                    className="hidden"
-                                    id={uploadId}
-                                    accept="image/*"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-11"
-                                    onClick={() => document.getElementById(uploadId)?.click()}
-                                  >
-                                    {file ? 'UPLOADED ' + (index + 1) : 'UPLOAD ' + (index + 1)}
-                                  </Button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </Field>
+                        {toCount(material.niwarColour) > 0 && (
+                          <Field label="COLOR REFS" className="col-span-1 md:col-span-2 lg:col-span-5 w-full">
+                            <div className="w-full grid [grid-template-columns:repeat(auto-fit,minmax(160px,160px))] gap-3">
+                              {Array.from({ length: toCount(material.niwarColour) }).map((_, index) => {
+                                const uploadId = 'upload-niwar-color-' + materialIndex + '-' + index;
+                                const file = getFileArray('niwarColorReference')[index];
+                                return (
+                                  <div key={uploadId} className="flex flex-col min-w-0">
+                                    <input
+                                      type="file"
+                                      onChange={(e) => updateFileArrayAtIndex('niwarColorReference', index, e.target.files[0])}
+                                      className="hidden"
+                                      id={uploadId}
+                                      accept="image/*"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-11 w-full px-3 whitespace-nowrap"
+                                      onClick={() => document.getElementById(uploadId)?.click()}
+                                    >
+                                      {file ? 'UPLOADED ' + (index + 1) : 'UPLOAD ' + (index + 1)}
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </Field>
+                        )}
                         <Field label="WEAVE PATTERN" required width="sm" error={errors[getErrorKey('niwarWeavePattern')]}
                         >
                           <SearchableDropdown
@@ -2190,34 +2192,36 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             aria-invalid={hasError('ribbingColour')}
                           />
                         </Field>
-                        <Field label="COLOR REFS" width="md" className="col-span-1 md:col-span-2 lg:col-span-5">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {Array.from({ length: toCount(material.ribbingColour) }).map((_, index) => {
-                              const uploadId = 'upload-ribbing-color-' + materialIndex + '-' + index;
-                              const file = getFileArray('ribbingColorReference')[index];
-                              return (
-                                <div key={uploadId} className="flex flex-col">
-                                  <input
-                                    type="file"
-                                    onChange={(e) => updateFileArrayAtIndex('ribbingColorReference', index, e.target.files[0])}
-                                    className="hidden"
-                                    id={uploadId}
-                                    accept="image/*"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-11"
-                                    onClick={() => document.getElementById(uploadId)?.click()}
-                                  >
-                                    {file ? 'UPLOADED ' + (index + 1) : 'UPLOAD ' + (index + 1)}
-                                  </Button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </Field>
+                        {toCount(material.ribbingColour) > 0 && (
+                          <Field label="COLOR REFS" className="col-span-1 md:col-span-2 lg:col-span-5 w-full">
+                            <div className="w-full grid [grid-template-columns:repeat(auto-fit,minmax(160px,160px))] gap-3">
+                              {Array.from({ length: toCount(material.ribbingColour) }).map((_, index) => {
+                                const uploadId = 'upload-ribbing-color-' + materialIndex + '-' + index;
+                                const file = getFileArray('ribbingColorReference')[index];
+                                return (
+                                  <div key={uploadId} className="flex flex-col min-w-0">
+                                    <input
+                                      type="file"
+                                      onChange={(e) => updateFileArrayAtIndex('ribbingColorReference', index, e.target.files[0])}
+                                      className="hidden"
+                                      id={uploadId}
+                                      accept="image/*"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-11 w-full px-3 whitespace-nowrap"
+                                      onClick={() => document.getElementById(uploadId)?.click()}
+                                    >
+                                      {file ? 'UPLOADED ' + (index + 1) : 'UPLOAD ' + (index + 1)}
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </Field>
+                        )}
                         <Field label="PLACEMENT" required width="sm" error={errors[getErrorKey('ribbingPlacement')]}>
                           <Input
                             type="text"
