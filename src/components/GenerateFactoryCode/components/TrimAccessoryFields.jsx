@@ -55,6 +55,391 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
       {/* Conditional fields based on trim/accessory type */}
       {material.trimAccessory && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-5">
+                  {/* ZIPPERS Fields */}
+                  {material.trimAccessory === 'ZIPPERS' && (
+                    <>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4">
+                        <Field label="ZIP #" width="sm">
+                          <Input
+                            type="text"
+                            value={material.zipNumber || ''}
+                            onChange={(e) => handleChange(materialIndex, 'zipNumber', e.target.value)}
+                            placeholder="3 or 5 (Common sizes)"
+                          />
+                        </Field>
+                        <Field label="TYPE" width="sm">
+                          <SearchableDropdown
+                            value={material.zipType || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'zipType', selectedValue)}
+                            options={['Concealed (Invisible)', 'Open (Separating)', 'Closed-End (Non-Separating)']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('zipType'))}
+                          />
+                        </Field>
+                        <Field label="BRAND" width="sm">
+                          <SearchableDropdown
+                            value={material.brand || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'brand', selectedValue)}
+                            options={['YKK', 'RIRI', 'SBS', 'Unbranded']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('brand'))}
+                          />
+                        </Field>
+                        <Field label="TEETH" width="sm">
+                          <SearchableDropdown
+                            value={material.teeth || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'teeth', selectedValue)}
+                            options={['Coil (Nylon/Polyester)', 'Plastic (Molded Vislon)', 'Metal (Brass, Aluminium)']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('teeth'))}
+                          />
+                        </Field>
+                        <Field label="PULLER" width="sm">
+                          <SearchableDropdown
+                            value={material.puller || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'puller', selectedValue)}
+                            options={['Metal', 'DTM (Dyed-to-Match Plastic)', 'Custom Logo', 'Ring']}
+                            placeholder="Select or type Puller"
+                            className={dropdownClass(hasError('puller'))}
+                          />
+                        </Field>
+                        <Field label="PULLER TYPE" width="sm">
+                          <SearchableDropdown
+                            value={material.pullerType || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'pullerType', selectedValue)}
+                            options={['Lockable (Auto-lock for secure closure)', 'Non-Lockable (Free-gliding)', 'Semi-']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('pullerType'))}
+                          />
+                        </Field>
+
+                        <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <TestingRequirementsInput
+                                value={Array.isArray(material.testingRequirement) ? material.testingRequirement : []}
+                                onChange={(arr) => handleChange(materialIndex, 'testingRequirement', arr)}
+                                options={['Slider Durability (Cycling test)', 'Lateral Strength (Teeth-pulling strength)', 'Puller']}
+                                placeholder="Select testing requirements"
+                              />
+                            </div>
+                            <input
+                              type="file"
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleChange(materialIndex, 'testingRequirementFile', f); }}
+                              className="hidden"
+                              id={`upload-zippers-${materialIndex}`}
+                              accept="image/*"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11"
+                              onClick={() => document.getElementById(`upload-zippers-${materialIndex}`)?.click()}
+                            >
+                              {material.testingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </div>
+                        </Field>
+
+                        <Field label="LENGTH" width="sm">
+                          <SearchableDropdown
+                            value={material.length || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'length', selectedValue)}
+                            options={['Specific Length (e.g', '20 cm', '7 inches', '500 mm)']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('length'))}
+                          />
+                        </Field>
+                        <Field label="UNIT" width="sm">
+                          <SearchableDropdown
+                            value={material.unitAdditional || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'unitAdditional', selectedValue)}
+                            options={['CM', 'KGS']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('unitAdditional'))}
+                          />
+                        </Field>
+                        <Field label="SURPLUS %" width="sm">
+                          <PercentInput
+                            value={material.surplus || ''}
+                            onChange={(e) => handleChange(materialIndex, 'surplus', e.target.value)}
+                          />
+                        </Field>
+                        <Field label="APPROVAL" width="sm">
+                          <SearchableDropdown
+                            value={material.approval || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'approval', selectedValue)}
+                            options={["BUYER'S", 'INITIAL', 'PP']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('approval'))}
+                          />
+                        </Field>
+                        <Field label="REMARKS" width="md" className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <Input
+                            type="text"
+                            value={material.remarks || ''}
+                            onChange={(e) => handleChange(materialIndex, 'remarks', e.target.value)}
+                            placeholder="Required for industrial wash, Must match fabric composition, Specific"
+                          />
+                        </Field>
+                      </div>
+
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full mt-5 mb-5">
+                        <Button
+                          type="button"
+                          variant={material.showZippersAdvancedSpec ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleChange(materialIndex, 'showZippersAdvancedSpec', !material.showZippersAdvancedSpec)}
+                        >
+                          {material.showZippersAdvancedSpec ? '− Advance Spec' : '+ Advance Spec'}
+                        </Button>
+                      </div>
+                      {material.showZippersAdvancedSpec && (
+                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4">
+                          <Field label="SLIDER TYPE" width="sm">
+                            <SearchableDropdown
+                              value={material.zipSliderType || ''}
+                              onChange={(selectedValue) => handleChange(materialIndex, 'zipSliderType', selectedValue)}
+                              options={['Auto-lock', 'Non-lock', 'Reverse lock', 'Two-way']}
+                              placeholder="Select or type"
+                              className={dropdownClass(hasError('zipSliderType'))}
+                            />
+                          </Field>
+                          <Field label="FINISH / COATING" width="sm">
+                            <SearchableDropdown
+                              value={material.zipFinish || ''}
+                              onChange={(selectedValue) => handleChange(materialIndex, 'zipFinish', selectedValue)}
+                              options={['Nickel', 'Brass', 'Antique', 'Black Oxide', 'DTM (Puller)']}
+                              placeholder="Select or type"
+                              className={dropdownClass(hasError('zipFinish'))}
+                            />
+                          </Field>
+                          <Field label="LENGTH TOLERANCE" width="sm">
+                            <Input
+                              type="text"
+                              value={material.zipLengthTolerance || ''}
+                              onChange={(e) => handleChange(materialIndex, 'zipLengthTolerance', e.target.value)}
+                              placeholder="e.g., ±3mm, ±5mm"
+                            />
+                          </Field>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* BUTTONS Fields */}
+                  {material.trimAccessory === 'BUTTONS' && (
+                    <>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4">
+                        <Field label="TYPE" width="sm">
+                          <SearchableDropdown
+                            value={material.buttonType || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'buttonType', selectedValue)}
+                            options={['Sewing (Flat/Shank)', 'Snap (Press Stud)', 'Tack (Jeans)', 'Toggle', 'Magnetic', 'Covered']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('buttonType'))}
+                          />
+                        </Field>
+                        <Field label="MATERIAL" width="sm">
+                          <SearchableDropdown
+                            value={material.buttonMaterial || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'buttonMaterial', selectedValue)}
+                            options={['Polyester', 'Metal (Brass, Alloy, Zinc)', 'Shell', 'Wood', 'Horn', 'Corozo', 'Coconut']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('buttonMaterial'))}
+                          />
+                        </Field>
+                        <Field label="SIZE SPEC" width="sm">
+                          <Input
+                            type="text"
+                            value={material.buttonSize || ''}
+                            onChange={(e) => handleChange(materialIndex, 'buttonSize', e.target.value)}
+                            placeholder="Text"
+                          />
+                        </Field>
+                        <Field label="LIGNE" width="sm">
+                          <SearchableDropdown
+                            value={material.buttonLigne || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'buttonLigne', selectedValue)}
+                            options={['14L', '16L', '18L', '20L', '22L', '24L', '26L', '28L', '30L', '32L', '34L', '36L', '38L', '40L']}
+                            placeholder="Select or type (1L=0.635mm)"
+                            className={dropdownClass(hasError('buttonLigne'))}
+                          />
+                        </Field>
+                        <Field label="HOLES" width="sm">
+                          <SearchableDropdown
+                            value={material.buttonHoles || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'buttonHoles', selectedValue)}
+                            options={['2-Hole', '4-Hole', 'Shank (no holes)', 'Snap Components']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('buttonHoles'))}
+                          />
+                        </Field>
+                        <Field label="FINISH/COLOUR" width="sm">
+                          <SearchableDropdown
+                            value={material.buttonFinishColour || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'buttonFinishColour', selectedValue)}
+                            options={['DTM', 'Glossy', 'Matte', 'Engraved', 'Plated (Nickel)', 'Plated (Antique Brass)', 'Plated (Gunmetal)']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('buttonFinishColour'))}
+                          />
+                        </Field>
+                        <Field label="PLACEMENT" width="sm">
+                          <Input
+                            type="text"
+                            value={material.buttonPlacement || ''}
+                            onChange={(e) => handleChange(materialIndex, 'buttonPlacement', e.target.value)}
+                            placeholder="Text"
+                          />
+                        </Field>
+
+                        <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <TestingRequirementsInput
+                                value={Array.isArray(material.buttonTestingRequirements) ? material.buttonTestingRequirements : (material.buttonTestingRequirements ? [material.buttonTestingRequirements] : [])}
+                                onChange={(arr) => handleChange(materialIndex, 'buttonTestingRequirements', arr)}
+                                options={['Needle Detection', 'Pull Strength', 'Colour Fastness', 'REACH/OEKO-TEX', 'Corrosion']}
+                                placeholder="Select testing requirements"
+                              />
+                            </div>
+                            <input
+                              type="file"
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleChange(materialIndex, 'buttonTestingRequirementFile', f); }}
+                              className="hidden"
+                              id={`upload-button-testing-${materialIndex}`}
+                              accept="image/*"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11"
+                              onClick={() => document.getElementById(`upload-button-testing-${materialIndex}`)?.click()}
+                            >
+                              {material.buttonTestingRequirementFile ? 'UPLOADED' : 'UPLOAD'}
+                            </Button>
+                          </div>
+                        </Field>
+
+                        <Field label="QTY" width="sm">
+                          <Input
+                            type="text"
+                            value={material.buttonQty || ''}
+                            onChange={(e) => handleChange(materialIndex, 'buttonQty', e.target.value)}
+                            placeholder="Unit: Pieces"
+                          />
+                        </Field>
+                        <Field label="SURPLUS %" width="sm">
+                          <PercentInput
+                            value={material.buttonSurplus || ''}
+                            onChange={(e) => handleChange(materialIndex, 'buttonSurplus', e.target.value)}
+                          />
+                        </Field>
+                        <Field label="WASTAGE %" width="sm">
+                          <PercentInput
+                            value={material.buttonWastage || ''}
+                            onChange={(e) => handleChange(materialIndex, 'buttonWastage', e.target.value)}
+                          />
+                        </Field>
+                        <Field label="APPROVAL" width="sm">
+                          <SearchableDropdown
+                            value={material.buttonApproval || ''}
+                            onChange={(selectedValue) => handleChange(materialIndex, 'buttonApproval', selectedValue)}
+                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            placeholder="Select or type"
+                            className={dropdownClass(hasError('buttonApproval'))}
+                          />
+                        </Field>
+                        <Field label="REMARKS" width="md" className="col-span-1 md:col-span-2 lg:col-span-5">
+                          <Input
+                            type="text"
+                            value={material.buttonRemarks || ''}
+                            onChange={(e) => handleChange(materialIndex, 'buttonRemarks', e.target.value)}
+                            placeholder="Self-Shank, Laser Engraved Logo"
+                          />
+                        </Field>
+                        <Field label="" width="sm" className="col-span-1 md:col-span-2 lg:col-span-5 flex flex-row gap-3 items-end">
+                          <input
+                            type="file"
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleChange(materialIndex, 'buttonColorReference', f); }}
+                            className="hidden"
+                            id={`upload-button-color-ref-${materialIndex}`}
+                            accept="image/*"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-11"
+                            onClick={() => document.getElementById(`upload-button-color-ref-${materialIndex}`)?.click()}
+                          >
+                            {material.buttonColorReference ? 'UPLOADED' : 'UPLOAD COLOR REFERENCE'}
+                          </Button>
+                          <input
+                            type="file"
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleChange(materialIndex, 'buttonReferenceImage', f); }}
+                            className="hidden"
+                            id={`upload-button-ref-image-${materialIndex}`}
+                            accept="image/*"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-11"
+                            onClick={() => document.getElementById(`upload-button-ref-image-${materialIndex}`)?.click()}
+                          >
+                            {material.buttonReferenceImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}
+                          </Button>
+                        </Field>
+                      </div>
+
+                      <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 w-full mt-5 mb-5">
+                        <Button
+                          type="button"
+                          variant={material.showButtonsAdvancedSpec ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleChange(materialIndex, 'showButtonsAdvancedSpec', !material.showButtonsAdvancedSpec)}
+                        >
+                          {material.showButtonsAdvancedSpec ? '− Advance Spec' : '+ Advance Spec'}
+                        </Button>
+                      </div>
+                      {material.showButtonsAdvancedSpec && (
+                        <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4">
+                          <Field label="ATTACHMENT" width="sm">
+                            <SearchableDropdown
+                              value={material.buttonAttachment || ''}
+                              onChange={(selectedValue) => handleChange(materialIndex, 'buttonAttachment', selectedValue)}
+                              options={['Machine Sew', 'Hand Sew (Shank)', 'Pneumatic Press (Snaps)']}
+                              placeholder="Select or type"
+                              className={dropdownClass(hasError('buttonAttachment'))}
+                            />
+                          </Field>
+                          <Field label="FUNCTION" width="sm">
+                            <SearchableDropdown
+                              value={material.buttonFunction || ''}
+                              onChange={(selectedValue) => handleChange(materialIndex, 'buttonFunction', selectedValue)}
+                              options={['Functional (Closure)', 'Decorative', 'Dual Purpose']}
+                              placeholder="Select or type"
+                              className={dropdownClass(hasError('buttonFunction'))}
+                            />
+                          </Field>
+                          <Field label="LOGO" width="sm">
+                            <SearchableDropdown
+                              value={material.buttonLogo || ''}
+                              onChange={(selectedValue) => handleChange(materialIndex, 'buttonLogo', selectedValue)}
+                              options={['Plain', 'Embossed', 'Engraved', 'Laser Engraved', 'Custom']}
+                              placeholder="Select or type"
+                              className={dropdownClass(hasError('buttonLogo'))}
+                            />
+                          </Field>
+                        </div>
+                      )}
+                    </>
+                  )}
+
                   {/* VELCRO Fields */}
                   {material.trimAccessory === 'VELCRO' && (
                     <>
