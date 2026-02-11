@@ -80,7 +80,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                   {material.trimAccessory === 'ZIPPERS' && (
                     <>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4">
-                        <Field label="ZIP #" width="sm">
+                        <Field label="ZIP #" required width="sm" error={errors[getErrorKey('zipNumber')]}>
                           <Input
                             type="text"
                             value={material.zipNumber || ''}
@@ -88,7 +88,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             placeholder="3 or 5 (Common sizes)"
                           />
                         </Field>
-                        <Field label="TYPE" width="sm">
+                        <Field label="TYPE" required width="sm" error={errors[getErrorKey('zipType')]}>
                           <SearchableDropdown
                             value={material.zipType || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'zipType', selectedValue)}
@@ -97,7 +97,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('zipType'))}
                           />
                         </Field>
-                        <Field label="BRAND" width="sm">
+                        <Field label="BRAND" required width="sm" error={errors[getErrorKey('brand')]}>
                           <SearchableDropdown
                             value={material.brand || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'brand', selectedValue)}
@@ -106,7 +106,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('brand'))}
                           />
                         </Field>
-                        <Field label="TEETH" width="sm">
+                        <Field label="TEETH" required width="sm" error={errors[getErrorKey('teeth')]}>
                           <SearchableDropdown
                             value={material.teeth || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'teeth', selectedValue)}
@@ -115,7 +115,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('teeth'))}
                           />
                         </Field>
-                        <Field label="PULLER" width="sm">
+                        <Field label="PULLER" required width="sm" error={errors[getErrorKey('puller')]}>
                           <SearchableDropdown
                             value={material.puller || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'puller', selectedValue)}
@@ -124,7 +124,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('puller'))}
                           />
                         </Field>
-                        <Field label="PULLER TYPE" width="sm">
+                        <Field label="PULLER TYPE" required width="sm" error={errors[getErrorKey('pullerType')]}>
                           <SearchableDropdown
                             value={material.pullerType || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'pullerType', selectedValue)}
@@ -134,7 +134,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           />
                         </Field>
 
-                        <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+                        <Field label="TESTING REQ." required width="sm" className="col-span-1 md:col-span-2 lg:col-span-5" error={errors[getErrorKey('testingRequirement')]}>
                           <div className="flex items-center gap-3">
                             <div className="flex-1">
                               <TestingRequirementsInput
@@ -142,6 +142,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                                 onChange={(arr) => handleChange(materialIndex, 'testingRequirement', arr)}
                                 options={['Slider Durability (Cycling test)', 'Lateral Strength (Teeth-pulling strength)', 'Puller']}
                                 placeholder="Select testing requirements"
+                                error={hasError('testingRequirement')}
                               />
                             </div>
                             <input
@@ -163,7 +164,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           </div>
                         </Field>
 
-                        <Field label="LENGTH" width="sm">
+                        <Field label="LENGTH" required width="sm" error={errors[getErrorKey('length')]}>
                           <SearchableDropdown
                             value={material.length || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'length', selectedValue)}
@@ -172,7 +173,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('length'))}
                           />
                         </Field>
-                        <Field label="UNIT" width="sm">
+                        <Field label="UNIT" required width="sm" error={errors[getErrorKey('unitAdditional')]}>
                           <SearchableDropdown
                             value={material.unitAdditional || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'unitAdditional', selectedValue)}
@@ -181,13 +182,14 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('unitAdditional'))}
                           />
                         </Field>
-                        <Field label="SURPLUS %" width="sm">
+                        <Field label="SURPLUS %" required width="sm" error={errors[getErrorKey('surplus')]}>
                           <PercentInput
                             value={material.surplus || ''}
                             onChange={(e) => handleChange(materialIndex, 'surplus', e.target.value)}
+                            error={hasError('surplus')}
                           />
                         </Field>
-                        <Field label="APPROVAL" width="sm">
+                        <Field label="APPROVAL" required width="sm" error={errors[getErrorKey('approval')]}>
                           <SearchableDropdown
                             value={material.approval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'approval', selectedValue)}
@@ -196,7 +198,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('approval'))}
                           />
                         </Field>
-                        <Field label="REMARKS" width="md" className="col-span-1 md:col-span-2 lg:col-span-5">
+                        <Field label="REMARKS" required width="md" className="col-span-1 md:col-span-2 lg:col-span-5" error={errors[getErrorKey('remarks')]}>
                           <Input
                             type="text"
                             value={material.remarks || ''}
@@ -231,7 +233,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                   {material.trimAccessory === 'BUTTONS' && (
                     <>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-4">
-                        <Field label="TYPE" width="sm">
+                        <Field label="TYPE" required width="sm" error={errors[getErrorKey('buttonType')]}>
                           <SearchableDropdown
                             value={material.buttonType || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'buttonType', selectedValue)}
@@ -240,7 +242,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('buttonType'))}
                           />
                         </Field>
-                        <Field label="MATERIAL" width="sm">
+                        <Field label="MATERIAL" required width="sm" error={errors[getErrorKey('buttonMaterial')]}>
                           <SearchableDropdown
                             value={material.buttonMaterial || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'buttonMaterial', selectedValue)}
@@ -249,7 +251,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('buttonMaterial'))}
                           />
                         </Field>
-                        <Field label="SIZE SPEC" width="sm">
+                        <Field label="SIZE SPEC" required width="sm" error={errors[getErrorKey('buttonSize')]}>
                           <Input
                             type="text"
                             value={material.buttonSize || ''}
@@ -257,7 +259,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             placeholder="Text"
                           />
                         </Field>
-                        <Field label="LIGNE" width="sm">
+                        <Field label="LIGNE" required width="sm" error={errors[getErrorKey('buttonLigne')]}>
                           <SearchableDropdown
                             value={material.buttonLigne || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'buttonLigne', selectedValue)}
@@ -266,7 +268,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('buttonLigne'))}
                           />
                         </Field>
-                        <Field label="HOLES" width="sm">
+                        <Field label="HOLES" required width="sm" error={errors[getErrorKey('buttonHoles')]}>
                           <SearchableDropdown
                             value={material.buttonHoles || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'buttonHoles', selectedValue)}
@@ -275,25 +277,61 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('buttonHoles'))}
                           />
                         </Field>
-                        <Field label="FINISH/COLOUR" width="sm">
-                          <SearchableDropdown
-                            value={material.buttonFinishColour || ''}
-                            onChange={(selectedValue) => handleChange(materialIndex, 'buttonFinishColour', selectedValue)}
-                            options={['DTM', 'Glossy', 'Matte', 'Engraved', 'Plated (Nickel)', 'Plated (Antique Brass)', 'Plated (Gunmetal)']}
-                            placeholder="Select or type"
-                            className={dropdownClass(hasError('buttonFinishColour'))}
-                          />
+                        <Field label="FINISH/COLOUR" required width="sm" error={errors[getErrorKey('buttonFinishColour')]}>
+                          <div className="flex flex-col gap-2">
+                            <SearchableDropdown
+                              value={material.buttonFinishColour || ''}
+                              onChange={(selectedValue) => handleChange(materialIndex, 'buttonFinishColour', selectedValue)}
+                              options={['DTM', 'Glossy', 'Matte', 'Engraved', 'Plated (Nickel)', 'Plated (Antique Brass)', 'Plated (Gunmetal)']}
+                              placeholder="Select or type"
+                              className={dropdownClass(hasError('buttonFinishColour'))}
+                            />
+                            <input
+                              type="file"
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleChange(materialIndex, 'buttonColorReference', f); }}
+                              className="hidden"
+                              id={`upload-button-color-ref-${materialIndex}`}
+                              accept="image/*"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() => document.getElementById(`upload-button-color-ref-${materialIndex}`)?.click()}
+                            >
+                              {material.buttonColorReference ? 'UPLOADED' : 'UPLOAD COLOR REF'}
+                            </Button>
+                          </div>
                         </Field>
-                        <Field label="PLACEMENT" width="sm">
-                          <Input
-                            type="text"
-                            value={material.buttonPlacement || ''}
-                            onChange={(e) => handleChange(materialIndex, 'buttonPlacement', e.target.value)}
-                            placeholder="Text"
-                          />
+                        <Field label="PLACEMENT" required width="sm" error={errors[getErrorKey('buttonPlacement')]}>
+                          <div className="flex flex-col gap-2">
+                            <Input
+                              type="text"
+                              value={material.buttonPlacement || ''}
+                              onChange={(e) => handleChange(materialIndex, 'buttonPlacement', e.target.value)}
+                              placeholder="Text"
+                            />
+                            <input
+                              type="file"
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleChange(materialIndex, 'buttonReferenceImage', f); }}
+                              className="hidden"
+                              id={`upload-button-ref-image-${materialIndex}`}
+                              accept="image/*"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-11 w-full"
+                              onClick={() => document.getElementById(`upload-button-ref-image-${materialIndex}`)?.click()}
+                            >
+                              {material.buttonReferenceImage ? 'UPLOADED' : 'UPLOAD REF IMAGE'}
+                            </Button>
+                          </div>
                         </Field>
 
-                        <Field label="TESTING REQ." width="sm" className="col-span-1 md:col-span-2 lg:col-span-5">
+                        <Field label="TESTING REQ." required width="sm" className="col-span-1 md:col-span-2 lg:col-span-5" error={errors[getErrorKey('buttonTestingRequirements')]}>
                           <div className="flex items-center gap-3">
                             <div className="flex-1">
                               <TestingRequirementsInput
@@ -301,6 +339,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                                 onChange={(arr) => handleChange(materialIndex, 'buttonTestingRequirements', arr)}
                                 options={['Needle Detection', 'Pull Strength', 'Colour Fastness', 'REACH/OEKO-TEX', 'Corrosion']}
                                 placeholder="Select testing requirements"
+                                error={hasError('buttonTestingRequirements')}
                               />
                             </div>
                             <input
@@ -322,7 +361,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           </div>
                         </Field>
 
-                        <Field label="QTY" width="sm">
+                        <Field label="QTY" required width="sm" error={errors[getErrorKey('buttonQty')]}>
                           <Input
                             type="text"
                             value={material.buttonQty || ''}
@@ -330,19 +369,21 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             placeholder="Unit: Pieces"
                           />
                         </Field>
-                        <Field label="SURPLUS %" width="sm">
+                        <Field label="SURPLUS %" required width="sm" error={errors[getErrorKey('buttonSurplus')]}>
                           <PercentInput
                             value={material.buttonSurplus || ''}
                             onChange={(e) => handleChange(materialIndex, 'buttonSurplus', e.target.value)}
+                            error={hasError('buttonSurplus')}
                           />
                         </Field>
-                        <Field label="WASTAGE %" width="sm">
+                        <Field label="WASTAGE %" required width="sm" error={errors[getErrorKey('buttonWastage')]}>
                           <PercentInput
                             value={material.buttonWastage || ''}
                             onChange={(e) => handleChange(materialIndex, 'buttonWastage', e.target.value)}
+                            error={hasError('buttonWastage')}
                           />
                         </Field>
-                        <Field label="APPROVAL" width="sm">
+                        <Field label="APPROVAL" required width="sm" error={errors[getErrorKey('buttonApproval')]}>
                           <SearchableDropdown
                             value={material.buttonApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'buttonApproval', selectedValue)}
@@ -351,47 +392,13 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                             className={dropdownClass(hasError('buttonApproval'))}
                           />
                         </Field>
-                        <Field label="REMARKS" width="md" className="col-span-1 md:col-span-2 lg:col-span-5">
+                        <Field label="REMARKS" required width="md" className="col-span-1 md:col-span-2 lg:col-span-5" error={errors[getErrorKey('buttonRemarks')]}>
                           <Input
                             type="text"
                             value={material.buttonRemarks || ''}
                             onChange={(e) => handleChange(materialIndex, 'buttonRemarks', e.target.value)}
                             placeholder="Self-Shank, Laser Engraved Logo"
                           />
-                        </Field>
-                        <Field label="" width="sm" className="col-span-1 md:col-span-2 lg:col-span-5 flex flex-row gap-3 items-end">
-                          <input
-                            type="file"
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleChange(materialIndex, 'buttonColorReference', f); }}
-                            className="hidden"
-                            id={`upload-button-color-ref-${materialIndex}`}
-                            accept="image/*"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-11"
-                            onClick={() => document.getElementById(`upload-button-color-ref-${materialIndex}`)?.click()}
-                          >
-                            {material.buttonColorReference ? 'UPLOADED' : 'UPLOAD COLOR REFERENCE'}
-                          </Button>
-                          <input
-                            type="file"
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleChange(materialIndex, 'buttonReferenceImage', f); }}
-                            className="hidden"
-                            id={`upload-button-ref-image-${materialIndex}`}
-                            accept="image/*"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-11"
-                            onClick={() => document.getElementById(`upload-button-ref-image-${materialIndex}`)?.click()}
-                          >
-                            {material.buttonReferenceImage ? 'UPLOADED' : 'UPLOAD REFERENCE IMAGE'}
-                          </Button>
                         </Field>
                       </div>
 
