@@ -1400,7 +1400,7 @@ const Step4 = ({
                             placeholder="Text"
                           />
                         </div>
-                </div>
+                      </div>
                       </>
                     )}
 
