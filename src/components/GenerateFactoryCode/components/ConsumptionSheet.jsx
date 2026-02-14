@@ -479,44 +479,88 @@ const ConsumptionSheet = ({ formData = {} }) => {
 
           {/* ROW 4: One row per raw material */}
           <div className="border-b border-border min-w-0">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 min-w-0 border-b border-border bg-muted/30">
-              <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Raw Material</span></div>
-              <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Net CNS</span></div>
-              <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Overage Qty</span></div>
-              <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gross Wastage</span></div>
-              <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gross CNS</span></div>
-              <div className={row4Last}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Unit</span></div>
+            {/* Mobile: label + value per field (each row is a card with label above value) */}
+            <div className="sm:hidden space-y-3 px-3 py-3 bg-muted/5">
+              {rawMats.length > 0 ? (
+                rawMats.map((material, mIdx) => {
+                  const matNetCns = material.netConsumption != null ? parseFloat(material.netConsumption) : 0;
+                  const matWastages = [];
+                  if (componentWastage) matWastages.push(componentWastage);
+                  extractRawMaterialWastagesSurplus(material, matWastages);
+                  const matCompoundWastage = calculateCompoundWastage(matWastages);
+                  const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
+                  const matUnit = material.unit || unit;
+                  const pairs = [
+                    { label: 'Raw Material', value: material.materialType || '-' },
+                    { label: 'Net CNS', value: matNetCns !== 0 ? matNetCns : '-' },
+                    { label: 'Overage Qty', value: overageQty },
+                    { label: 'Gross Wastage', value: `${matCompoundWastage}%` },
+                    { label: 'Gross CNS', value: matGrossCns },
+                    { label: 'Unit', value: (matUnit || '-').toUpperCase() },
+                  ];
+                  return (
+                    <div key={mIdx} className="rounded-lg border border-border bg-white p-4 shadow-sm space-y-3">
+                      {pairs.map((p, i) => (
+                        <div key={i}>
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-0.5">{p.label}</span>
+                          <span className={p.label === 'Gross CNS' ? 'text-base font-bold text-primary' : 'text-sm font-medium text-foreground'}>{p.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="rounded-lg border border-border bg-white p-4 shadow-sm space-y-3">
+                  {['Raw Material', 'Net CNS', 'Overage Qty', 'Gross Wastage', 'Gross CNS', 'Unit'].map((label, i) => (
+                    <div key={i}>
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-0.5">{label}</span>
+                      <span className="text-sm text-muted-foreground">-</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            {rawMats.length > 0 ? (
-              rawMats.map((material, mIdx) => {
-                const matNetCns = material.netConsumption != null ? parseFloat(material.netConsumption) : 0;
-                const matWastages = [];
-                if (componentWastage) matWastages.push(componentWastage);
-                extractRawMaterialWastagesSurplus(material, matWastages);
-                const matCompoundWastage = calculateCompoundWastage(matWastages);
-                const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
-                const matUnit = material.unit || unit;
-                return (
-                  <div key={mIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 min-w-0 border-b border-border last:border-b-0">
-                    <div className={row4Cell}><span className="text-sm text-foreground break-words">{material.materialType || '-'}</span></div>
-                    <div className={row4Cell}><span className="text-base font-bold text-foreground">{matNetCns || '-'}</span></div>
-                    <div className={row4Cell}><span className="text-base font-bold text-foreground">{overageQty}</span></div>
-                    <div className={row4Cell}><span className="text-base font-bold text-foreground">{matCompoundWastage}%</span></div>
-                    <div className={row4Cell}><span className="text-base font-bold text-primary">{matGrossCns}</span></div>
-                    <div className={row4Last}><span className="text-base font-bold text-foreground uppercase">{matUnit}</span></div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 min-w-0 border-b border-border">
-                <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
-                <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
-                <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
-                <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
-                <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
-                <div className={row4Last}><span className="text-sm text-muted-foreground">-</span></div>
+            {/* sm and up: table with header row + data rows */}
+            <div className="hidden sm:block min-w-0">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 min-w-0 border-b border-border bg-muted/30">
+                <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Raw Material</span></div>
+                <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Net CNS</span></div>
+                <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Overage Qty</span></div>
+                <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gross Wastage</span></div>
+                <div className={row4Cell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gross CNS</span></div>
+                <div className={row4Last}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Unit</span></div>
               </div>
-            )}
+              {rawMats.length > 0 ? (
+                rawMats.map((material, mIdx) => {
+                  const matNetCns = material.netConsumption != null ? parseFloat(material.netConsumption) : 0;
+                  const matWastages = [];
+                  if (componentWastage) matWastages.push(componentWastage);
+                  extractRawMaterialWastagesSurplus(material, matWastages);
+                  const matCompoundWastage = calculateCompoundWastage(matWastages);
+                  const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
+                  const matUnit = material.unit || unit;
+                  return (
+                    <div key={mIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 min-w-0 border-b border-border last:border-b-0">
+                      <div className={row4Cell}><span className="text-sm text-foreground break-words">{material.materialType || '-'}</span></div>
+                      <div className={row4Cell}><span className="text-base font-bold text-foreground">{matNetCns || '-'}</span></div>
+                      <div className={row4Cell}><span className="text-base font-bold text-foreground">{overageQty}</span></div>
+                      <div className={row4Cell}><span className="text-base font-bold text-foreground">{matCompoundWastage}%</span></div>
+                      <div className={row4Cell}><span className="text-base font-bold text-primary">{matGrossCns}</span></div>
+                      <div className={row4Last}><span className="text-base font-bold text-foreground uppercase">{matUnit}</span></div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 min-w-0 border-b border-border">
+                  <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
+                  <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
+                  <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
+                  <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
+                  <div className={row4Cell}><span className="text-sm text-muted-foreground">-</span></div>
+                  <div className={row4Last}><span className="text-sm text-muted-foreground">-</span></div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ROW 5: SPEC */}
@@ -581,8 +625,34 @@ const ConsumptionSheet = ({ formData = {} }) => {
           {artworkMats.length > 0 && (
             <div className="border-b border-border bg-muted/5 px-4 sm:px-6 py-5 min-w-0">
               <span className="text-xs font-bold text-foreground uppercase tracking-wider block mb-3">Artwork</span>
-              <div className="min-w-0 rounded-lg border border-border overflow-hidden bg-card">
-                {/* Header row – 5 cols: Material Description, Net CNS, Wastage/Surplus, Gross CNS, Unit */}
+              {/* Mobile: label + value per field for each artwork row */}
+              <div className="sm:hidden space-y-3">
+                {artworkMats.map((artwork, idx) => {
+                  const artworkNetCns = parseFloat(artwork.netConsumption) || 0;
+                  const artworkWastageSurplus = extractArtworkWastageSurplus(artwork);
+                  const artworkCompoundWastage = calculateCompoundWastage(artworkWastageSurplus);
+                  const artworkGrossCns = calculateGrossCns(overageQty, artworkWastageSurplus, artworkNetCns);
+                  const pairs = [
+                    { label: 'Material Description', value: artwork.materialDescription || '-' },
+                    { label: 'Net CNS', value: artworkNetCns || '-' },
+                    { label: 'Wastage/Surplus', value: `${artworkCompoundWastage}%` },
+                    { label: 'Gross CNS', value: artworkGrossCns },
+                    { label: 'Unit', value: (artwork.unit || '-').toUpperCase() },
+                  ];
+                  return (
+                    <div key={idx} className="rounded-lg border border-border bg-white p-4 shadow-sm space-y-3 min-w-0">
+                      {pairs.map((p, i) => (
+                        <div key={i}>
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-0.5">{p.label}</span>
+                          <span className={p.label === 'Gross CNS' ? 'text-base font-bold text-primary' : 'text-sm font-medium text-foreground break-words'}>{p.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* sm and up: table with header row + data rows */}
+              <div className="hidden sm:block min-w-0 rounded-lg border border-border overflow-hidden bg-card">
                 <div className="grid grid-cols-2 sm:grid-cols-5 min-w-0 border-b border-border bg-muted/30">
                   <div className="min-w-0 px-3 sm:px-4 md:px-6 py-3 md:py-4 border-r border-border [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r sm:[&:nth-child(5n)]:border-r-0">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Material Description</span>
