@@ -245,7 +245,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
     return workOrders;
   };
 
-  // Helper: Get total net CNS for a component from Step-2, Step-3 AND Step-4
+  // Helper: Get total net CNS for a component from Step-2, Step-3 AND Step-4 (used only where full total is needed)
   const getTotalNetCNS = (componentName, stepData) => {
     const consumptions = [];
 
@@ -265,6 +265,58 @@ const ConsumptionSheet = ({ formData = {} }) => {
     });
 
     return calculateNetConsumption(consumptions);
+  };
+
+  // Helper: Get net CNS from raw materials only (Step-2) for the Raw Material row – isolated from consumption/artwork
+  const getRawMaterialsOnlyNetCNS = (componentName, stepData) => {
+    const rawMats = getRawMaterialsForComponent(componentName, stepData);
+    const consumptions = rawMats
+      .filter((m) => m.netConsumption)
+      .map((m) => m.netConsumption);
+    return calculateNetConsumption(consumptions);
+  };
+
+  // Known wastage/surplus keys on a raw material (Step-2): foam, fiber, fabric, trim&accessory, yarn categories + work orders.
+  // Explicit list so we never miss a category; extractAllWastages(m) still runs to catch any nested or future keys.
+  const RAW_MATERIAL_WASTAGE_SURPLUS_KEYS = [
+    'surplus', 'wastage',
+    'fabricSurplus', 'fabricWastage',
+    'foamSurplus', 'foamWastage', 'foamPeEpeSurplus', 'foamPeEpeWastage', 'foamPuSurplus', 'foamPuWastage',
+    'foamRebondedSurplus', 'foamRebondedWastage', 'foamGelInfusedSurplus', 'foamGelInfusedWastage',
+    'foamLatexSurplus', 'foamLatexWastage', 'foamMemorySurplus', 'foamMemoryWastage', 'foamHrSurplus', 'foamHrWastage',
+    'fiberSurplus', 'fiberWastage',
+    'stitchingThreadSurplus', 'stitchingThreadWastage',
+  ];
+
+  const pushIfPresent = (list, value) => {
+    if (value !== undefined && value !== null && value !== '') list.push(value);
+  };
+
+  // Extract all wastage/surplus from one raw material: 5 categories (foam, fiber, fabric, trim&accessory, yarn) + work orders
+  const extractRawMaterialWastagesSurplus = (material, wastageList) => {
+    RAW_MATERIAL_WASTAGE_SURPLUS_KEYS.forEach((key) => {
+      if (material[key] !== undefined) pushIfPresent(wastageList, material[key]);
+    });
+    (material.workOrders || []).forEach((wo) => extractAllWastages(wo, wastageList));
+  };
+
+  // Helper: Get wastage/surplus values for raw materials only (Step-1 component + Step-2 raw) for Raw Material row calculations.
+  // Step-2: from each raw material, all nested forms (foam, fiber, fabric, trim&accessory, yarn) and work orders – no Step-3/Step-4.
+  const getAllWastagesForRawMaterialsOnly = (componentName, stepData, productComponents) => {
+    const wastageValues = [];
+
+    // Step-1: Component-level wastage
+    for (const comp of productComponents || []) {
+      if (comp.productComforter === componentName && comp.wastage) {
+        wastageValues.push(comp.wastage);
+        break;
+      }
+    }
+
+    const rawMats = getRawMaterialsForComponent(componentName, stepData);
+    rawMats.forEach((m) => extractRawMaterialWastagesSurplus(m, wastageValues));
+
+    return wastageValues;
   };
 
   // Helper: Get ALL wastage/surplus values for compound calculation (Step-1, Step-2, Step-3, Step-4)
@@ -401,15 +453,16 @@ const ConsumptionSheet = ({ formData = {} }) => {
 
     const unit = getUnitForComponent(componentName, stepData);
     const workOrders = getWorkOrdersForComponent(componentName, stepData);
-    const netCns = getTotalNetCNS(componentName, stepData);
-    const allWastages = getAllWastagesForComponent(componentName, stepData, productComponents);
+    // Raw Material row: use only raw materials (Step-2) – isolated from consumption/artwork
+    const netCns = getRawMaterialsOnlyNetCNS(componentName, stepData);
+    const rawOnlyWastages = getAllWastagesForRawMaterialsOnly(componentName, stepData, productComponents);
     const materialTypes = getMaterialTypes(componentName, stepData);
     const componentDetails = component || getComponentDetails(componentName, productComponents);
     const artworkMats = getArtworkMaterialsForComponent(componentName, stepData);
 
-    const compoundWastage = calculateCompoundWastage(allWastages);
+    const compoundWastage = calculateCompoundWastage(rawOnlyWastages);
     const overageQty = calculateOverageQty(product.poQty || 0, product.overagePercentage || '0');
-    const grossCns = calculateGrossCns(overageQty, allWastages, netCns);
+    const grossCns = calculateGrossCns(overageQty, rawOnlyWastages, netCns);
 
     return (
       <div className="w-full mb-8">
