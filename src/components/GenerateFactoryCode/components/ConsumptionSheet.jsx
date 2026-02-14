@@ -465,16 +465,16 @@ const ConsumptionSheet = ({ formData = {} }) => {
     const grossCns = calculateGrossCns(overageQty, rawOnlyWastages, netCns);
 
     return (
-      <div className="w-full mb-8">
-        <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm" style={{ padding: '16px' }}>
+      <div className="w-full min-w-0 mb-8">
+        <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm min-w-0" style={{ padding: '16px' }}>
           {/* ROW 1: IPC */}
-          <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-muted/40 to-muted/20">
+          <div className="px-4 sm:px-6 py-4 border-b border-border bg-gradient-to-r from-muted/40 to-muted/20">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">IPC Code</span>
             <span className="text-lg font-bold text-foreground">{product.ipcCode}</span>
           </div>
 
           {/* ROW 2: Product (or Subproduct name) + Set Of */}
-          <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-muted/30 to-muted/10 flex items-center justify-between gap-4">
+          <div className="px-4 sm:px-6 py-4 border-b border-border bg-gradient-to-r from-muted/30 to-muted/10 flex items-center justify-between gap-4">
             <div>
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 {product.isSubproduct ? 'Subproduct' : 'Product'}
@@ -487,43 +487,43 @@ const ConsumptionSheet = ({ formData = {} }) => {
           </div>
 
           {/* ROW 3: Component */}
-          <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="px-4 sm:px-6 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Component</span>
             <span className="text-base font-bold text-primary">{componentName || '-'}</span>
           </div>
 
-          {/* ROW 4: Raw Material, Net CNS, Overage Qty, Gross Wastage, Gross CNS, Unit */}
-          <div className="grid grid-cols-6 gap-0 border-b border-border">
-            <div className="px-6 py-5 border-r border-border bg-muted/5">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Raw Material</span>
-              <span className="text-sm text-foreground leading-relaxed">
+          {/* ROW 4: Same as Artwork – 2 cols | sm 3 cols | md 6 cols, no x-scroll */}
+          <div className="border-b border-border grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 min-w-0">
+            <div className="min-w-0 px-3 sm:px-4 md:px-6 py-4 md:py-5 border-b border-r border-border bg-muted/5 [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r sm:[&:nth-child(3n)]:border-r-0 md:[&:nth-child(3n)]:border-r md:[&:nth-child(6n)]:border-r-0">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Raw Material</span>
+              <span className="text-sm text-foreground leading-relaxed break-words">
                 {materialTypes.length > 0 ? materialTypes.join(', ') : '-'}
               </span>
             </div>
-            <div className="px-6 py-5 border-r border-border bg-muted/5">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Net CNS</span>
-              <span className="text-lg font-bold text-foreground">{netCns || '-'}</span>
+            <div className="min-w-0 px-3 sm:px-4 md:px-6 py-4 md:py-5 border-b border-r border-border bg-muted/5 [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r sm:[&:nth-child(3n)]:border-r-0 md:[&:nth-child(3n)]:border-r md:[&:nth-child(6n)]:border-r-0">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Net CNS</span>
+              <span className="text-base font-bold text-foreground">{netCns || '-'}</span>
             </div>
-            <div className="px-6 py-5 border-r border-border bg-muted/5">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Overage Qty</span>
-              <span className="text-lg font-bold text-foreground">{overageQty}</span>
+            <div className="min-w-0 px-3 sm:px-4 md:px-6 py-4 md:py-5 border-b border-r border-border bg-muted/5 [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r sm:[&:nth-child(3n)]:border-r-0 md:[&:nth-child(3n)]:border-r md:[&:nth-child(6n)]:border-r-0">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Overage Qty</span>
+              <span className="text-base font-bold text-foreground">{overageQty}</span>
             </div>
-            <div className="px-6 py-5 border-r border-border bg-muted/5">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Gross Wastage</span>
-              <span className="text-lg font-bold text-foreground">{compoundWastage}%</span>
+            <div className="min-w-0 px-3 sm:px-4 md:px-6 py-4 md:py-5 border-b border-r border-border bg-muted/5 [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r sm:[&:nth-child(3n)]:border-r-0 md:[&:nth-child(3n)]:border-r md:[&:nth-child(6n)]:border-r-0">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Gross Wastage</span>
+              <span className="text-base font-bold text-foreground">{compoundWastage}%</span>
             </div>
-            <div className="px-6 py-5 border-r border-border bg-muted/5">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Gross CNS</span>
-              <span className="text-lg font-bold text-primary">{grossCns}</span>
+            <div className="min-w-0 px-3 sm:px-4 md:px-6 py-4 md:py-5 border-b border-r border-border bg-muted/5 [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r sm:[&:nth-child(3n)]:border-r-0 md:[&:nth-child(3n)]:border-r md:[&:nth-child(6n)]:border-r-0">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Gross CNS</span>
+              <span className="text-base font-bold text-primary">{grossCns}</span>
             </div>
-            <div className="px-6 py-5 bg-muted/5">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Unit</span>
-              <span className="text-lg font-bold text-foreground uppercase">{unit}</span>
+            <div className="min-w-0 px-3 sm:px-4 md:px-6 py-4 md:py-5 border-b border-border bg-muted/5 md:border-b-0">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Unit</span>
+              <span className="text-base font-bold text-foreground uppercase">{unit}</span>
             </div>
           </div>
 
           {/* ROW 5: SPEC */}
-          <div className="border-b border-border bg-muted/5 px-6 py-5">
+          <div className="border-b border-border bg-muted/5 px-4 sm:px-6 py-5">
             <span className="text-xs font-bold text-foreground uppercase tracking-wider block mb-4">Specification</span>
             <div className="grid grid-cols-2 gap-6">
               <div className="bg-white rounded-lg border border-border p-4 shadow-sm">
@@ -556,7 +556,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
           </div>
 
           {/* WORK ORDERS */}
-          <div className="border-b border-border bg-muted/5 px-6 py-5">
+          <div className="border-b border-border bg-muted/5 px-4 sm:px-6 py-5">
             <span className="text-xs font-bold text-foreground uppercase tracking-wider block mb-4">Work Orders</span>
             <div className="px-3 pb-3">
               {workOrders.length > 0 ? (
@@ -582,7 +582,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
 
           {/* ARTWORK SECTION - After Work Orders */}
           {artworkMats.length > 0 && (
-            <div className="border-b border-border bg-muted/5 px-6 py-5">
+            <div className="border-b border-border bg-muted/5 px-4 sm:px-6 py-5">
               <span className="text-xs font-bold text-foreground uppercase tracking-wider block mb-4">Artwork</span>
               <div className="space-y-3">
                 {artworkMats.map((artwork, idx) => {
@@ -594,10 +594,10 @@ const ConsumptionSheet = ({ formData = {} }) => {
                   return (
                     <div
                       key={idx}
-                      className="bg-white border border-border rounded-lg p-4 shadow-sm"
+                      className="bg-white border border-border rounded-lg p-3 sm:p-4 shadow-sm min-w-0 max-w-full"
                     >
-                      <div className="grid grid-cols-6 gap-4">
-                        <div className="col-span-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4 min-w-0">
+                        <div className="col-span-2 min-w-0">
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Material Description</span>
                           <span className="text-sm font-medium text-foreground">{artwork.materialDescription || '-'}</span>
                         </div>
@@ -645,10 +645,10 @@ const ConsumptionSheet = ({ formData = {} }) => {
     const mergedItems = isMerged ? getMergedIpcsProducts(productSelection, formData) : [];
 
     return (
-      <div className="w-full mb-8">
-        <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm" style={{ padding: '16px' }}>
+      <div className="w-full min-w-0 mb-8">
+        <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm min-w-0" style={{ padding: '16px' }}>
           {/* ROW 1: IPC(s) */}
-          <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-muted/40 to-muted/20">
+          <div className="px-4 sm:px-6 py-4 border-b border-border bg-gradient-to-r from-muted/40 to-muted/20">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
               {isMerged ? 'IPC Codes' : 'IPC Code'}
             </span>
@@ -666,7 +666,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
           </div>
 
           {/* ROW 2: Product(s) */}
-          <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-muted/30 to-muted/10 flex items-center justify-between gap-4">
+          <div className="px-4 sm:px-6 py-4 border-b border-border bg-gradient-to-r from-muted/30 to-muted/10 flex items-center justify-between gap-4">
             <div className="flex-1">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                 {isMerged ? 'Products' : (product.isSubproduct ? 'Subproduct' : 'Product')}
@@ -693,7 +693,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
           </div>
 
           {/* PACKAGING SECTION */}
-          <div className="bg-muted/5 px-6 py-5">
+          <div className="bg-muted/5 px-4 sm:px-6 py-5">
             <span className="text-xs font-bold text-foreground uppercase tracking-wider block mb-4">Packaging</span>
             <div className="space-y-3">
               {packagingMats.map((packaging, idx) => {
@@ -727,7 +727,15 @@ const ConsumptionSheet = ({ formData = {} }) => {
   };
 
   return (
-    <div className="w-full overflow-y-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+    <div
+      className="w-full min-w-0 overflow-y-auto overflow-x-hidden"
+      style={{
+        maxHeight: 'calc(100vh - 250px)',
+        WebkitOverflowScrolling: 'touch',
+        touchAction: 'pan-y',
+        overscrollBehavior: 'contain',
+      }}
+    >
       {allProducts.length > 0 ? (
         (() => {
           const shownMergedKeys = new Set();
