@@ -178,9 +178,23 @@ const ConsumptionSheet = ({ formData = {} }) => {
     return values;
   };
 
+  // Helper: Determine if a raw material is complete enough to appear in CNS sheet
+  const isRawMaterialCompleteForCns = (material) => {
+    if (!material) return false;
+    const materialType = material.materialType?.toString().trim();
+    const materialDescription = material.materialDescription?.toString().trim();
+    const netConsumption = material.netConsumption?.toString().trim();
+    const unit = material.unit?.toString().trim();
+    return Boolean(materialType && materialDescription && netConsumption && unit);
+  };
+
   // Helper: Get raw materials for a component from stepData (Step-2)
   const getRawMaterialsForComponent = (componentName, stepData) => {
-    return stepData?.rawMaterials?.filter((m) => m.componentName === componentName) || [];
+    return (
+      stepData?.rawMaterials?.filter(
+        (m) => m.componentName === componentName && isRawMaterialCompleteForCns(m)
+      ) || []
+    );
   };
 
   // Helper: Get consumption materials for a component from stepData (Step-3)
@@ -596,13 +610,28 @@ const ConsumptionSheet = ({ formData = {} }) => {
           </svg>
         </button>
         <span
-          className="pointer-events-none absolute z-20 hidden group-hover:block group-focus-within:block"
+          className="pointer-events-none absolute z-20 hidden group-hover:block group-focus-visible:block"
           style={tooltipStyle}
         >
           {message}
         </span>
       </span>
       );
+    };
+
+    const filterValidWorkOrders = (workOrders = []) => {
+      return workOrders.filter((wo) => {
+        if (!wo || typeof wo !== 'object') return false;
+        return Object.values(wo).some((value) => {
+          if (value === null || value === undefined) return false;
+          if (typeof value === 'string') return value.trim() !== '';
+          if (typeof value === 'number') return value !== 0 && !Number.isNaN(value);
+          if (typeof value === 'boolean') return value === true;
+          if (Array.isArray(value)) return value.length > 0;
+          if (typeof value === 'object') return Object.values(value).some((v) => v !== null && v !== undefined && `${v}`.trim() !== '');
+          return false;
+        });
+      });
     };
 
     const renderMaterialWorkOrders = (workOrders) => {
@@ -640,7 +669,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
       const matTotalWastage = calculateTotalWastage(matWastages);
       const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
       const matUnit = material.unit || unit || '-';
-      const materialWorkOrders = material.workOrders || [];
+      const materialWorkOrders = filterValidWorkOrders(material.workOrders || []);
       const wastageTraceTitle = wastageBreakdown.length > 0
         ? `Gross wastage from (compounded): ${wastageBreakdown.map((b) => `${b.source} ${b.value}%`).join(' → ')}`
         : '';
@@ -676,7 +705,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
       const matTotalWastage = calculateTotalWastage(matWastages);
       const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
       const matUnit = (material.unit || unit || '-').toString().toUpperCase();
-      const materialWorkOrders = material.workOrders || [];
+      const materialWorkOrders = filterValidWorkOrders(material.workOrders || []);
 
       return (
         <div key={matIdx} className="rounded-xl border border-border bg-white shadow-sm">

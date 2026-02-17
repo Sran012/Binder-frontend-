@@ -208,7 +208,7 @@ export const TRIM_ACCESSORY_SCHEMAS = {
     advanced: []
   },
   'RIBBING': {
-    required: ['ribbingType', 'ribbingMaterial', 'ribbingColour', 'ribbingGsm', 'ribbingForm', 'ribbingLength', 'ribbingDia', 'ribbingWidth', 'ribbingSurplus', 'ribbingWastage', 'ribbingApproval'],
+    required: ['ribbingType', 'ribbingMaterial', 'ribbingColour', 'ribbingSurplus', 'ribbingWastage', 'ribbingApproval'],
     advanced: ['ribbingStretchPercent', 'ribbingCutting', 'ribbingSpandexContent', 'ribbingAntiCurl'],
     conditional: {
       'ribbingQtyYardage': { when: 'ribbingQtyType', equals: 'YARDAGE' },
