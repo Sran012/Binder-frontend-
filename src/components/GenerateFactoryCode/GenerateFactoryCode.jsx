@@ -398,6 +398,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const [errors, setErrors] = useState({});
 
   const STORAGE_KEY = 'factoryCodeFormData';
+  const getStorageKey = (ipoCode) =>
+    ipoCode ? `${STORAGE_KEY}:${ipoCode}` : STORAGE_KEY;
 
   const fileToBase64 = (file) => {
     return new Promise((resolve) => {
@@ -447,15 +449,19 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         }
       }
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cloned));
+      const payload = JSON.stringify(cloned);
+      localStorage.setItem(STORAGE_KEY, payload);
+      if (data?.ipoCode) {
+        localStorage.setItem(getStorageKey(data.ipoCode), payload);
+      }
     } catch (e) {
       console.warn('Failed to save to localStorage:', e);
     }
   };
 
-  const loadFromLocalStorage = () => {
+  const loadFromLocalStorage = (ipoCode) => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(getStorageKey(ipoCode)) || localStorage.getItem(STORAGE_KEY);
       if (!saved) return null;
 
       const data = JSON.parse(saved);
@@ -480,12 +486,15 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     }
   };
 
-  const clearLocalStorage = () => {
+  const clearLocalStorage = (ipoCode) => {
     localStorage.removeItem(STORAGE_KEY);
+    if (ipoCode) {
+      localStorage.removeItem(getStorageKey(ipoCode));
+    }
   };
 
   useEffect(() => {
-    const savedData = loadFromLocalStorage();
+    const savedData = loadFromLocalStorage(initialFormData?.ipoCode);
     if (!savedData) return;
 
     const hasInitialFromIPO = initialFormData?.ipoCode || (initialFormData?.programName && (initialFormData?.buyerCode || initialFormData?.type));
