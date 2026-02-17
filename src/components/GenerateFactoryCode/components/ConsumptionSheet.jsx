@@ -534,6 +534,123 @@ const ConsumptionSheet = ({ formData = {} }) => {
     const desktopTableCell = { padding: '14px 18px' };
     const desktopHeaderCell = { padding: '12px 18px' };
 
+    const renderMaterialWorkOrders = (workOrders) => {
+      if (!workOrders || workOrders.length === 0) {
+        return (
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Work orders –</div>
+        );
+      }
+      return (
+        <div className="space-y-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Work orders</span>
+          <div className="flex flex-wrap gap-3">
+            {workOrders.map((wo, idx) => (
+              <div
+                key={`${wo.workOrder || 'wo'}-${idx}`}
+                className="bg-muted/10 border border-border rounded-lg text-sm"
+                style={{ padding: '8px 12px' }}
+              >
+                <span className="font-semibold text-foreground">{wo.workOrder || `WO ${idx + 1}`}</span>
+                {wo.wastage && (
+                  <span className="text-muted-foreground text-xs block mt-1">Wastage: {wo.wastage}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    const renderDesktopMaterialBlock = (material, matIdx) => {
+      const matNetCns = material.netConsumption != null ? parseFloat(material.netConsumption) : 0;
+      const wastageBreakdown = getRawMaterialWastageBreakdown(material);
+      const matWastages = wastageBreakdown.map((b) => b.value);
+      const matCompoundWastage = calculateCompoundWastage(matWastages);
+      const matTotalWastage = calculateTotalWastage(matWastages);
+      const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
+      const matUnit = material.unit || unit || '-';
+      const materialWorkOrders = material.workOrders || [];
+      const wastageTraceTitle = wastageBreakdown.length > 0
+        ? `Gross wastage from (compounded): ${wastageBreakdown.map((b) => `${b.source} ${b.value}%`).join(' → ')}`
+        : '';
+
+      return (
+        <div key={matIdx} className="min-w-0 border-b border-border">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 min-w-0">
+            <div className={row4Cell} style={desktopTableCell}>
+              <div className="flex items-start gap-2">
+                <span className="text-xs font-semibold text-muted-foreground">{matIdx + 1}.</span>
+                <span className="text-sm text-foreground break-words">{material.materialType || '-'}</span>
+              </div>
+            </div>
+            <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matNetCns || '-'}</span></div>
+            <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{overageQty}</span></div>
+            <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matTotalWastage}%</span></div>
+            <div className={row4Cell} style={desktopTableCell} title={wastageTraceTitle}><span className="text-base font-bold text-foreground">{matCompoundWastage}%</span></div>
+            <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-primary">{matGrossCns}</span></div>
+            <div className={row4Last} style={desktopTableCell}><span className="text-base font-bold text-foreground uppercase">{matUnit}</span></div>
+          </div>
+          <div className="border-t border-border/70 bg-muted/5" style={{ padding: '14px 18px' }}>
+            {renderMaterialWorkOrders(materialWorkOrders)}
+          </div>
+        </div>
+      );
+    };
+
+    const renderMobileTimelineBlock = (material, matIdx) => {
+      const matNetCns = material.netConsumption != null ? parseFloat(material.netConsumption) : 0;
+      const wastageBreakdown = getRawMaterialWastageBreakdown(material);
+      const matWastages = wastageBreakdown.map((b) => b.value);
+      const matCompoundWastage = calculateCompoundWastage(matWastages);
+      const matTotalWastage = calculateTotalWastage(matWastages);
+      const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
+      const matUnit = (material.unit || unit || '-').toString().toUpperCase();
+      const materialWorkOrders = material.workOrders || [];
+
+      return (
+        <div key={matIdx} className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+          <div style={{ padding: '16px 18px' }}>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Material {matIdx + 1}</span>
+                <span className="text-[10px] font-semibold text-muted-foreground">#{matIdx + 1}</span>
+              </div>
+              <p className="mt-1.5 text-base font-semibold text-foreground leading-snug">{material.materialType || 'Raw material'}</p>
+            </div>
+            <div className="space-y-3 mt-3">
+              <div className="flex justify-between items-baseline gap-3">
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Net CNS</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">{matNetCns !== 0 ? matNetCns : '–'}</span>
+              </div>
+              <div className="flex justify-between items-baseline gap-3">
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Overage Qty</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">{overageQty}</span>
+              </div>
+              <div className="flex justify-between items-baseline gap-3">
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Wastage</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">{matTotalWastage}%</span>
+              </div>
+              <div className="flex justify-between items-baseline gap-3">
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Gross Wastage</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">{matCompoundWastage}%</span>
+              </div>
+              <div className="flex justify-between items-baseline gap-3">
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Unit</span>
+                <span className="text-sm font-semibold text-foreground uppercase">{matUnit}</span>
+              </div>
+              <div className="flex justify-between items-baseline gap-3 pt-2 mt-1 border-t border-border/60">
+                <span className="text-xs font-semibold text-muted-foreground shrink-0">Gross CNS</span>
+                <span className="text-base font-bold text-primary tabular-nums">{matGrossCns}</span>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-border/70 bg-muted/5" style={{ padding: '14px 18px' }}>
+            {renderMaterialWorkOrders(materialWorkOrders)}
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div className="w-full min-w-0 mb-8">
         <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm min-w-0" style={{ padding: '20px' }}>
@@ -562,134 +679,41 @@ const ConsumptionSheet = ({ formData = {} }) => {
             <span className="text-base font-bold text-primary">{componentName || '-'}</span>
           </div>
 
-          {/* ROW 4: One row per raw material — only one of mobile or desktop layout */}
+          {/* ROW 4: One row per raw material — grouped layout */}
           <div className="border-b border-border min-w-0">
             {isMobileCns ? (
-            /* Mobile: grouped cards */
-            <div className="bg-muted/5" style={{ padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {rawMats.length > 0 ? (
-                rawMats.map((material, mIdx) => {
-                  const matNetCns = material.netConsumption != null ? parseFloat(material.netConsumption) : 0;
-                  const wastageBreakdown = getRawMaterialWastageBreakdown(material);
-                  const matWastages = wastageBreakdown.map((b) => b.value);
-                  const matCompoundWastage = calculateCompoundWastage(matWastages);
-                  const matTotalWastage = calculateTotalWastage(matWastages);
-                  const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
-                  const matUnit = (material.unit || unit || '-').toString().toUpperCase();
-                  return (
-                    <div key={mIdx} className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
-                      <div style={{ padding: '16px 18px' }}>
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Material {mIdx + 1}</span>
-                        <p className="mt-1.5 text-base font-semibold text-foreground leading-snug">{material.materialType || '–'}</p>
-                      </div>
-                      <div className="border-t border-border bg-muted/20" style={{ padding: '14px 18px' }}>
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-baseline gap-3">
-                            <span className="text-xs font-medium text-muted-foreground shrink-0">Net CNS</span>
-                            <span className="text-sm font-semibold text-foreground tabular-nums">{matNetCns !== 0 ? matNetCns : '–'}</span>
-                          </div>
-                          <div className="flex justify-between items-baseline gap-3">
-                            <span className="text-xs font-medium text-muted-foreground shrink-0">Overage Qty</span>
-                            <span className="text-sm font-semibold text-foreground tabular-nums">{overageQty}</span>
-                          </div>
-                          <div className="flex justify-between items-baseline gap-3">
-                            <span className="text-xs font-medium text-muted-foreground shrink-0">Wastage</span>
-                            <span className="text-sm font-semibold text-foreground tabular-nums">{matTotalWastage}%</span>
-                          </div>
-                          <div className="flex justify-between items-baseline gap-3">
-                            <span className="text-xs font-medium text-muted-foreground shrink-0">Gross Wastage</span>
-                            <span className="text-sm font-semibold text-foreground tabular-nums">{matCompoundWastage}%</span>
-                          </div>
-                          {wastageBreakdown.length > 0 && (
-                            <div className="text-[10px] text-muted-foreground pt-1 border-t border-border/60 mt-1">
-                              <span className="font-medium">From (compounded): </span>
-                              {wastageBreakdown.map((b, i) => (
-                                <span key={i}>{i > 0 ? ' + ' : ''}{b.source} {b.value}%</span>
-                              ))}
-                            </div>
-                          )}
-                          <div className="flex justify-between items-baseline gap-3">
-                            <span className="text-xs font-medium text-muted-foreground shrink-0">Unit</span>
-                            <span className="text-sm font-semibold text-foreground uppercase">{matUnit}</span>
-                          </div>
-                          <div className="flex justify-between items-baseline gap-3 pt-2 mt-1 border-t border-border/60">
-                            <span className="text-xs font-semibold text-muted-foreground shrink-0">Gross CNS</span>
-                            <span className="text-base font-bold text-primary tabular-nums">{matGrossCns}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
-                  <div className="border-b border-border/60" style={{ padding: '16px 18px' }}>
-                    <p className="text-sm font-medium text-muted-foreground">No raw material</p>
+              <div className="bg-muted/5" style={{ padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {rawMats.length > 0 ? (
+                  rawMats.map((material, mIdx) => renderMobileTimelineBlock(material, mIdx))
+                ) : (
+                  <div className="rounded-xl border border-border/60 bg-white shadow-sm overflow-hidden p-5 text-sm font-medium text-muted-foreground">
+                    No raw material
                   </div>
-                  <div className="text-sm text-muted-foreground" style={{ padding: '14px 18px' }}>
-                    <div className="space-y-3">
-                      <div className="flex justify-between"><span>Net CNS</span><span>–</span></div>
-                      <div className="flex justify-between"><span>Overage Qty</span><span>–</span></div>
-                      <div className="flex justify-between"><span>Wastage</span><span>–</span></div>
-                      <div className="flex justify-between"><span>Gross Wastage</span><span>–</span></div>
-                      <div className="flex justify-between"><span>Unit</span><span>–</span></div>
-                      <div className="flex justify-between pt-2 border-t border-border/60"><span className="font-medium">Gross CNS</span><span>–</span></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            ) : (
-            /* Desktop: table with header row + data rows */
-            <div className="min-w-0">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 min-w-0 border-b border-border bg-muted/30">
-                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Raw Material</span></div>
-                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Net CNS</span></div>
-                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Overage Qty</span></div>
-                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Wastage</span></div>
-                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gross Wastage</span></div>
-                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gross CNS</span></div>
-                <div className={row4Last} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Unit</span></div>
+                )}
               </div>
-              {rawMats.length > 0 ? (
-                rawMats.map((material, mIdx) => {
-                  const matNetCns = material.netConsumption != null ? parseFloat(material.netConsumption) : 0;
-                  const wastageBreakdown = getRawMaterialWastageBreakdown(material);
-                  const matWastages = wastageBreakdown.map((b) => b.value);
-                  const matCompoundWastage = calculateCompoundWastage(matWastages);
-                  const matTotalWastage = calculateTotalWastage(matWastages);
-                  const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
-                  const matUnit = material.unit || unit;
-                  const wastageTraceTitle = wastageBreakdown.length > 0
-                    ? `Gross wastage from (compounded): ${wastageBreakdown.map((b) => `${b.source} ${b.value}%`).join(' → ')}`
-                    : '';
-                  return (
-                    <div key={mIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 min-w-0 border-b border-border last:border-b-0">
-                      <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{material.materialType || '-'}</span></div>
-                      <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matNetCns || '-'}</span></div>
-                      <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{overageQty}</span></div>
-                      <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matTotalWastage}%</span></div>
-                      <div className={row4Cell} style={desktopTableCell} title={wastageTraceTitle}><span className="text-base font-bold text-foreground">{matCompoundWastage}%</span></div>
-                      <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-primary">{matGrossCns}</span></div>
-                      <div className={row4Last} style={desktopTableCell}><span className="text-base font-bold text-foreground uppercase">{matUnit}</span></div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 min-w-0 border-b border-border">
-                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-muted-foreground">-</span></div>
-                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-muted-foreground">-</span></div>
-                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-muted-foreground">-</span></div>
-                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-muted-foreground">-</span></div>
-                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-muted-foreground">-</span></div>
-                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-muted-foreground">-</span></div>
-                  <div className={row4Last} style={desktopTableCell}><span className="text-sm text-muted-foreground">-</span></div>
+            ) : (
+              <div className="min-w-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 min-w-0 border-b border-border bg-muted/30">
+                  <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Raw Material</span></div>
+                  <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Net CNS</span></div>
+                  <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Overage Qty</span></div>
+                  <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Wastage</span></div>
+                  <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gross Wastage</span></div>
+                  <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gross CNS</span></div>
+                  <div className={row4Last} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Unit</span></div>
                 </div>
-              )}
-            </div>
+                <div className="min-w-0">
+                  {rawMats.length > 0 ? (
+                    rawMats.map((material, mIdx) => renderDesktopMaterialBlock(material, mIdx))
+                  ) : (
+                  <div className="rounded-xl border border-border/60 bg-white shadow-sm overflow-hidden p-5 text-sm font-medium text-muted-foreground">
+                    No raw material
+                  </div>
+                )}
+                </div>
+              </div>
             )}
           </div>
-
           {/* ROW 5: SPEC */}
           <div className="border-b border-border bg-muted/5" style={isMobileCns ? { padding: '18px 16px' } : { padding: '20px' }}>
             <span className="text-xs font-bold text-foreground uppercase tracking-wider block mb-4">Specification</span>
