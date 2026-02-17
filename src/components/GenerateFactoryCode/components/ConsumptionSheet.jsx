@@ -515,7 +515,6 @@ const ConsumptionSheet = ({ formData = {} }) => {
     const productComponents = product.productComponents || [];
 
     const unit = getUnitForComponent(componentName, stepData);
-    const workOrders = getWorkOrdersForComponent(componentName, stepData);
     const rawMats = getRawMaterialsForComponent(componentName, stepData);
     const componentDetails = component || getComponentDetails(componentName, productComponents);
     const artworkMats = getArtworkMaterialsForComponent(componentName, stepData);
@@ -744,32 +743,6 @@ const ConsumptionSheet = ({ formData = {} }) => {
                   </span>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* WORK ORDERS */}
-          <div className="border-b border-border bg-muted/5" style={isMobileCns ? { padding: '18px 16px' } : { padding: '20px' }}>
-            <span className="text-xs font-bold text-foreground uppercase tracking-wider block mb-4">Work Orders</span>
-            <div style={isMobileCns ? {} : { paddingBottom: '4px' }}>
-              {workOrders.length > 0 ? (
-                <div className="flex flex-wrap" style={{ gap: isMobileCns ? '14px' : '16px' }}>
-                  {workOrders.map((wo, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white border border-border rounded-lg min-w-[140px] shadow-sm hover:shadow-md transition-shadow"
-                      style={isMobileCns ? { padding: '14px 18px' } : { padding: '16px 20px' }}
-                    >
-                      <span className="text-xs font-medium text-muted-foreground block mb-1">WO {idx + 1}</span>
-                      <span className="text-sm font-bold text-foreground">{wo.workOrder}</span>
-                      {wo.wastage && (
-                        <span className="text-xs text-muted-foreground block mt-1">Wastage: {wo.wastage}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-sm text-muted-foreground">-</span>
-              )}
             </div>
           </div>
 
