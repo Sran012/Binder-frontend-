@@ -91,10 +91,10 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
   };
   const dropdownClass = (error) =>
     `border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none${error ? ' border-red-600' : ''}`;
-  const toCount = (value) => {
+  const toCount = (value, max = 20) => {
     const parsed = parseInt(value, 10);
     if (Number.isNaN(parsed) || parsed < 0) return 0;
-    return parsed;
+    return Math.min(parsed, max);
   };
   const getFileArray = (fieldName) => {
     const value = material[fieldName];
@@ -878,11 +878,18 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <Input
                             type="number"
                             min="0"
+                            max="20"
                             value={material.niwarColour || ''}
                             onChange={(e) => {
                               const nextValue = e.target.value;
-                              handleChange(materialIndex, 'niwarColour', nextValue);
-                              trimFileArrayToCount('niwarColorReference', toCount(nextValue));
+                              if (nextValue === '') {
+                                handleChange(materialIndex, 'niwarColour', '');
+                                trimFileArrayToCount('niwarColorReference', 0);
+                                return;
+                              }
+                              const clamped = Math.min(20, Math.max(0, parseInt(nextValue, 10) || 0));
+                              handleChange(materialIndex, 'niwarColour', String(clamped));
+                              trimFileArrayToCount('niwarColorReference', clamped);
                             }}
                             placeholder="Enter number of colours"
                             aria-invalid={hasError('niwarColour')}
@@ -2131,11 +2138,18 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <Input
                             type="number"
                             min="0"
+                            max="20"
                             value={material.ribbingColour || ''}
                             onChange={(e) => {
                               const nextValue = e.target.value;
-                              handleChange(materialIndex, 'ribbingColour', nextValue);
-                              trimFileArrayToCount('ribbingColorReference', toCount(nextValue));
+                              if (nextValue === '') {
+                                handleChange(materialIndex, 'ribbingColour', '');
+                                trimFileArrayToCount('ribbingColorReference', 0);
+                                return;
+                              }
+                              const clamped = Math.min(20, Math.max(0, parseInt(nextValue, 10) || 0));
+                              handleChange(materialIndex, 'ribbingColour', String(clamped));
+                              trimFileArrayToCount('ribbingColorReference', clamped);
                             }}
                             placeholder="Enter number of colours"
                             aria-invalid={hasError('ribbingColour')}
