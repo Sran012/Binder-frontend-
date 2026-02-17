@@ -38,6 +38,17 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
 
   const orderTypeOptions = ['Production', 'Sampling', 'Company'];
   const companyTypeOptions = ['STOCK', 'SAM'];
+  const normalizeKey = (value) => String(value || '').trim().toLowerCase();
+  const findExistingIPO = (data, list) => {
+    return (list || []).find((ipo) => {
+      if (normalizeKey(ipo.orderType) !== normalizeKey(data.orderType)) return false;
+      if (normalizeKey(ipo.programName) !== normalizeKey(data.programName)) return false;
+      if (data.orderType === 'Company') {
+        return normalizeKey(ipo.type) === normalizeKey(data.type);
+      }
+      return normalizeKey(ipo.buyerCode) === normalizeKey(data.buyerCode);
+    });
+  };
 
   // Load buyer codes from localStorage
   useEffect(() => {
@@ -156,6 +167,21 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
     if (!validateInitialScreen()) return;
 
     try {
+      const storedIPOs = JSON.parse(localStorage.getItem('internalPurchaseOrders') || '[]');
+      const existingMatch = findExistingIPO(initialData, storedIPOs);
+      if (existingMatch) {
+        setInitialData({
+          orderType: existingMatch.orderType || initialData.orderType,
+          buyerCode: existingMatch.buyerCode || '',
+          type: existingMatch.type || '',
+          programName: existingMatch.programName || initialData.programName,
+          ipoCode: existingMatch.ipoCode || '',
+          poSrNo: existingMatch.poSrNo ?? null
+        });
+        setShowInitialScreen(false);
+        return;
+      }
+
       const savedJson = localStorage.getItem(FACTORY_CODE_STORAGE_KEY);
       const draft = savedJson ? JSON.parse(savedJson) : null;
 
@@ -217,6 +243,19 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
     setInitialData(updatedData);
     setGeneratedIPOCode(ipoCode);
     setShowIPOPopup(true);
+  };
+
+  const handleOpenExistingIPO = (item) => {
+    if (!item) return;
+    setInitialData({
+      orderType: item.orderType || '',
+      buyerCode: item.buyerCode || '',
+      type: item.type || '',
+      programName: item.programName || '',
+      ipoCode: item.ipoCode || '',
+      poSrNo: item.poSrNo ?? null
+    });
+    setShowInitialScreen(false);
   };
 
   // Handle Next from IPO popup
@@ -406,7 +445,8 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
               }}
             >
               {[...existingIPOs].reverse().map((item, idx) => (
-                <div
+                <button
+                  type="button"
                   key={(item.ipoCode || '') + '-' + (item.createdAt || idx)}
                   style={{
                     display: 'inline-flex',
@@ -416,11 +456,13 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
                     borderRadius: '6px',
                     fontSize: '13px'
                   }}
+                  onClick={() => handleOpenExistingIPO(item)}
+                  title="Open IPO"
                 >
                   <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: '600', color: 'var(--foreground)' }}>
                     {item.ipoCode || 'N/A'}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -433,4 +475,3 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
 };
 
 export default InternalPurchaseOrder;
-
