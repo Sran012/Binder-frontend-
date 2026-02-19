@@ -388,7 +388,8 @@ const Step4 = ({
                     value={material.unit || ''}
                     onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'unit', selectedValue)}
                     options={['CM', 'KGS', 'PCS']}
-                    placeholder="Select or type Unit"
+                    strictMode
+                    placeholder="CM"
                     className={errors[`artworkMaterial_${actualIndex}_unit`] 
                       ? 'border-red-600' 
                       : ''}
@@ -639,10 +640,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                 <SearchableDropdown
-                                  value={material.labelsBrandSizeUnit || 'MM'}
+                                  value={material.labelsBrandSizeUnit || ''}
                                   onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'labelsBrandSizeUnit', selectedValue)}
                                   options={['CM', 'KGS','PCS']}
-                                  placeholder="Select or type Unit"
+                                  strictMode
+                                  placeholder="CM"
                                   style={{ width: '120px' }}
                                 />
                               </div>
@@ -906,7 +908,7 @@ const Step4 = ({
                                   onChange={(e) => handleArtworkMaterialChange(actualIndex, 'careCompositionSizeWidth', e.target.value)}
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_careCompositionSizeWidth`] ? 'border-red-600' : 'border-border'}`}
                                   style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                                  placeholder="Width (mm)"
+                                  placeholder="Width"
                                 />
                                 <span className="text-gray-600" style={{ flexShrink: 0 }}>x</span>
                                 <input
@@ -915,13 +917,14 @@ const Step4 = ({
                                   onChange={(e) => handleArtworkMaterialChange(actualIndex, 'careCompositionSizeLength', e.target.value)}
                                   className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_careCompositionSizeLength`] ? 'border-red-600' : 'border-border'}`}
                                   style={{ padding: '10px 14px', height: '44px', width: '140px' }}
-                                  placeholder="Length (mm)"
+                                  placeholder="Length"
                                 />
                                 <SearchableDropdown
-                                  value={material.careCompositionSizeUnit || 'MM'}
+                                  value={material.careCompositionSizeUnit || ''}
                                   onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'careCompositionSizeUnit', selectedValue)}
                                   options={['CM', 'KGS','PCS']}
-                                  placeholder="Select or type Unit"
+                                  strictMode
+                                  placeholder="CM"
                                   style={{ width: '120px' }}
                                 />
                               </div>
@@ -1198,10 +1201,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                 <SearchableDropdown
-                                  value={material.rfidSizeUnit || 'MM'}
+                                  value={material.rfidSizeUnit || ''}
                                   onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'rfidSizeUnit', selectedValue)}
                                   options={['CM', 'KGS','PCS']}
-                                  placeholder="Select or type Unit"
+                                  strictMode
+                                  placeholder="CM"
                                   style={{ width: '120px' }}
                                 />
                               </div>
@@ -1367,7 +1371,7 @@ const Step4 = ({
                               }
                             }}
                             options={LAW_LABEL_TYPES}
-                            placeholder="Select or type"
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none w-full ${errors[`artworkMaterial_${actualIndex}_lawLabelType`] ? 'border-red-600' : 'border-border'}`}
                           />
                           {errors[`artworkMaterial_${actualIndex}_lawLabelType`] && <span className="text-red-600 text-xs mt-1">{errors[`artworkMaterial_${actualIndex}_lawLabelType`]}</span>}
@@ -1454,10 +1458,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.lawLabelSizeUnit || 'MM'}
+                            value={material.lawLabelSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'lawLabelSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_lawLabelSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '120px' }}
                           />
@@ -1706,10 +1711,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.hangTagSealsSizeUnit || 'MM'}
+                            value={material.hangTagSealsSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'hangTagSealsSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_\${actualIndex}_hangTagSealsSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '120px' }}
                           />
@@ -1932,10 +1938,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.heatTransferSizeUnit || 'MM'}
+                            value={material.heatTransferSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'heatTransferSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_\${actualIndex}_heatTransferSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '120px' }}
                           />
@@ -2170,7 +2177,8 @@ const Step4 = ({
                             value={material.upcBarcodeSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'upcBarcodeSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_\${actualIndex}_upcBarcodeSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '100px' }}
                           />
@@ -2419,10 +2427,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.priceTicketSizeUnit || 'MM'}
+                            value={material.priceTicketSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'priceTicketSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_priceTicketSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '120px' }}
                           />
@@ -2652,10 +2661,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.antiCounterfeitSizeUnit || 'MM'}
+                            value={material.antiCounterfeitSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'antiCounterfeitSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className="border-2 rounded-lg text-sm transition-all bg-background text-foreground border-border focus:border-primary focus:outline-none"
                             style={{ width: '120px' }}
                           />
@@ -2985,10 +2995,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.qcInspectionSizeUnit || 'MM'}
+                            value={material.qcInspectionSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'qcInspectionSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className="border-2 rounded-lg text-sm transition-all bg-background text-foreground border-border focus:border-primary focus:outline-none"
                             style={{ width: '120px' }}
                           />
@@ -3324,10 +3335,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.bellyBandSizeUnit || 'MM'}
+                            value={material.bellyBandSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'bellyBandSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_bellyBandSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '120px' }}
                           />
@@ -3608,10 +3620,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.sizeLabelsSizeUnit || 'MM'}
+                            value={material.sizeLabelsSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'sizeLabelsSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_sizeLabelsSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '120px' }}
                           />
@@ -3935,7 +3948,8 @@ const Step4 = ({
                             value={material.tagsSpecialLabelsSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'tagsSpecialLabelsSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_tagsSpecialLabelsSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '100px' }}
                           />
@@ -4302,10 +4316,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.flammabilitySafetySizeUnit || 'MM'}
+                            value={material.flammabilitySafetySizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'flammabilitySafetySizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_flammabilitySafetySizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '120px' }}
                           />
@@ -4586,10 +4601,11 @@ const Step4 = ({
                                   placeholder="HEIGHT"
                                 />
                                                           <SearchableDropdown
-                            value={material.insertCardsSizeUnit || 'MM'}
+                            value={material.insertCardsSizeUnit || ''}
                             onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'insertCardsSizeUnit', selectedValue)}
                             options={['CM', 'KGS','PCS']}
-                            placeholder="Select or type"
+                            strictMode
+                            placeholder="CM"
                             className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_insertCardsSizeUnit`] ? 'border-red-600' : 'border-border'}`}
                             style={{ width: '120px' }}
                           />
