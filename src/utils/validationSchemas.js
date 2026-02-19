@@ -576,7 +576,8 @@ export const PACKAGING_MATERIAL_SCHEMAS = {
     // Stiffener size (L x W) required only when Stiffener is YES; form uses Length + Width, not a single Dimensions field
     conditional: {
       'cartonBoxStiffenerLength': { when: 'cartonBoxStiffenerRequired', equals: 'YES' },
-      'cartonBoxStiffenerWidth': { when: 'cartonBoxStiffenerRequired', equals: 'YES' }
+      'cartonBoxStiffenerWidth': { when: 'cartonBoxStiffenerRequired', equals: 'YES' },
+      'cartonBoxStiffenerUnit': { when: 'cartonBoxStiffenerRequired', equals: 'YES' }
     }
   },
   'CORNER PROTECTORS': {

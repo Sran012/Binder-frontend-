@@ -209,7 +209,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       {material.cartonBoxStiffenerRequired === 'YES' && (
                         <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
                           <label className="text-sm font-semibold text-gray-700 mb-2">STIFFENER SIZE (L x W) <span className="text-red-500">*</span></label>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div className="flex flex-col">
                               <label className="text-xs text-gray-600 mb-1">L</label>
                               <input
@@ -233,6 +233,19 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                                 placeholder="Stiffener Width"
                               />
                               {errors?.[`${errorKeyPrefix}_cartonBoxStiffenerWidth`] && <span className="text-red-600 text-xs mt-1">{errors[`${errorKeyPrefix}_cartonBoxStiffenerWidth`]}</span>}
+                            </div>
+                            <div className="flex flex-col">
+                              <label className="text-xs text-gray-600 mb-1">UNIT</label>
+                              <select
+                                value={material.cartonBoxStiffenerUnit || material.cartonBoxDimensionsUnit || 'CM'}
+                                onChange={(e) => onChange('cartonBoxStiffenerUnit', e.target.value)}
+                                className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`${errorKeyPrefix}_cartonBoxStiffenerUnit`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
+                                style={{ padding: '10px 14px', height: '44px', width: '100%' }}
+                              >
+                                <option value="CM">CM</option>
+                                <option value="KGS">KGS</option>
+                              </select>
+                              {errors?.[`${errorKeyPrefix}_cartonBoxStiffenerUnit`] && <span className="text-red-600 text-xs mt-1">{errors[`${errorKeyPrefix}_cartonBoxStiffenerUnit`]}</span>}
                             </div>
                           </div>
                         </div>
