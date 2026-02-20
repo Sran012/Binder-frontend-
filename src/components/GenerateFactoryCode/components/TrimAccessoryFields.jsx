@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PercentInput } from '@/components/ui/percent-input';
 import { TestingRequirementsInput } from '@/components/ui/testing-requirements-input';
 import { isEmpty } from '@/utils/validationSchemas';
+import { TRIMS_APPROVAL_OPTIONS } from '../data/approvalOptions';
 import {
   ZippersAdvancedSpec,
   ButtonsAdvancedSpec,
@@ -242,7 +243,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.approval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'approval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('approval'))}
                           />
@@ -440,7 +441,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.buttonApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'buttonApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('buttonApproval'))}
                           />
@@ -639,7 +640,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.velcroApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'velcroApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('velcroApproval'))}
                           />
@@ -812,7 +813,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.rivetApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'rivetApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('rivetApproval'))}
                           />
@@ -1104,7 +1105,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.niwarApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'niwarApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('niwarApproval'))}
                           />
@@ -1320,7 +1321,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.laceApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'laceApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('laceApproval'))}
                           />
@@ -1520,7 +1521,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.feltApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'feltApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('feltApproval'))}
                           />
@@ -1745,7 +1746,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.interliningApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'interliningApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('interliningApproval'))}
                           />
@@ -1877,7 +1878,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.hookEyeApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'hookEyeApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('hookEyeApproval'))}
                           />
@@ -2023,7 +2024,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.bucklesApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'bucklesApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                           />
@@ -2211,7 +2212,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.shoulderPadApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'shoulderPadApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('shoulderPadApproval'))}
                           />
@@ -2418,7 +2419,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.ribbingApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'ribbingApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('ribbingApproval'))}
                           />
@@ -2561,7 +2562,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.cableTieApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'cableTieApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className="border border-input rounded-md bg-background text-foreground h-11 w-full text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
                           />
@@ -2740,7 +2741,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.seamTapeApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'seamTapeApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('seamTapeApproval'))}
                           />
@@ -2985,7 +2986,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.reflectiveTapeApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'reflectiveTapeApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'IPP', 'Compliance Certificate']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('reflectiveTapeApproval'))}
                           />
@@ -3202,7 +3203,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.frTrimsApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'frTrimsApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'IPP', 'Certification Report']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('frTrimsApproval'))}
                           />
@@ -3381,7 +3382,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.cordStopApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'cordStopApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'IPP', 'Functionality Approval']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('cordStopApproval'))}
                           />
@@ -3561,7 +3562,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.ringsLoopsApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'ringsLoopsApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'IPP', 'Load Test Certificate']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('ringsLoopsApproval'))}
                           />
@@ -3740,7 +3741,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.pinBarbApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'pinBarbApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('pinBarbApproval'))}
                           />
@@ -3902,7 +3903,7 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.magneticClosureApproval || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'magneticClosureApproval', selectedValue)}
-                            options={["BUYER'S", 'INITIAL', 'IPP', 'Magnet Strength Check']}
+                            options={TRIMS_APPROVAL_OPTIONS}
                             placeholder="Select or type"
                             className={dropdownClass(hasError('magneticClosureApproval'))}
                           />

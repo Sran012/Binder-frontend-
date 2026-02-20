@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import SearchableDropdown from '../SearchableDropdown';
+import { ARTWORK_APPROVAL_OPTIONS } from '../../data/approvalOptions';
 import {
   ANTI_COUNTERFEIT_TYPES,
   ANTI_COUNTERFEIT_MATERIALS,
@@ -5040,7 +5041,7 @@ const Step4 = ({
                   <SearchableDropdown
                         value={material.approval || ''}
                         onChange={(selectedValue) => handleArtworkMaterialChange(actualIndex, 'approval', selectedValue)}
-                        options={["BUYER'S", 'INITIAL', 'IPP', 'PP', 'TOP']}
+                        options={ARTWORK_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                         className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground focus:border-primary focus:outline-none ${errors[`artworkMaterial_${actualIndex}_approval`] ? 'border-red-600' : 'border-border'}`}
                       />
@@ -6703,5 +6704,4 @@ const Step4 = ({
 };
 
 export default Step4;
-
 

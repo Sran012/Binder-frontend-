@@ -1,4 +1,5 @@
 import SearchableDropdown from './SearchableDropdown';
+import { PACKAGING_APPROVAL_OPTIONS } from '../data/approvalOptions';
 import { TestingRequirementsInput } from '@/components/ui/testing-requirements-input';
 import { cn } from '@/lib/utils';
 
@@ -2412,7 +2413,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.cartonBoxApproval || ''}
                         onChange={(selectedValue) => onChange('cartonBoxApproval', selectedValue)}
-                        options={['SELF', "BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2422,7 +2423,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.cornerProtectorApproval || ''}
                         onChange={(selectedValue) => onChange('cornerProtectorApproval', selectedValue)}
-                        options={["BUYER'S", 'QA Approval', 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2432,7 +2433,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.edgeProtectorApproval || ''}
                         onChange={(selectedValue) => onChange('edgeProtectorApproval', selectedValue)}
-                        options={["BUYER'S", 'QA Approval', 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2442,7 +2443,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.foamInsertApproval || ''}
                         onChange={(selectedValue) => onChange('foamInsertApproval', selectedValue)}
-                        options={["BUYER'S", 'QA Approval', 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2452,7 +2453,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.palletStrapApproval || ''}
                         onChange={(selectedValue) => onChange('palletStrapApproval', selectedValue)}
-                        options={["BUYER'S", 'Logistics Approval', 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2462,7 +2463,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.polybagBaleApproval || ''}
                         onChange={(selectedValue) => onChange('polybagBaleApproval', selectedValue)}
-                        options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2472,7 +2473,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.polybagPolybagFlapApproval || ''}
                         onChange={(selectedValue) => onChange('polybagPolybagFlapApproval', selectedValue)}
-                        options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2482,7 +2483,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.silicaGelDesiccantApproval || ''}
                         onChange={(selectedValue) => onChange('silicaGelDesiccantApproval', selectedValue)}
-                        options={["BUYER'S", 'QA Approval', 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2492,7 +2493,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.stretchWrapApproval || ''}
                         onChange={(selectedValue) => onChange('stretchWrapApproval', selectedValue)}
-                        options={["BUYER'S", 'Logistics Approval', 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2502,7 +2503,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.tapeApproval || ''}
                         onChange={(selectedValue) => onChange('tapeApproval', selectedValue)}
-                        options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2512,7 +2513,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.voidFillApproval || ''}
                         onChange={(selectedValue) => onChange('voidFillApproval', selectedValue)}
-                        options={["BUYER'S", 'QA Approval', 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2522,7 +2523,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                       <SearchableDropdown
                         value={material.dividerApproval || ''}
                         onChange={(selectedValue) => onChange('dividerApproval', selectedValue)}
-                        options={["BUYER'S", 'QA Approval', 'INITIAL', 'PP SAMPLE']}
+                        options={PACKAGING_APPROVAL_OPTIONS}
                         placeholder="Select or type Approval"
                       />
                     </div>
@@ -2532,7 +2533,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                     <SearchableDropdown
                       value={material.approvalAgainst || ''}
                       onChange={(selectedValue) => onChange('approvalAgainst', selectedValue)}
-                      options={["BUYER'S", 'INITIAL', 'PP SAMPLE']}
+                      options={PACKAGING_APPROVAL_OPTIONS}
                       placeholder="Select or type Approval Against"
                     />
                   </div>
