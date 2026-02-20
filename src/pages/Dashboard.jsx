@@ -25,9 +25,11 @@ const Dashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(null);
+  const [hoveredSubmenu, setHoveredSubmenu] = useState(null);
   const [existingIPOs, setExistingIPOs] = useState([]);
   const profileMenuRef = useRef(null);
-  const hoverTimeoutRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const hoverPanelRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -91,14 +93,32 @@ const Dashboard = () => {
     }
   }, [hoveredMenu]);
 
-  const handleMenuHover = (id) => {
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    setHoveredMenu(id);
-  };
+  useEffect(() => {
+    if (!hoveredMenu) {
+      setHoveredSubmenu(null);
+      return;
+    }
+    setHoveredSubmenu(null);
+  }, [hoveredMenu]);
 
-  const handleMenuLeave = () => {
-    hoverTimeoutRef.current = setTimeout(() => setHoveredMenu(null), 150);
-  };
+  useEffect(() => {
+    if (activePage === 'home' || activePage === 'tasks') {
+      setHoveredMenu(null);
+    }
+  }, [activePage]);
+
+  useEffect(() => {
+    if (!hoveredMenu) return;
+    const handleClickOutside = (event) => {
+      const sidebarEl = sidebarRef.current;
+      const panelEl = hoverPanelRef.current;
+      if (sidebarEl?.contains(event.target)) return;
+      if (panelEl?.contains(event.target)) return;
+      setHoveredMenu(null);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [hoveredMenu]);
 
   const ipoByType = (type) =>
     existingIPOs.filter((ipo) => (ipo.orderType || '').toLowerCase() === type.toLowerCase());
@@ -108,117 +128,174 @@ const Dashboard = () => {
 
     if (hoveredMenu === 'code-creation') {
       return (
-        <div className="hover-panel" onMouseEnter={() => handleMenuHover('code-creation')} onMouseLeave={handleMenuLeave}>
-          <div className="hover-panel-column">
-            <button className="hover-panel-item" onClick={() => { setActivePage('code-creation'); setCodeCreationView('buyer'); }}>
-              Buyer
-            </button>
-            <button className="hover-panel-item" onClick={() => { setActivePage('code-creation'); setCodeCreationView('vendor'); }}>
-              Vendor
-            </button>
-            <button className="hover-panel-item" onClick={() => { setActivePage('code-creation'); setCodeCreationView('company-essentials'); }}>
-              Company Essentials
-            </button>
-            <button className="hover-panel-item" onClick={() => { setActivePage('code-creation'); setCodeCreationView('internal-purchase-order'); }}>
-              Internal Purchase Order
-            </button>
+        <div className="hover-panel-group" ref={hoverPanelRef} onMouseLeave={() => setHoveredSubmenu(null)}>
+          <div className="hover-panel">
+            <div className="hover-panel-column">
+              <button className="hover-panel-item" onClick={() => { setActivePage('code-creation'); setCodeCreationView('buyer'); setHoveredMenu(null); }}>
+                Buyer
+              </button>
+              <button className="hover-panel-item" onClick={() => { setActivePage('code-creation'); setCodeCreationView('vendor'); setHoveredMenu(null); }}>
+                Vendor
+              </button>
+              <button className="hover-panel-item" onClick={() => { setActivePage('code-creation'); setCodeCreationView('company-essentials'); setHoveredMenu(null); }}>
+                Company Essentials
+              </button>
+              <button className="hover-panel-item" onClick={() => { setActivePage('code-creation'); setCodeCreationView('internal-purchase-order'); setHoveredMenu(null); }}>
+                Internal Purchase Order
+              </button>
+            </div>
           </div>
         </div>
       );
     }
 
     if (hoveredMenu === 'ipo-issued') {
+      const categories = [
+        { label: 'Production', key: 'Production' },
+        { label: 'Sampling', key: 'Sampling' },
+        { label: 'Company', key: 'Company' },
+      ];
+      const activeCategory =
+        hoveredSubmenu?.menu === 'ipo-issued' ? hoveredSubmenu.category : null;
+      const items = activeCategory ? ipoByType(activeCategory) : [];
       return (
-        <div className="hover-panel" onMouseEnter={() => handleMenuHover('ipo-issued')} onMouseLeave={handleMenuLeave}>
-          <div className="hover-panel-column">
-            <div className="hover-panel-title">Production</div>
-            {ipoByType('Production').map((ipo) => (
-              <div key={ipo.ipoCode} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            {ipoByType('Production').length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
+        <div className="hover-panel-group" ref={hoverPanelRef} onMouseLeave={() => setHoveredSubmenu(null)}>
+          <div className="hover-panel">
+            <div className="hover-panel-column">
+              <div className="hover-panel-title">IPO Issued</div>
+              {categories.map((cat) => (
+                <button
+                  key={cat.key}
+                  type="button"
+                  className={`hover-panel-item ${activeCategory === cat.key ? 'active' : ''}`}
+                  onMouseEnter={() => setHoveredSubmenu({ menu: 'ipo-issued', category: cat.key })}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="hover-panel-column">
-            <div className="hover-panel-title">Sampling</div>
-            {ipoByType('Sampling').map((ipo) => (
-              <div key={ipo.ipoCode} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            {ipoByType('Sampling').length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
-          </div>
-          <div className="hover-panel-column">
-            <div className="hover-panel-title">Company</div>
-            {ipoByType('Company').map((ipo) => (
-              <div key={ipo.ipoCode} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            {ipoByType('Company').length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
-          </div>
+          {activeCategory && (
+            <div className="hover-panel nested-panel">
+              <div className="hover-panel-column">
+                <div className="hover-panel-title">{categories.find((c) => c.key === activeCategory)?.label}</div>
+                {items.map((ipo) => (
+                  <div key={ipo.ipoCode} className="hover-panel-subitem">{ipo.ipoCode}</div>
+                ))}
+                {items.length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
 
     if (hoveredMenu === 'purchase') {
+      const categories = [
+        { label: 'Production', key: 'Production' },
+        { label: 'Sampling', key: 'Sampling' },
+        { label: 'Company Essentials', key: 'Company' },
+      ];
+      const activeCategory =
+        hoveredSubmenu?.menu === 'purchase' ? hoveredSubmenu.category : null;
+      const items = activeCategory ? ipoByType(activeCategory) : [];
       return (
-        <div className="hover-panel" onMouseEnter={() => handleMenuHover('purchase')} onMouseLeave={handleMenuLeave}>
-          <div className="hover-panel-column">
-            <div className="hover-panel-title">Production</div>
-            {ipoByType('Production').map((ipo) => (
-              <div key={ipo.ipoCode} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            {ipoByType('Production').length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
+        <div className="hover-panel-group" ref={hoverPanelRef} onMouseLeave={() => setHoveredSubmenu(null)}>
+          <div className="hover-panel">
+            <div className="hover-panel-column">
+              <div className="hover-panel-title">Purchase</div>
+              {categories.map((cat) => (
+                <button
+                  key={cat.key}
+                  type="button"
+                  className={`hover-panel-item ${activeCategory === cat.key ? 'active' : ''}`}
+                  onMouseEnter={() => setHoveredSubmenu({ menu: 'purchase', category: cat.key })}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="hover-panel-column">
-            <div className="hover-panel-title">Sampling</div>
-            {ipoByType('Sampling').map((ipo) => (
-              <div key={ipo.ipoCode} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            {ipoByType('Sampling').length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
-          </div>
-          <div className="hover-panel-column">
-            <div className="hover-panel-title">Company Essentials</div>
-            {ipoByType('Company').map((ipo) => (
-              <div key={ipo.ipoCode} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            {ipoByType('Company').length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
-            <button className="hover-panel-action" onClick={() => { setActivePage('code-creation'); setCodeCreationView('generate-po'); }}>
-              Generate PO
-            </button>
-          </div>
+          {activeCategory && (
+            <div className="hover-panel nested-panel">
+              <div className="hover-panel-column">
+                <div className="hover-panel-title">{categories.find((c) => c.key === activeCategory)?.label}</div>
+                {items.map((ipo) => (
+                  <div key={ipo.ipoCode} className="hover-panel-subitem">{ipo.ipoCode}</div>
+                ))}
+                {items.length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
+                {activeCategory === 'Company' && (
+                  <button className="hover-panel-action" onClick={() => { setActivePage('code-creation'); setCodeCreationView('generate-po'); setHoveredMenu(null); }}>
+                    Generate PO
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
 
     if (hoveredMenu === 'ims') {
+      const categories = [
+        { label: 'Production', key: 'Production' },
+        { label: 'Sampling', key: 'Sampling' },
+        { label: 'Company Essentials', key: 'Company' },
+      ];
+      const activeSection = hoveredSubmenu?.menu === 'ims' ? hoveredSubmenu.section : null;
+      const activeCategory = hoveredSubmenu?.menu === 'ims' ? hoveredSubmenu.category : null;
+      const items = activeCategory ? ipoByType(activeCategory) : [];
       return (
-        <div className="hover-panel" onMouseEnter={() => handleMenuHover('ims')} onMouseLeave={handleMenuLeave}>
-          <div className="hover-panel-column">
-            <div className="hover-panel-title">Inward Store Sheet</div>
-            <div className="hover-panel-subtitle">Production</div>
-            {ipoByType('Production').map((ipo) => (
-              <div key={`in-${ipo.ipoCode}`} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            <div className="hover-panel-subtitle">Sampling</div>
-            {ipoByType('Sampling').map((ipo) => (
-              <div key={`in-${ipo.ipoCode}`} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            <div className="hover-panel-subtitle">Company Essentials</div>
-            {ipoByType('Company').map((ipo) => (
-              <div key={`in-${ipo.ipoCode}`} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
+        <div className="hover-panel-group" ref={hoverPanelRef} onMouseLeave={() => setHoveredSubmenu(null)}>
+          <div className="hover-panel">
+            <div className="hover-panel-column">
+              <div className="hover-panel-title">IMS</div>
+              <button
+                type="button"
+                className={`hover-panel-item ${activeSection === 'inward' ? 'active' : ''}`}
+                onMouseEnter={() => setHoveredSubmenu({ menu: 'ims', section: 'inward', category: null })}
+              >
+                Inward Store Sheet
+              </button>
+              <button
+                type="button"
+                className={`hover-panel-item ${activeSection === 'outward' ? 'active' : ''}`}
+                onMouseEnter={() => setHoveredSubmenu({ menu: 'ims', section: 'outward', category: null })}
+              >
+                Outward Store Sheet
+              </button>
+            </div>
           </div>
-          <div className="hover-panel-column">
-            <div className="hover-panel-title">Outward Store Sheet</div>
-            <div className="hover-panel-subtitle">Production</div>
-            {ipoByType('Production').map((ipo) => (
-              <div key={`out-${ipo.ipoCode}`} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            <div className="hover-panel-subtitle">Sampling</div>
-            {ipoByType('Sampling').map((ipo) => (
-              <div key={`out-${ipo.ipoCode}`} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-            <div className="hover-panel-subtitle">Company Essentials</div>
-            {ipoByType('Company').map((ipo) => (
-              <div key={`out-${ipo.ipoCode}`} className="hover-panel-subitem">{ipo.ipoCode}</div>
-            ))}
-          </div>
+          {activeSection && (
+            <div className="hover-panel nested-panel">
+              <div className="hover-panel-column">
+                <div className="hover-panel-title">
+                  {activeSection === 'inward' ? 'Inward Store Sheet' : 'Outward Store Sheet'}
+                </div>
+                {categories.map((cat) => (
+                  <button
+                    key={`${activeSection}-${cat.key}`}
+                    type="button"
+                    className={`hover-panel-item ${activeCategory === cat.key ? 'active' : ''}`}
+                    onMouseEnter={() => setHoveredSubmenu({ menu: 'ims', section: activeSection, category: cat.key })}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {activeCategory && (
+            <div className="hover-panel nested-panel second">
+              <div className="hover-panel-column">
+                <div className="hover-panel-title">{categories.find((c) => c.key === activeCategory)?.label}</div>
+                {items.map((ipo) => (
+                  <div key={`${activeSection}-${ipo.ipoCode}`} className="hover-panel-subitem">{ipo.ipoCode}</div>
+                ))}
+                {items.length === 0 && <div className="hover-panel-subitem muted">No IPOs</div>}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -228,7 +305,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`} ref={sidebarRef}>
         <div className="sidebar-header">
           <div className="logo-wrapper">
             <button
@@ -252,10 +329,15 @@ const Dashboard = () => {
               onClick={() => {
                 if (item.id === 'home' || item.id === 'tasks') {
                   setActivePage(item.id);
+                  setHoveredMenu(null);
+                  return;
                 }
+                if (item.id === 'code-creation') {
+                  setCodeCreationView(null);
+                }
+                setActivePage(item.id);
+                setHoveredMenu(item.id);
               }}
-              onMouseEnter={() => handleMenuHover(item.id)}
-              onMouseLeave={handleMenuLeave}
             >
               <span className="nav-icon" aria-hidden="true">
                 <item.icon size={18} />
