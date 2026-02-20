@@ -5412,7 +5412,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       {showConsumptionSheet && (
         <>
           {/* Consumption Sheet View - Just the sheet, no extra header */}
-          <div className="mb-8 mx-auto min-w-0 w-full" style={{ maxWidth: '1800px' }}>
+          <div className="mb-8 mx-auto min-w-0 w-[92vw]" style={{ maxWidth: '2000px' }}>
             {/* Close Button */}
             <div className="flex justify-end mb-4 px-2 sm:px-0">
               <Button type="button" onClick={() => setShowConsumptionSheet(false)} variant="default">
@@ -5440,7 +5440,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       }}>
         <DialogContent
           showCloseButton={true}
-          className="max-h-[90vh] overflow-hidden flex flex-col rounded-2xl border-2 border-border shadow-2xl bg-white p-4 sm:p-6 w-[95vw] max-w-full sm:w-[85vw] md:w-[50vw] md:max-w-[900px]"
+          className="max-h-[90vh] overflow-hidden flex flex-col rounded-2xl border-2 border-border shadow-2xl bg-white p-4 sm:p-6 w-[92vw] max-w-full sm:w-[85vw] md:w-[65vw] md:max-w-[1100px]"
           style={{ padding: '18px' }}
         >
           <DialogHeader className="pb-5 pt-2 px-2 border-b border-border flex-shrink-0 min-w-0">

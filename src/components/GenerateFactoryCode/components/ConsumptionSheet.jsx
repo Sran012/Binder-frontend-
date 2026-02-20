@@ -812,12 +812,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
             <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matTotalWastage}%</span></div>
             <div className={row4Cell} style={desktopTableCell} title={wastageTraceTitle}><span className="text-base font-bold text-foreground">{matCompoundWastage}%</span></div>
             <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-primary">{matGrossCns}</span></div>
-            <div className={row4Cell} style={desktopTableCell}>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[11px] text-muted-foreground">Set of {setOfNumber}</span>
-                <span className="text-base font-bold text-primary">{matGrossCnsSet.toFixed(3)}</span>
-              </div>
-            </div>
+            <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-primary">{matGrossCnsSet.toFixed(3)}</span></div>
             <div className={row4Last} style={desktopTableCell}><span className="text-base font-bold text-foreground uppercase">{matUnit}</span></div>
           </div>
           <div className="border-t border-border/70 bg-muted/5" style={{ padding: '14px 18px' }}>
@@ -918,7 +913,7 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`, { size: 'sm' 
               </div>
               <div className="flex justify-between items-baseline gap-3">
                 <span className="text-xs font-semibold text-muted-foreground shrink-0 inline-flex items-center gap-2">
-                  {renderInfoIcon('Gross CNS multiplied by Set Of', { size: 'sm' })} Gross CNS (Set)
+                  {renderInfoIcon('Gross CNS multiplied by Set Of', { size: 'sm' })} Gross CNS
                   <span className="text-[11px] text-muted-foreground">Set of {setOfNumber}</span>
                 </span>
                 <span className="text-base font-bold text-primary tabular-nums">{matGrossCnsSet.toFixed(3)}</span>
@@ -1065,9 +1060,12 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                     </span>
                   </div>
                   <div className={row4Cell} style={desktopHeaderCell}>
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
-                      Gross CNS (Set) {renderInfoIcon('Gross CNS multiplied by Set Of', { align: 'right' })}
-                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
+                        Gross CNS {renderInfoIcon('Gross CNS multiplied by Set Of', { align: 'right' })}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Set of {setOfNumber}</span>
+                    </div>
                   </div>
                   <div className={row4Last} style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
@@ -1181,6 +1179,7 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                   const artworkWastageSurplus = extractArtworkWastageSurplus(artwork);
                   const artworkCompoundWastage = calculateCompoundWastage(artworkWastageSurplus);
                   const artworkGrossCns = calculateGrossCns(overageQty, artworkWastageSurplus, artworkNetCns);
+                  const artworkGrossCnsSet = (parseFloat(artworkGrossCns) || 0) * setOfNumber;
                   const artUnit = (artwork.unit || '-').toString().toUpperCase();
                   return (
                     <div key={idx} className="rounded-xl border border-border bg-white shadow-sm min-w-0">
@@ -1214,6 +1213,13 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                             </span>
                             <span className="text-base font-bold text-primary tabular-nums">{artworkGrossCns}</span>
                           </div>
+                          <div className="flex justify-between items-baseline gap-3">
+                            <span className="text-xs font-semibold text-muted-foreground shrink-0 inline-flex items-center gap-2">
+                              {renderInfoIcon('Gross CNS multiplied by Set Of', { size: 'sm' })} Gross CNS
+                              <span className="text-[11px] text-muted-foreground">Set of {setOfNumber}</span>
+                            </span>
+                            <span className="text-base font-bold text-primary tabular-nums">{artworkGrossCnsSet.toFixed(3)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1223,22 +1229,30 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
               ) : (
               /* Desktop: table with header row + data rows */
               <div className="min-w-0 rounded-lg border border-border overflow-hidden bg-card">
-                <div className="grid grid-cols-2 sm:grid-cols-5 min-w-0 border-b border-border bg-muted/30">
-                  <div className="min-w-0 border-r border-border [&:nth-child(5n)]:border-r-0" style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Material Description</span></div>
-                  <div className="min-w-0 border-r border-border [&:nth-child(5n)]:border-r-0" style={desktopHeaderCell}>
+                <div className="grid grid-cols-2 sm:grid-cols-6 min-w-0 border-b border-border bg-muted/30">
+                  <div className="min-w-0 border-r border-border" style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Material Description</span></div>
+                  <div className="min-w-0 border-r border-border" style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
                       Net CNS {renderInfoIcon('Sum of net consumption for this artwork material')}
                     </span>
                   </div>
-                  <div className="min-w-0 border-r border-border [&:nth-child(5n)]:border-r-0" style={desktopHeaderCell}>
+                  <div className="min-w-0 border-r border-border" style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
                       Wastage {renderInfoIcon('Sum of all wastage/surplus values for this artwork material')}
                     </span>
                   </div>
-                  <div className="min-w-0 border-r border-border [&:nth-child(5n)]:border-r-0" style={desktopHeaderCell}>
+                  <div className="min-w-0 border-r border-border" style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
                       Gross CNS {renderInfoIcon('Gross CNS per piece multiplied by overage quantity')}
                     </span>
+                  </div>
+                  <div className="min-w-0 border-r border-border" style={desktopHeaderCell}>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
+                        Gross CNS {renderInfoIcon('Gross CNS multiplied by Set Of', { align: 'right' })}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Set of {setOfNumber}</span>
+                    </div>
                   </div>
                   <div className="min-w-0 border-border" style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
@@ -1251,14 +1265,16 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                   const artworkWastageSurplus = extractArtworkWastageSurplus(artwork);
                   const artworkCompoundWastage = calculateCompoundWastage(artworkWastageSurplus);
                   const artworkGrossCns = calculateGrossCns(overageQty, artworkWastageSurplus, artworkNetCns);
-                  const artCellClass = 'min-w-0 border-r border-border [&:nth-child(5n)]:border-r-0 bg-muted/5';
+                  const artworkGrossCnsSet = (parseFloat(artworkGrossCns) || 0) * setOfNumber;
+                  const artCellClass = 'min-w-0 border-r border-border bg-muted/5';
                   const artLastClass = 'min-w-0 border-border bg-muted/5';
                   return (
-                    <div key={idx} className="grid grid-cols-2 sm:grid-cols-5 min-w-0 border-b border-border last:border-b-0">
+                    <div key={idx} className="grid grid-cols-2 sm:grid-cols-6 min-w-0 border-b border-border last:border-b-0">
                       <div className={artCellClass} style={desktopTableCell}><span className="text-sm text-foreground break-words">{artwork.materialDescription || '-'}</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-foreground">{artworkNetCns || '-'}</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-foreground">{artworkCompoundWastage}%</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-primary">{artworkGrossCns}</span></div>
+                      <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-primary">{artworkGrossCnsSet.toFixed(3)}</span></div>
                       <div className={artLastClass} style={desktopTableCell}><span className="text-base font-bold text-foreground uppercase">{artwork.unit || '-'}</span></div>
                     </div>
                   );
