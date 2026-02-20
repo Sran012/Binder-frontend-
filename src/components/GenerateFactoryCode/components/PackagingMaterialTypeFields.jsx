@@ -50,6 +50,7 @@ const getPoQtyAndImageForIpc = (skus, ipc) => {
 const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, errors, materialIndex = 0, casepackQty, productSelection, skus }) => {
   if (!material || typeof material !== 'object') return null;
   const safeIndex = Number.isFinite(materialIndex) ? materialIndex : 0;
+  const typeFieldWidth = 280;
   const selectedIpcs = Array.isArray(productSelection) ? productSelection : (productSelection ? [productSelection] : []);
   const casepack = typeof casepackQty === 'number' ? casepackQty : parseFloat(String(casepackQty || '').trim()) || 0;
   const polybagNum = parseFloat(String(material.polybagBalePolybagCount || '').trim()) || 0;
@@ -2231,7 +2232,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                   {(material.packagingMaterialType === 'CARTON BOX' || material.packagingMaterialType === 'CORNER PROTECTORS' || material.packagingMaterialType === 'EDGE PROTECTORS' || material.packagingMaterialType === 'FOAM INSERT' || material.packagingMaterialType === 'PALLET STRAP' || material.packagingMaterialType === 'POLYBAG~Bale' || material.packagingMaterialType === 'POLYBAG~POLYBAG-FLAP' || material.packagingMaterialType === 'SILICA GEL DESICCANT' || material.packagingMaterialType === 'SHRINK TAPE' || material.packagingMaterialType === 'TAPE' || material.packagingMaterialType === 'VOID~FILL' || material.packagingMaterialType === 'DIVIDER') ? (
                     <>
                       <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-                        <div className="flex flex-col flex-1">
+                        <div className="flex flex-col" style={{ width: `${typeFieldWidth}px` }}>
                           <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS % <span className="text-red-500">*</span></label>
                           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                             <input
@@ -2292,7 +2293,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                                 (material.packagingMaterialType === 'VOID~FILL' && errors?.[`${errorKeyPrefix}_voidFillSurplus`]) ||
                                 (material.packagingMaterialType === 'DIVIDER' && errors?.[`${errorKeyPrefix}_dividerSurplus`])
                               ) ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                              style={{ padding: '10px 32px 10px 14px', width: '100%', height: '44px' }}
+                              style={{ padding: '10px 32px 10px 14px', width: `${typeFieldWidth}px`, height: '44px' }}
                               placeholder=""
                             />
                             <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
@@ -2303,7 +2304,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                             </span>
                           ) : null}
                         </div>
-                        <div className="flex flex-col flex-1">
+                        <div className="flex flex-col" style={{ width: `${typeFieldWidth}px` }}>
                           <label className="text-sm font-semibold text-gray-700 mb-2">WASTAGE % <span className="text-red-500">*</span></label>
                           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                             <input
@@ -2364,7 +2365,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                                 (material.packagingMaterialType === 'VOID~FILL' && errors?.[`${errorKeyPrefix}_voidFillWastage`]) ||
                                 (material.packagingMaterialType === 'DIVIDER' && errors?.[`${errorKeyPrefix}_dividerWastage`])
                               ) ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                              style={{ padding: '10px 32px 10px 14px', width: '100%', height: '44px' }}
+                              style={{ padding: '10px 32px 10px 14px', width: `${typeFieldWidth}px`, height: '44px' }}
                               placeholder=""
                             />
                             <span style={{ position: 'absolute', right: '14px', color: '#6b7280', pointerEvents: 'none', userSelect: 'none' }}>%</span>
@@ -2379,14 +2380,14 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                     </>
                   ) : (
                   <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 flex items-end gap-4">
-                    <div className="flex flex-col flex-1">
+                    <div className="flex flex-col" style={{ width: `${typeFieldWidth}px` }}>
                       <label className="text-sm font-semibold text-gray-700 mb-2">SURPLUS</label>
                       <input
                         type="text"
                         value={material.surplus || ''}
                         onChange={(e) => onChange('surplus', e.target.value)}
                         className={`border-2 rounded-lg text-sm transition-all bg-white text-gray-900 focus:border-indigo-500 focus:outline-none ${errors?.[`${errorKeyPrefix}_surplus`] ? 'border-red-600' : 'border-[#e5e7eb]'}`}
-                        style={{ padding: '10px 14px', height: '44px' }}
+                        style={{ padding: '10px 14px', height: '44px', width: `${typeFieldWidth}px` }}
                         placeholder="%AGE"
                       />
                     </div>
