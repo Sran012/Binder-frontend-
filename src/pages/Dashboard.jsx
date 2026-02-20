@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import HomeContent from '../components/HomeContent';
@@ -6,6 +6,15 @@ import TasksContent from '../components/TasksContent';
 import DepartmentContent from '../components/DepartmentContent';
 import ProfileContent from '../components/ProfileContent';
 import IMSContent from '../components/IMSContent';
+import {
+  Menu,
+  Home,
+  ListChecks,
+  Building2,
+  Boxes,
+  MessageCircle,
+  UserCircle
+} from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -13,6 +22,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('home');
   const [departmentResetKey, setDepartmentResetKey] = useState(0);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -21,12 +33,12 @@ const Dashboard = () => {
 
   const getMenuItems = () => {
     return [
-      { id: 'home', label: 'Home' },
-      { id: 'tasks', label: 'Tasks' },
-      { id: 'department', label: 'Departments' },
-      { id: 'ims', label: 'IMS' },
-      { id: 'community', label: 'Community' },
-      { id: 'profile', label: 'Profile' },
+      { id: 'home', label: 'Home', icon: Home },
+      { id: 'tasks', label: 'Tasks', icon: ListChecks },
+      { id: 'department', label: 'Departments', icon: Building2 },
+      { id: 'ims', label: 'IMS', icon: Boxes },
+      { id: 'community', label: 'Community', icon: MessageCircle },
+      { id: 'profile', label: 'Profile', icon: UserCircle },
     ];
   };
 
@@ -50,11 +62,31 @@ const Dashboard = () => {
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileMenu]);
+
   return (
     <div className="dashboard-container">
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-wrapper">
+            <button
+              type="button"
+              className="sidebar-toggle"
+              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              aria-label="Toggle sidebar"
+            >
+              <Menu size={18} />
+            </button>
             <div className="logo-icon-dash">B</div>
             <span className="logo-text-dash">Binder</span>
           </div>
@@ -77,6 +109,9 @@ const Dashboard = () => {
                 }
               }}
             >
+              <span className="nav-icon" aria-hidden="true">
+                <item.icon size={18} />
+              </span>
               <span className="nav-label">{item.label}</span>
             </button>
           ))}
@@ -90,30 +125,29 @@ const Dashboard = () => {
           <div className="top-bar-left">
             <h2 className="page-title">Binder Dashboard</h2>
           </div>
-          <div className="top-bar-right">
-            <div className="user-info">
-              <div className="user-avatar">
+          <div className="top-bar-right" ref={profileMenuRef}>
+            <button
+              type="button"
+              className="profile-trigger"
+              onClick={() => setShowProfileMenu((prev) => !prev)}
+              aria-label="Open profile menu"
+            >
+              <span className="user-avatar">
                 {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
+              </span>
+            </button>
+            {showProfileMenu && (
+              <div className="profile-menu">
+                <div className="profile-menu-header">
+                  <div className="profile-menu-name">{user?.name || 'User'}</div>
+                  <div className="profile-menu-email">{user?.email || ''}</div>
+                </div>
+                <div className="profile-menu-divider" />
+                <button type="button" className="profile-menu-logout" onClick={handleLogout}>
+                  Logout
+                </button>
               </div>
-              <div className="user-details">
-                <p className="user-name">{user?.name || user?.email || 'User'}</p>
-                <p className="user-role">
-                  {user?.role === 'master-admin' && 'Master Admin'}
-                  {user?.role === 'manager' && 'Manager'}
-                  {user?.role === 'tenant' && 'Tenant'}
-                </p>
-              </div>
-              <button className="top-logout-btn" onClick={handleLogout} aria-label="Logout">
-                <span className="top-logout-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <path d="M16 17l5-5-5-5" />
-                    <path d="M21 12H9" />
-                  </svg>
-                </span>
-                <span className="top-logout-label">Logout</span>
-              </button>
-            </div>
+            )}
           </div>
         </header>
         <div className="content-wrapper">
