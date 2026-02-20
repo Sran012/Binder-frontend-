@@ -461,7 +461,9 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
   const loadFromLocalStorage = (ipoCode) => {
     try {
-      const saved = localStorage.getItem(getStorageKey(ipoCode)) || localStorage.getItem(STORAGE_KEY);
+      const saved = ipoCode
+        ? localStorage.getItem(getStorageKey(ipoCode))
+        : localStorage.getItem(STORAGE_KEY);
       if (!saved) return null;
 
       const data = JSON.parse(saved);
@@ -505,6 +507,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     }
 
     const draftMatchesContext =
+      (!initialFormData?.ipoCode || savedData.ipoCode === initialFormData.ipoCode) &&
       savedData.programName === initialFormData.programName &&
       (initialFormData.orderType === 'Company'
         ? savedData.type === initialFormData.type
