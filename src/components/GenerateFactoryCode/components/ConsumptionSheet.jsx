@@ -596,6 +596,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
     const componentDetails = component || getComponentDetails(componentName, productComponents);
     const artworkMats = getArtworkMaterialsForComponent(componentName, stepData);
     const overageQty = calculateOverageQty(product.poQty || 0, product.overagePercentage || '0');
+    const setOfNumber = parseFloat(String(product.setOf || '').trim()) || 1;
 
     let componentWastage = null;
     for (const comp of productComponents || []) {
@@ -605,7 +606,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
       }
     }
 
-    const row4Cell = 'min-w-0 border-r border-border bg-muted/5 flex items-center [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r sm:[&:nth-child(3n)]:border-r-0 md:[&:nth-child(3n)]:border-r md:[&:nth-child(6n)]:border-r-0';
+    const row4Cell = 'min-w-0 border-r border-border bg-muted/5 flex items-center';
     const row4Last = 'min-w-0 border-border bg-muted/5 flex items-center';
     const desktopTableCell = { padding: '14px 18px' };
     const desktopHeaderCell = { padding: '12px 18px' };
@@ -790,6 +791,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
       const matCompoundWastage = calculateCompoundWastage(matWastages);
       const matTotalWastage = calculateTotalWastage(matWastages);
       const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
+      const matGrossCnsSet = (parseFloat(matGrossCns) || 0) * setOfNumber;
       const matUnit = material.unit || unit || '-';
       const materialWorkOrders = filterValidWorkOrders(material.workOrders || []);
       const wastageTraceTitle = wastageBreakdown.length > 0
@@ -798,7 +800,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
 
       return (
         <div key={matIdx} className="min-w-0 border-b border-border">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-8 min-w-0">
             <div className={row4Cell} style={desktopTableCell}>
               <div className="flex items-start gap-2">
                 <span className="text-xs font-semibold text-muted-foreground">{matIdx + 1}.</span>
@@ -810,6 +812,12 @@ const ConsumptionSheet = ({ formData = {} }) => {
             <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matTotalWastage}%</span></div>
             <div className={row4Cell} style={desktopTableCell} title={wastageTraceTitle}><span className="text-base font-bold text-foreground">{matCompoundWastage}%</span></div>
             <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-primary">{matGrossCns}</span></div>
+            <div className={row4Cell} style={desktopTableCell}>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] text-muted-foreground">Set of {setOfNumber}</span>
+                <span className="text-base font-bold text-primary">{matGrossCnsSet.toFixed(3)}</span>
+              </div>
+            </div>
             <div className={row4Last} style={desktopTableCell}><span className="text-base font-bold text-foreground uppercase">{matUnit}</span></div>
           </div>
           <div className="border-t border-border/70 bg-muted/5" style={{ padding: '14px 18px' }}>
@@ -855,6 +863,7 @@ const ConsumptionSheet = ({ formData = {} }) => {
       const matCompoundWastage = calculateCompoundWastage(matWastages);
       const matTotalWastage = calculateTotalWastage(matWastages);
       const matGrossCns = calculateGrossCns(overageQty, matWastages, matNetCns);
+      const matGrossCnsSet = (parseFloat(matGrossCns) || 0) * setOfNumber;
       const matUnit = (material.unit || unit || '-').toString().toUpperCase();
       const materialWorkOrders = filterValidWorkOrders(material.workOrders || []);
 
@@ -906,6 +915,13 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`, { size: 'sm' 
                   {renderInfoIcon('Gross CNS per piece multiplied by overage quantity', { size: 'sm' })} Gross CNS
                 </span>
                 <span className="text-base font-bold text-primary tabular-nums">{matGrossCns}</span>
+              </div>
+              <div className="flex justify-between items-baseline gap-3">
+                <span className="text-xs font-semibold text-muted-foreground shrink-0 inline-flex items-center gap-2">
+                  {renderInfoIcon('Gross CNS multiplied by Set Of', { size: 'sm' })} Gross CNS (Set)
+                  <span className="text-[11px] text-muted-foreground">Set of {setOfNumber}</span>
+                </span>
+                <span className="text-base font-bold text-primary tabular-nums">{matGrossCnsSet.toFixed(3)}</span>
               </div>
             </div>
           </div>
@@ -1015,7 +1031,7 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`, { size: 'sm' 
               </div>
             ) : (
               <div className="min-w-0">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 min-w-0 border-b border-border bg-muted/30">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-8 min-w-0 border-b border-border bg-muted/30">
                   <div className={row4Cell} style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
                       Raw Material {renderInfoIcon('Each row is a raw material; its work orders are listed below')}
@@ -1046,6 +1062,11 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                   <div className={row4Cell} style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
                       Gross CNS {renderInfoIcon('Gross CNS per piece multiplied by overage quantity')}
+                    </span>
+                  </div>
+                  <div className={row4Cell} style={desktopHeaderCell}>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
+                      Gross CNS (Set) {renderInfoIcon('Gross CNS multiplied by Set Of', { align: 'right' })}
                     </span>
                   </div>
                   <div className={row4Last} style={desktopHeaderCell}>
