@@ -9,7 +9,8 @@ import InternalPurchaseOrder from '../components/InternalPurchaseOrder/InternalP
 import GeneratePOCode from '../components/GeneratePOCode';
 import {
   Menu,
-  Home
+  Home,
+  Calculator
 } from 'lucide-react';
 import './Dashboard.css';
 
@@ -117,7 +118,11 @@ const Dashboard = () => {
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const [hoveredSubmenu, setHoveredSubmenu] = useState(null);
   const [existingIPOs, setExistingIPOs] = useState([]);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calcInput, setCalcInput] = useState('');
+  const [calcResult, setCalcResult] = useState('0');
   const profileMenuRef = useRef(null);
+  const calculatorRef = useRef(null);
   const sidebarRef = useRef(null);
   const hoverPanelRef = useRef(null);
 
@@ -136,6 +141,63 @@ const Dashboard = () => {
 
   const displayName = getDisplayName();
   const showEmailLine = Boolean(user?.email && displayName !== user?.email);
+
+  const isOperator = (value) => ['+', '-', '*', '/'].includes(value);
+
+  const appendCalcValue = (value) => {
+    setCalcInput((prev) => {
+      if (value === '.') {
+        const lastSegment = prev.split(/[\+\-\*\/]/).pop() || '';
+        if (lastSegment.includes('.')) {
+          return prev;
+        }
+      }
+
+      if (isOperator(value)) {
+        if (!prev && value !== '-') {
+          return prev;
+        }
+        if (prev && isOperator(prev.slice(-1))) {
+          return `${prev.slice(0, -1)}${value}`;
+        }
+      }
+
+      return `${prev}${value}`;
+    });
+  };
+
+  const handleCalcClear = () => {
+    setCalcInput('');
+    setCalcResult('0');
+  };
+
+  const handleCalcDelete = () => {
+    setCalcInput((prev) => prev.slice(0, -1));
+  };
+
+  const evaluateCalculation = () => {
+    if (!calcInput) {
+      return;
+    }
+
+    const safeExpression = calcInput.replace(/[^0-9+\-*/().]/g, '');
+    if (!safeExpression || isOperator(safeExpression.slice(-1))) {
+      return;
+    }
+
+    try {
+      const raw = Function(`"use strict"; return (${safeExpression});`)();
+      if (!Number.isFinite(raw)) {
+        setCalcResult('Error');
+        return;
+      }
+      const formatted = Number.isInteger(raw) ? raw.toString() : Number(raw.toFixed(8)).toString();
+      setCalcResult(formatted);
+      setCalcInput(formatted);
+    } catch (error) {
+      setCalcResult('Error');
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -197,6 +259,72 @@ const Dashboard = () => {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showProfileMenu]);
+
+  useEffect(() => {
+    if (!showCalculator) {
+      return;
+    }
+
+    const focusTimer = window.setTimeout(() => {
+      calculatorRef.current?.focus();
+    }, 0);
+
+    return () => window.clearTimeout(focusTimer);
+  }, [showCalculator]);
+
+  useEffect(() => {
+    if (!showCalculator) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      const { key } = event;
+
+      if (/^\d$/.test(key)) {
+        event.preventDefault();
+        appendCalcValue(key);
+        return;
+      }
+
+      if (key === '.') {
+        event.preventDefault();
+        appendCalcValue('.');
+        return;
+      }
+
+      if (['+', '-', '*', '/'].includes(key)) {
+        event.preventDefault();
+        appendCalcValue(key);
+        return;
+      }
+
+      if (key === 'Enter' || key === '=') {
+        event.preventDefault();
+        evaluateCalculation();
+        return;
+      }
+
+      if (key === 'Backspace') {
+        event.preventDefault();
+        handleCalcDelete();
+        return;
+      }
+
+      if (key === 'Delete') {
+        event.preventDefault();
+        handleCalcClear();
+        return;
+      }
+
+      if (key === 'Escape') {
+        event.preventDefault();
+        setShowCalculator(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showCalculator, calcInput]);
 
   useEffect(() => {
     try {
@@ -470,6 +598,17 @@ const Dashboard = () => {
             <h2 className="page-title">Binder Dashboard</h2>
           </div>
           <div className="top-bar-right" ref={profileMenuRef}>
+            <button
+              type="button"
+              className="calculator-trigger"
+              onClick={() => {
+                setShowProfileMenu(false);
+                setShowCalculator(true);
+              }}
+              aria-label="Open calculator"
+            >
+              <Calculator size={18} />
+            </button>
             <span className="profile-username">{displayName}</span>
             <button
               type="button"
@@ -494,6 +633,102 @@ const Dashboard = () => {
             )}
           </div>
         </header>
+        {showCalculator && (
+          <div
+            className="calculator-overlay"
+            onClick={() => setShowCalculator(false)}
+            role="presentation"
+          >
+            <div
+              className="calculator-popup"
+              role="dialog"
+              aria-label="Calculator"
+              aria-modal="true"
+              onClick={(event) => event.stopPropagation()}
+              ref={calculatorRef}
+              tabIndex={-1}
+            >
+              <div className="calculator-header">
+                <div>
+                  <div className="calculator-title">Calculator</div>
+                  <div className="calculator-subtitle">Quick math</div>
+                </div>
+                <button
+                  type="button"
+                  className="calculator-close"
+                  onClick={() => setShowCalculator(false)}
+                  aria-label="Close calculator"
+                >
+                  x
+                </button>
+              </div>
+              <div className="calculator-display">
+                <div className="calculator-expression">{calcInput || '0'}</div>
+                <div className="calculator-result">{calcResult}</div>
+              </div>
+              <div className="calculator-keys">
+                <button type="button" className="calc-key util" onClick={handleCalcClear}>
+                  C
+                </button>
+                <button type="button" className="calc-key util" onClick={handleCalcDelete}>
+                  DEL
+                </button>
+                <button type="button" className="calc-key util" onClick={() => appendCalcValue('/')}>
+                  /
+                </button>
+                <button type="button" className="calc-key operator" onClick={() => appendCalcValue('*')}>
+                  x
+                </button>
+
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('7')}>
+                  7
+                </button>
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('8')}>
+                  8
+                </button>
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('9')}>
+                  9
+                </button>
+                <button type="button" className="calc-key operator" onClick={() => appendCalcValue('-')}>
+                  -
+                </button>
+
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('4')}>
+                  4
+                </button>
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('5')}>
+                  5
+                </button>
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('6')}>
+                  6
+                </button>
+                <button type="button" className="calc-key operator" onClick={() => appendCalcValue('+')}>
+                  +
+                </button>
+
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('1')}>
+                  1
+                </button>
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('2')}>
+                  2
+                </button>
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('3')}>
+                  3
+                </button>
+                <button type="button" className="calc-key equals" onClick={evaluateCalculation}>
+                  =
+                </button>
+
+                <button type="button" className="calc-key zero" onClick={() => appendCalcValue('0')}>
+                  0
+                </button>
+                <button type="button" className="calc-key" onClick={() => appendCalcValue('.')}>
+                  .
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="content-wrapper">
           {renderContent()}
           {renderHoverPanel()}
