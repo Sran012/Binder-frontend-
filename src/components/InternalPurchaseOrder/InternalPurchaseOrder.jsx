@@ -241,6 +241,7 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
   if (!showInitialScreen) {
     return (
       <GenerateFactoryCode 
+        key={`${initialData.ipoCode || ''}-${initialData.programName || ''}-${initialData.buyerCode || ''}-${initialData.type || ''}`}
         onBack={onBack}
         initialFormData={initialData}
         onNavigateToCodeCreation={onNavigateToCodeCreation}
