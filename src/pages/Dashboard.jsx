@@ -112,6 +112,7 @@ const StorefrontIcon = ({ size = 18 }) => (
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [activePage, setActivePage] = useState('home');
+  const [tasksView, setTasksView] = useState('assign');
   const [codeCreationView, setCodeCreationView] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -220,7 +221,7 @@ const Dashboard = () => {
       case 'home':
         return <HomeContent user={user} />;
       case 'tasks':
-        return <TasksContent />;
+        return <TasksContent initialView={tasksView} />;
       case 'code-creation':
         if (codeCreationView === 'buyer') {
           return <GenerateBuyerCode onBack={() => { setActivePage('code-creation'); setCodeCreationView(null); setHoveredMenu('code-creation'); }} />;
@@ -635,13 +636,30 @@ const Dashboard = () => {
                 type="button"
                 className={`hover-panel-item ${activeAction === 'assign' ? 'active' : ''}`}
                 onMouseEnter={() => setHoveredSubmenu({ menu: 'tasks', action: 'assign', type: null, ipo: null, department: null, user: null })}
+                onClick={() => {
+                  setTasksView('assign');
+                  setActivePage('tasks');
+                  setHoveredMenu(null);
+                }}
               >
                 Assign Tasks
+              </button>
+              <button
+                type="button"
+                className={`hover-panel-item ${activeAction === 'assigned' ? 'active' : ''}`}
+                onMouseEnter={() => setHoveredSubmenu({ menu: 'tasks', action: 'assigned', type: null, ipo: null, department: null, user: null })}
+                onClick={() => {
+                  setTasksView('assigned');
+                  setActivePage('tasks');
+                  setHoveredMenu(null);
+                }}
+              >
+                Tasks Assigned To You
               </button>
             </div>
           </div>
 
-          {activeAction && (
+          {activeAction === 'assign' && (
             <div className="hover-panel nested-panel">
               <div className="hover-panel-column">
                 <div className="hover-panel-title">Select PO Type</div>
