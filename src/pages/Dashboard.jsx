@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import HomeContent from '../components/HomeContent';
 import TasksContent from '../components/TasksContent';
+import PurchaseContent from '../components/PurchaseContent';
 import GenerateBuyerCode from '../components/GenerateBuyerCode';
 import GenerateVendorCode from '../components/GenerateVendorCode';
 import CompanyEssentials from '../components/CompanyEssentials';
@@ -222,6 +223,8 @@ const Dashboard = () => {
         return <HomeContent user={user} />;
       case 'tasks':
         return <TasksContent initialView={tasksView} />;
+      case 'purchase':
+        return <PurchaseContent />;
       case 'code-creation':
         if (codeCreationView === 'buyer') {
           return <GenerateBuyerCode onBack={() => { setActivePage('code-creation'); setCodeCreationView(null); setHoveredMenu('code-creation'); }} />;

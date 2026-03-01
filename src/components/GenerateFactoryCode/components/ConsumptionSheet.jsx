@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { TRIM_ACCESSORY_SCHEMAS } from '@/utils/validationSchemas';
 
 /**
@@ -21,6 +22,7 @@ import { TRIM_ACCESSORY_SCHEMAS } from '@/utils/validationSchemas';
  * - Row 7: Artwork (after work orders, per component)
  */
 const ConsumptionSheet = ({ formData = {} }) => {
+  const PURCHASE_SHARE_KEY = 'purchaseSharedData';
   // Single layout on screen: only mobile OR desktop (avoids duplicate render)
   const [isMobileCns, setIsMobileCns] = useState(false);
   useEffect(() => {
@@ -537,6 +539,79 @@ const ConsumptionSheet = ({ formData = {} }) => {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  };
+
+  const buildPurchaseSharePayload = () => {
+    const ipcs = [];
+    const addIpc = (ipcCode, stepData) => {
+      if (!ipcCode || !stepData) return;
+      const rawSet = new Set();
+      (stepData.rawMaterials || []).forEach((m) => {
+        if (!isRawMaterialCompleteForCns(m)) return;
+        const label = m.materialDescription || m.materialType || '';
+        if (label) rawSet.add(label);
+      });
+
+      const trimSet = new Set();
+      (stepData.consumptionMaterials || []).forEach((m) => {
+        const label = (m.materialDescription || '').trim();
+        const net = (m.netConsumption || '').toString().trim();
+        if (label && net) trimSet.add(label);
+      });
+
+      const artworkSet = new Set();
+      (stepData.artworkMaterials || []).forEach((m) => {
+        const label = (m.artworkCategory || m.material || '').toString().trim();
+        if (label) artworkSet.add(label);
+      });
+
+      const packagingSet = new Set();
+      (stepData.packaging?.materials || []).forEach((m) => {
+        const label = formatPackagingTypeName(m.packagingMaterialType || '');
+        if (label && label !== '-') packagingSet.add(label);
+      });
+
+      ipcs.push({
+        ipcCode,
+        categories: {
+          rawMaterials: Array.from(rawSet),
+          trimsAccessory: Array.from(trimSet),
+          artworkLabeling: Array.from(artworkSet),
+          packaging: Array.from(packagingSet)
+        }
+      });
+    };
+
+    formData.skus?.forEach((sku, skuIndex) => {
+      const ipcCode = sku.ipcCode || `IPC-${skuIndex + 1}`;
+      addIpc(ipcCode, sku.stepData);
+      sku.subproducts?.forEach((subproduct, spIndex) => {
+        const spCode = subproduct.ipcCode || `${ipcCode.replace(/\/SP-?\d+$/i, '')}/SP-${spIndex + 1}`;
+        addIpc(spCode, subproduct.stepData);
+      });
+    });
+
+    const code = formData.ipoCode || formData.buyerCode || '';
+    return {
+      code,
+      orderType: formData.orderType || '',
+      sharedAt: new Date().toISOString(),
+      ipcs
+    };
+  };
+
+  const handleShareToPurchase = () => {
+    const payload = buildPurchaseSharePayload();
+    if (!payload.code) return;
+    const existing = JSON.parse(localStorage.getItem(PURCHASE_SHARE_KEY) || '[]');
+    const next = Array.isArray(existing) ? [...existing] : [];
+    const idx = next.findIndex((entry) => entry.code === payload.code && entry.orderType === payload.orderType);
+    if (idx >= 0) {
+      next[idx] = payload;
+    } else {
+      next.push(payload);
+    }
+    localStorage.setItem(PURCHASE_SHARE_KEY, JSON.stringify(next));
   };
 
   // Build flat list: IPC → Product/Subproduct → Components (in form order)
@@ -1387,57 +1462,64 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
   };
 
   return (
-    <div
-      className="w-full min-w-0 overflow-y-auto overflow-x-hidden"
-      style={{
-        maxHeight: 'calc(100vh - 250px)',
-        WebkitOverflowScrolling: 'touch',
-        touchAction: 'pan-y',
-        overscrollBehavior: 'contain',
-      }}
-    >
-      {allProducts.length > 0 ? (
-        (() => {
-          const shownMergedKeys = new Set();
-          return allProducts.map((product, idx) => {
-            const stepData = product.stepData;
-            const packagingType = stepData?.packaging?.toBeShipped || '';
-            const isMerged = packagingType.toLowerCase() === 'merged';
-            const productSelection = stepData?.packaging?.productSelection || [];
-            const mergedKey = Array.isArray(productSelection) ? productSelection.sort().join(',') : String(productSelection);
-            
-            // For merged: only show packaging once per merged group
-            // For standalone: show packaging for each product
-            let shouldShowPackaging = true;
-            if (isMerged && mergedKey) {
-              if (shownMergedKeys.has(mergedKey)) {
-                shouldShowPackaging = false;
-              } else {
-                shownMergedKeys.add(mergedKey);
+    <div>
+      <div
+        className="w-full min-w-0 overflow-y-auto overflow-x-hidden"
+        style={{
+          maxHeight: 'calc(100vh - 250px)',
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-y',
+          overscrollBehavior: 'contain',
+        }}
+      >
+        {allProducts.length > 0 ? (
+          (() => {
+            const shownMergedKeys = new Set();
+            return allProducts.map((product, idx) => {
+              const stepData = product.stepData;
+              const packagingType = stepData?.packaging?.toBeShipped || '';
+              const isMerged = packagingType.toLowerCase() === 'merged';
+              const productSelection = stepData?.packaging?.productSelection || [];
+              const mergedKey = Array.isArray(productSelection) ? productSelection.sort().join(',') : String(productSelection);
+              
+              // For merged: only show packaging once per merged group
+              // For standalone: show packaging for each product
+              let shouldShowPackaging = true;
+              if (isMerged && mergedKey) {
+                if (shownMergedKeys.has(mergedKey)) {
+                  shouldShowPackaging = false;
+                } else {
+                  shownMergedKeys.add(mergedKey);
+                }
               }
-            }
 
-            return (
-              <div key={idx}>
-                {product.components.map((component, cIdx) =>
-                  component.productComforter ? (
-                    <ComponentRow
-                      key={`${idx}-${cIdx}`}
-                      componentName={component.productComforter}
-                      component={component}
-                      product={product}
-                    />
-                  ) : null
-                )}
-                {/* Packaging section at product/IPC level */}
-                {shouldShowPackaging && <PackagingRow product={product} formData={formData} isMobile={isMobileCns} />}
-              </div>
-            );
-          });
-        })()
-      ) : (
-        <div className="text-center py-12 text-muted-foreground">No products found. Please complete previous steps first.</div>
-      )}
+              return (
+                <div key={idx}>
+                  {product.components.map((component, cIdx) =>
+                    component.productComforter ? (
+                      <ComponentRow
+                        key={`${idx}-${cIdx}`}
+                        componentName={component.productComforter}
+                        component={component}
+                        product={product}
+                      />
+                    ) : null
+                  )}
+                  {/* Packaging section at product/IPC level */}
+                  {shouldShowPackaging && <PackagingRow product={product} formData={formData} isMobile={isMobileCns} />}
+                </div>
+              );
+            });
+          })()
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">No products found. Please complete previous steps first.</div>
+        )}
+      </div>
+      <div className="mt-6 flex justify-end">
+        <Button type="button" onClick={handleShareToPurchase}>
+          Share to Purchase Department
+        </Button>
+      </div>
     </div>
   );
 };
