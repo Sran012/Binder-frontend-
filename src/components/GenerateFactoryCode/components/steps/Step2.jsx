@@ -6,6 +6,7 @@ import { PercentInput } from '@/components/ui/percent-input';
 import { TestingRequirementsInput } from '@/components/ui/testing-requirements-input';
 import { cn } from '@/lib/utils';
 import QualityVerificationToggle from '../QualityVerificationToggle';
+import WorkOrderDateFields from '../WorkOrderDateFields';
 import { 
   getFiberTypes, 
   getYarnTypes, 
@@ -11488,6 +11489,18 @@ const Step2 = ({
                           )}
                         </div>
                       )}
+
+                      {/* Start Date & Date of Completion - Common for all work order types, after Quality Verification */}
+                      <div className="w-full" style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+                        <WorkOrderDateFields
+                          startDate={workOrder.startDate}
+                          dateOfCompletion={workOrder.dateOfCompletion}
+                          onChange={(field, value) => handleWorkOrderChange(actualIndex, woIndex, field, value)}
+                          errorStartDate={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_startDate`]}
+                          errorDateOfCompletion={errors[`rawMaterial_${actualIndex}_workOrder_${woIndex}_dateOfCompletion`]}
+                          className="w-full"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

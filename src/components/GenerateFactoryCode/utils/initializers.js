@@ -58,6 +58,8 @@ export const initializeRawMaterials = (formData) => {
           design: '',
           imageRef: null,
           qualityVerification: '',
+          startDate: '',
+          dateOfCompletion: '',
           machineType: '',
           reed: '',
           pick: '',
