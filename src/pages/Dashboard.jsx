@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { SidebarContext } from '../context/SidebarContext';
 import HomeContent from '../components/HomeContent';
 import TasksContent from '../components/TasksContent';
 import PurchaseContent from '../components/PurchaseContent';
@@ -794,8 +795,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-container">
-      <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`} ref={sidebarRef}>
+    <SidebarContext.Provider value={{ isSidebarCollapsed }}>
+      <div className="dashboard-container">
+        <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`} ref={sidebarRef}>
         <div className="sidebar-header">
           <div className="logo-wrapper">
             <button
@@ -982,7 +984,8 @@ const Dashboard = () => {
           {renderHoverPanel()}
         </div>
       </main>
-    </div>
+      </div>
+    </SidebarContext.Provider>
   );
 };
 

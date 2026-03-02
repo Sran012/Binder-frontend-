@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSidebar, SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_WIDTH_EXPANDED } from '@/context/SidebarContext';
 import TEXTILE_FIBER_DATA from './data/textileFiberData';
 import { getFiberTypes, getYarnTypes, getSpinningMethod, getYarnDetails } from './utils/yarnHelpers';
 import { initializeRawMaterials, initializeConsumptionMaterials } from './utils/initializers';
@@ -34,7 +35,25 @@ import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 
 const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCreation, onNavigateToIPO }) => {
+  const { isSidebarCollapsed } = useSidebar();
   const scrollContainerRef = useRef(null);
+  const [overlayLeft, setOverlayLeft] = useState(
+    typeof window !== 'undefined' && window.innerWidth >= 768
+      ? (isSidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED)
+      : 0
+  );
+  useEffect(() => {
+    const update = () => {
+      setOverlayLeft(
+        window.innerWidth >= 768
+          ? (isSidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED)
+          : 0
+      );
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [isSidebarCollapsed]);
   const consumptionSheetRef = useRef(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedSku, setSelectedSku] = useState('product_0'); // Format: 'product_0' or 'subproduct_0_1'
@@ -533,6 +552,19 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     'Artwork & Labeling',
     'Packaging'
   ];
+
+  // Init shipping groups when Factory Code popup opens
+  useEffect(() => {
+    if (!showFactoryCodePopup) return;
+    const init = {};
+    formData.skus?.forEach((sku, idx) => {
+      init[`${idx}-product`] = 1;
+      (sku.subproducts || []).forEach((_, spIdx) => {
+        init[`${idx}-sp-${spIdx}`] = 1;
+      });
+    });
+    setShippingGroups(init);
+  }, [showFactoryCodePopup]);
 
   // Update consumption materials when overage or poQty changes from Step 0
   useEffect(() => {
@@ -5381,56 +5413,58 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         </>
       )}
 
-      {/* Generate Factory Code Popup */}
-      <Dialog open={showFactoryCodePopup} onOpenChange={(open) => {
-        setShowFactoryCodePopup(open);
-        if (open) {
-          const init = {};
-          formData.skus?.forEach((sku, idx) => {
-            init[`${idx}-product`] = 1;
-            (sku.subproducts || []).forEach((_, spIdx) => {
-              init[`${idx}-sp-${spIdx}`] = 1;
-            });
-          });
-          setShippingGroups(init);
-        }
-      }}>
-        <DialogContent
-          showCloseButton={true}
-          className="max-h-[90vh] overflow-hidden flex flex-col rounded-2xl border-2 border-border shadow-2xl bg-white p-4 sm:p-6 w-[92vw] max-w-full sm:w-[85vw] md:w-[65vw] md:max-w-[1100px]"
-          style={{ padding: '18px' }}
+      {/* Generate Factory Code Popup - Custom overlay: main area only, centered, full width */}
+      {showFactoryCodePopup && (
+        <div
+          className="fixed z-50 flex items-center justify-center bg-black/50 right-0"
+          style={{ left: overlayLeft, top: '72px', bottom: 0 }}
+          onClick={() => setShowFactoryCodePopup(false)}
+          role="presentation"
         >
-          <DialogHeader className="pb-5 pt-2 px-2 border-b border-border flex-shrink-0 min-w-0">
-            <DialogTitle className="text-xl font-semibold text-foreground truncate">
-              Factory Code Generation
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-6 px-3 sm:px-6 py-6 flex-1 overflow-y-auto overflow-x-hidden min-h-0 min-w-0">
-            {/* Consumption Sheet */}
-            <div className="rounded-xl border border-border overflow-hidden min-w-0 max-w-full">
-              <ConsumptionSheet ref={consumptionSheetRef} formData={formData} />
+          <div
+            className="flex flex-col rounded-2xl border-2 border-border shadow-2xl bg-white overflow-hidden"
+            style={{
+              width: 'calc(100% - 48px)',
+              maxHeight: 'calc(100% - 48px)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-5 pt-2 px-6 border-b border-border flex-shrink-0">
+              <h2 className="text-xl font-semibold text-foreground truncate">Factory Code Generation</h2>
+              <button
+                type="button"
+                onClick={() => setShowFactoryCodePopup(false)}
+                className="rounded-sm opacity-70 hover:opacity-100 transition-opacity p-1"
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
             </div>
 
-          </div>
+            <div className="flex flex-col gap-6 px-6 py-6 flex-1 overflow-y-auto overflow-x-auto min-h-0 min-w-0">
+              <div className="rounded-xl border border-border overflow-x-auto min-w-0">
+                <ConsumptionSheet ref={consumptionSheetRef} formData={formData} />
+              </div>
+            </div>
 
-          <div className="flex justify-end gap-3 px-3 sm:px-6 py-5 border-t border-border bg-white flex-shrink-0 min-w-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                const ok = consumptionSheetRef.current?.shareToPurchase?.();
-                if (ok) setShowShareSuccessPopup(true);
-              }}
-            >
-              Share to Purchase Department
-            </Button>
-            <Button type="button" onClick={() => setShowFactoryCodePopup(false)} variant="default">
-              Done
-            </Button>
+            <div className="flex justify-end gap-3 px-6 py-5 border-t border-border bg-white flex-shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const ok = consumptionSheetRef.current?.shareToPurchase?.();
+                  if (ok) setShowShareSuccessPopup(true);
+                }}
+              >
+                Share to Purchase Department
+              </Button>
+              <Button type="button" onClick={() => setShowFactoryCodePopup(false)} variant="default">
+                Done
+              </Button>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Share to Purchase Success Dialog */}
       <Dialog open={showShareSuccessPopup} onOpenChange={setShowShareSuccessPopup}>
