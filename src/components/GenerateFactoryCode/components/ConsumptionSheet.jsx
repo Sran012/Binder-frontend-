@@ -911,13 +911,14 @@ const ConsumptionSheet = forwardRef(({ formData = {} }, ref) => {
 
       return (
         <div key={matIdx} className="min-w-0 border-b border-border">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-8 min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-9 min-w-0">
             <div className={row4Cell} style={desktopTableCell}>
               <div className="flex items-start gap-2">
                 <span className="text-xs font-semibold text-muted-foreground">{matIdx + 1}.</span>
                 <span className="text-sm text-foreground break-words">{material.materialType || '-'}</span>
               </div>
             </div>
+            <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{material.materialDescription || '-'}</span></div>
             <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matNetCns || '-'}</span></div>
             <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{overageQty}</span></div>
             <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matTotalWastage}%</span></div>
@@ -982,6 +983,9 @@ const ConsumptionSheet = forwardRef(({ formData = {} }, ref) => {
                 <span className="text-[10px] font-semibold text-muted-foreground">#{matIdx + 1}</span>
               </div>
               <p className="mt-1.5 text-base font-semibold text-foreground leading-snug">{material.materialType || 'Raw material'}</p>
+              {material.materialDescription && (
+                <p className="mt-1 text-sm text-muted-foreground leading-snug break-words">{material.materialDescription}</p>
+              )}
             </div>
             <div className="space-y-3 mt-3">
               <div className="flex justify-between items-baseline gap-3">
@@ -1137,10 +1141,15 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`, { size: 'sm' 
               </div>
             ) : (
               <div className="min-w-0">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-8 min-w-0 border-b border-border bg-muted/30">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-9 min-w-0 border-b border-border bg-muted/30">
                   <div className={row4Cell} style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
                       Raw Material {renderInfoIcon('Each row is a raw material; its work orders are listed below')}
+                    </span>
+                  </div>
+                  <div className={row4Cell} style={desktopHeaderCell}>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
+                      Material Description {renderInfoIcon('Description of the raw material')}
                     </span>
                   </div>
                   <div className={row4Cell} style={desktopHeaderCell}>
@@ -1345,7 +1354,7 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                   <div className="min-w-0 border-r border-border" style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Material Description</span></div>
                   <div className="min-w-0 border-r border-border" style={desktopHeaderCell}>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider inline-flex items-center gap-2">
-                      Net CNS {renderInfoIcon('Sum of net consumption for this artwork material')}
+                      Quantity {renderInfoIcon('Quantity from artwork material')}
                     </span>
                   </div>
                   <div className="min-w-0 border-r border-border" style={desktopHeaderCell}>
