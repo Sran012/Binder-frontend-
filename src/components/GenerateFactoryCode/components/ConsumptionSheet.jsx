@@ -227,6 +227,33 @@ const ConsumptionSheet = forwardRef(({ formData = {} }, ref) => {
     return stepData?.artworkMaterials?.filter((m) => (m.components || '') === componentName) || [];
   };
 
+  // Helper: Get quantity from artwork material based on category-specific qty field
+  const getArtworkQuantity = (artwork) => {
+    if (!artwork) return '';
+    const cat = (artwork.artworkCategory || '').trim();
+    const qtyFieldMap = {
+      'LABELS (BRAND/MAIN)': 'labelsBrandQty',
+      'CARE & COMPOSITION': 'careCompositionQty',
+      'TAGS & SPECIAL LABELS': 'tagsSpecialLabelsQty',
+      'FLAMMABILITY / SAFETY LABELS': 'flammabilitySafetyQty',
+      'RFID / SECURITY TAGS': 'rfidQty',
+      'LAW LABEL / CONTENTS TAG': 'lawLabelQty',
+      'HANG TAG SEALS / STRINGS': 'hangTagSealsQty',
+      'PRICE TICKET / BARCODE TAG': 'priceTicketQty',
+      'HEAT TRANSFER LABELS': 'heatTransferQty',
+      'UPC LABEL / BARCODE STICKER': 'upcBarcodeQty',
+      'SIZE LABELS (INDIVIDUAL)': 'sizeLabelsQty',
+      'ANTI-COUNTERFEIT & HOLOGRAMS': 'antiCounterfeitQty',
+      'QC / INSPECTION LABELS': 'qcInspectionQty',
+      'BELLY BAND / WRAPPER': 'bellyBandQty',
+      'INSERT CARDS': 'insertCardsQty',
+      'RIBBONS': 'ribbonsQty'
+    };
+    const field = qtyFieldMap[cat] || 'lengthQuantity';
+    const val = artwork[field];
+    return val != null && val !== '' ? String(val).trim() : '';
+  };
+
   // Helper: Get packaging materials for a product/IPC from stepData (Step-5)
   const getPackagingMaterialsForProduct = (stepData) => {
     return stepData?.packaging?.materials || [];
@@ -305,7 +332,11 @@ const ConsumptionSheet = forwardRef(({ formData = {} }, ref) => {
 
     const artworkMats = getArtworkMaterialsForComponent(componentName, stepData);
     artworkMats.forEach((m) => {
-      if (m.netConsumption) consumptions.push(m.netConsumption);
+      const qty = getArtworkQuantity(m);
+      if (qty) {
+        const n = parseFloat(String(qty).replace(/[^0-9.-]/g, ''));
+        if (!isNaN(n)) consumptions.push(n);
+      }
     });
 
     return calculateNetConsumption(consumptions);
@@ -1255,10 +1286,11 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
               /* Mobile: grouped cards */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {artworkMats.map((artwork, idx) => {
-                  const artworkNetCns = parseFloat(artwork.netConsumption) || 0;
+                  const artworkQty = getArtworkQuantity(artwork);
+                  const artworkQtyNum = parseFloat(String(artworkQty).replace(/[^0-9.-]/g, '')) || 0;
                   const artworkWastageSurplus = extractArtworkWastageSurplus(artwork);
                   const artworkCompoundWastage = calculateCompoundWastage(artworkWastageSurplus);
-                  const artworkGrossCns = calculateGrossCns(overageQty, artworkWastageSurplus, artworkNetCns);
+                  const artworkGrossCns = calculateGrossCns(overageQty, artworkWastageSurplus, artworkQtyNum);
                   const artworkGrossCnsSet = (parseFloat(artworkGrossCns) || 0) * setOfNumber;
                   const artUnit = (artwork.unit || '-').toString().toUpperCase();
                   return (
@@ -1271,9 +1303,9 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                         <div className="space-y-3">
                           <div className="flex justify-between items-baseline gap-3">
                             <span className="text-xs font-medium text-muted-foreground shrink-0 inline-flex items-center gap-2">
-                              {renderInfoIcon('Sum of net consumption for this artwork material', { size: 'sm' })} Net CNS
+                              {renderInfoIcon('Quantity from artwork material', { size: 'sm' })} Quantity
                             </span>
-                            <span className="text-sm font-semibold text-foreground tabular-nums">{artworkNetCns || '–'}</span>
+                            <span className="text-sm font-semibold text-foreground tabular-nums">{artworkQty || '–'}</span>
                           </div>
                           <div className="flex justify-between items-baseline gap-3">
                             <span className="text-xs font-medium text-muted-foreground shrink-0 inline-flex items-center gap-2">
@@ -1341,17 +1373,18 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                   </div>
                 </div>
                 {artworkMats.map((artwork, idx) => {
-                  const artworkNetCns = parseFloat(artwork.netConsumption) || 0;
+                  const artworkQty = getArtworkQuantity(artwork);
+                  const artworkQtyNum = parseFloat(String(artworkQty).replace(/[^0-9.-]/g, '')) || 0;
                   const artworkWastageSurplus = extractArtworkWastageSurplus(artwork);
                   const artworkCompoundWastage = calculateCompoundWastage(artworkWastageSurplus);
-                  const artworkGrossCns = calculateGrossCns(overageQty, artworkWastageSurplus, artworkNetCns);
+                  const artworkGrossCns = calculateGrossCns(overageQty, artworkWastageSurplus, artworkQtyNum);
                   const artworkGrossCnsSet = (parseFloat(artworkGrossCns) || 0) * setOfNumber;
                   const artCellClass = 'min-w-0 border-r border-border bg-muted/5';
                   const artLastClass = 'min-w-0 border-border bg-muted/5';
                   return (
                     <div key={idx} className="grid grid-cols-2 sm:grid-cols-6 min-w-0 border-b border-border last:border-b-0">
                       <div className={artCellClass} style={desktopTableCell}><span className="text-sm text-foreground break-words">{artwork.materialDescription || '-'}</span></div>
-                      <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-foreground">{artworkNetCns || '-'}</span></div>
+                      <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-foreground">{artworkQty || '-'}</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-foreground">{artworkCompoundWastage}%</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-primary">{artworkGrossCns}</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-primary">{artworkGrossCnsSet.toFixed(3)}</span></div>

@@ -100,7 +100,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         artworkMaterials: [{
           srNo: 1,
           materialDescription: '',
-          netConsumption: '',
           unit: '',
           placement: '',
           workOrder: '',
@@ -258,7 +257,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     artworkMaterials: [{
       srNo: 1,
       materialDescription: '',
-      netConsumption: '',
       unit: '',
       placement: '',
       workOrder: '',
@@ -673,7 +671,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     artworkMaterials: [{
       srNo: 1,
       materialDescription: '',
-      netConsumption: '',
       unit: '',
       placement: '',
       workOrder: '',
@@ -3134,16 +3131,12 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
       const errorPrefix = `artworkMaterial_${materialIndex}`;
       const hasAnyData = material.components?.trim() ||
-        material.netConsumption?.toString().trim() ||
         material.artworkCategory?.trim();
 
       if (!hasAnyData) return;
 
       if (isEmpty(material.components)) {
         newErrors[`${errorPrefix}_components`] = 'Component is required';
-      }
-      if (isEmpty(material.netConsumption)) {
-        newErrors[`${errorPrefix}_netConsumption`] = 'Net Consumption is required';
       }
 
       const artworkCategory = material.artworkCategory?.toString().trim();
@@ -3169,7 +3162,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     // Only validate materials that have a component and have data entered (don't require material 0 or others to be filled)
     const materialsWithData = materials.filter((material) => {
       const hasAnyData = material.components?.trim() ||
-        material.netConsumption?.toString().trim() ||
         material.artworkCategory?.trim();
       return hasAnyData;
     });
@@ -3182,7 +3174,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       const errorPrefix = `artworkMaterial_${materialIndex}`;
       const hasAnyData = material.components?.trim() ||
         material.materialDescription?.trim() ||
-        material.netConsumption?.toString().trim() ||
         material.unit?.trim() ||
         material.placement?.trim() ||
         material.workOrder?.trim() ||
@@ -3192,9 +3183,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
 
       if (isEmpty(material.components)) {
         newErrors[`${errorPrefix}_components`] = 'Component is required';
-      }
-      if (isEmpty(material.netConsumption)) {
-        newErrors[`${errorPrefix}_netConsumption`] = 'Net Consumption is required';
       }
 
       const artworkCategory = material.artworkCategory?.toString().trim();
@@ -3285,7 +3273,6 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
             srNo: newSrNo,
             components: componentName || '',
             materialDescription: '',
-            netConsumption: '',
             unit: '',
             placement: '',
             workOrder: '',

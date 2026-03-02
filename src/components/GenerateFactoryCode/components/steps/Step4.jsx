@@ -314,44 +314,8 @@ const Step4 = ({
               )}
             </div>
 
-            {/* Row 1: Net CNS (component is fixed by selection) */}
-            <div style={{ marginBottom: '24px' }}>
-              <div className="flex flex-wrap items-start gap-3">
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-700 mb-2">
-                    NET CNS/PC <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={material.netConsumption}
-                    onChange={(e) => handleArtworkMaterialChange(actualIndex, 'netConsumption', e.target.value)}
-                    className={`border-2 rounded-lg text-sm transition-all bg-background text-foreground ${
-                      errors[`artworkMaterial_${actualIndex}_netConsumption`] 
-                        ? 'border-red-600' 
-                        : 'border-border focus:border-primary focus:outline-none'
-                    }`}
-                    style={{ padding: '10px 14px', width: '120px', height: '44px' }}
-                    onFocus={(e) => {
-                      if (!errors[`artworkMaterial_${actualIndex}_netConsumption`]) {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                      }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
-                    }}
-                    placeholder="0.000"
-                    required
-                  />
-                  {errors[`artworkMaterial_${actualIndex}_netConsumption`] && (
-                    <span className="text-red-600 text-xs mt-1 font-medium">
-                      {errors[`artworkMaterial_${actualIndex}_netConsumption`]}
-                    </span>
-                  )}
-                </div>
-              </div>
-              {/* ARTWORK CATEGORY SELECTOR */}
-              <div className="w-full" style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+            {/* ARTWORK CATEGORY SELECTOR */}
+              <div className="w-full" style={{ marginTop: 0 }}>
                 <div className="flex flex-col" style={{ width: '280px', marginBottom: '20px' }}>
                   <label className="text-sm font-bold text-gray-800 mb-2">ARTWORK CATEGORY</label>
                   <SearchableDropdown
@@ -6561,7 +6525,6 @@ const Step4 = ({
                   width="lg"
                 />
               </div>
-            </div>
           </div>
                 );
               })}
