@@ -5,11 +5,11 @@ import { cn } from '@/lib/utils';
 const QualityVerificationToggle = ({
   value,
   onChange,
-  label = 'Quality Verification',
+  label = 'QUALITY VERIFICATION',
   width = 'sm',
   className
 }) => {
-  const normalized = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value || 'No';
+  const normalized = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value === 'Yes' || value === 'No' ? value : '');
   const isYes = normalized === 'Yes';
   const isNo = normalized === 'No';
   const groupName = `quality-verification-${useId()}`;
@@ -18,36 +18,26 @@ const QualityVerificationToggle = ({
     { label: 'Yes', value: 'Yes', selected: isYes },
     { label: 'No', value: 'No', selected: isNo }
   ];
-  const selectedIndex = options.findIndex((option) => option.selected);
-  const indicatorStyle = {
-    width: 'calc(50% - 8px)',
-    left: `calc(${Math.max(selectedIndex, 0) * 50}% + 4px)`
-  };
 
   return (
-    <Field label={label} width={width} className={className}>
+    <Field label={label} width={width} className={cn('w-fit', className)}>
       <div
-        className="relative inline-flex w-full max-w-[220px] items-center justify-between rounded-full border border-border/60 bg-white/60 px-1 py-1 shadow-sm shadow-slate-900/5"
+        className="flex items-center gap-4"
         role="radiogroup"
         aria-label={label}
       >
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-y-1 rounded-full bg-primary/10 transition-all duration-200"
-          style={indicatorStyle}
-        />
-        {options.map((option, index) => (
+        {options.map((option) => (
           <label
             key={option.value}
-            className="group relative flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition-colors"
+            className="group relative flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground transition-colors"
           >
             <span
               className={cn(
-                'flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-all duration-200',
+                'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-all duration-200',
                 option.selected ? 'border-primary bg-primary' : 'border-muted-foreground/40 bg-transparent'
               )}
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-white transition-opacity duration-200" />
+              {option.selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             </span>
             <span
               className={cn(
@@ -61,9 +51,10 @@ const QualityVerificationToggle = ({
               type="radio"
               name={groupName}
               value={option.value}
-              className="sr-only"
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
               checked={option.selected}
               onChange={() => onChange(option.value)}
+              tabIndex={0}
             />
           </label>
         ))}

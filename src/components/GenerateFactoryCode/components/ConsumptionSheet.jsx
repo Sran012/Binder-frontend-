@@ -1547,27 +1547,29 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
           <div className="min-w-0 rounded-lg border border-border overflow-hidden bg-card">
           {standardMats.length > 0 && (
             <>
-              <div className="grid grid-cols-5 min-w-0 border-b border-border bg-muted/30">
+              <div className="grid grid-cols-6 min-w-0 border-b border-border bg-muted/30">
                 <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mat</span></div>
+                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mat Desc</span></div>
                 <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">IPCs</span></div>
-                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Casepack</span></div>
                 <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Wastage/Surplus</span></div>
+                <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Casepack</span></div>
                 <div className={row4Last} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total mat req</span></div>
               </div>
               {standardMats.map((packaging, idx) => {
                 const packagingWastageSurplus = extractPackagingWastageSurplus(packaging);
                 const packagingCompoundWastage = calculateCompoundWastage(packagingWastageSurplus);
                 const matDesc = (packaging.materialDescription || '').toString().trim();
-                const matName = matDesc || formatPackagingTypeName(packaging.packagingMaterialType);
+                const matType = formatPackagingTypeName(packaging.packagingMaterialType);
                 const matCasepack = parseFloat(String(packaging.casepack || '').trim()) || formCasepack;
                 const totalPo = isMerged ? totalPoQtyForMerged : poQtyForStandalone;
                 const reqMat = matCasepack > 0 ? (totalPo / matCasepack).toFixed(2) : '-';
                 return (
-                  <div key={`std-${idx}`} className="grid grid-cols-5 min-w-0 border-b border-border last:border-b-0">
-                    <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{matName}</span></div>
+                  <div key={`std-${idx}`} className="grid grid-cols-6 min-w-0 border-b border-border last:border-b-0">
+                    <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{matType || '-'}</span></div>
+                    <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{matDesc || '-'}</span></div>
                     <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{ipcsDisplay || '-'}</span></div>
-                    <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matCasepack || '-'}</span></div>
                     <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{packagingCompoundWastage}%</span></div>
+                    <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matCasepack || '-'}</span></div>
                     <div className={row4Last} style={desktopTableCell}><span className="text-base font-bold text-primary">{reqMat}</span></div>
                   </div>
                 );
@@ -1589,13 +1591,15 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
 
             return (
               <div key={`inner-${idx}`} className="border-b border-border last:border-b-0">
-                <div className="grid grid-cols-3 min-w-0 border-b border-border bg-muted/30">
+                <div className="grid grid-cols-4 min-w-0 border-b border-border bg-muted/30">
                   <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mat</span></div>
+                  <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mat Desc</span></div>
                   <div className={row4Cell} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Casepack</span></div>
                   <div className={row4Last} style={desktopHeaderCell}><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Wastage/Surplus</span></div>
                 </div>
-                <div className="grid grid-cols-3 min-w-0 border-b border-border">
-                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{matName}</span></div>
+                <div className="grid grid-cols-4 min-w-0 border-b border-border">
+                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{formatPackagingTypeName(packaging.packagingMaterialType) || '-'}</span></div>
+                  <div className={row4Cell} style={desktopTableCell}><span className="text-sm text-foreground break-words">{matDesc || '-'}</span></div>
                   <div className={row4Cell} style={desktopTableCell}><span className="text-base font-bold text-foreground">{matCasepack || '-'}</span></div>
                   <div className={row4Last} style={desktopTableCell}><span className="text-base font-bold text-foreground">{packagingCompoundWastage}%</span></div>
                 </div>
@@ -1642,7 +1646,7 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
   return (
     <div>
       <div
-        className="w-full min-w-0 overflow-y-auto overflow-x-hidden"
+        className="w-full min-w-0 overflow-y-auto overflow-x-auto"
         style={{
           maxHeight: 'calc(100vh - 250px)',
           WebkitOverflowScrolling: 'touch',

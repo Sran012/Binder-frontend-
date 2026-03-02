@@ -1205,7 +1205,7 @@ const PackagingMaterialTypeFields = ({ material, onChange, errorKeyPrefix, error
                                 />
                               </div>
                               <div className="flex flex-col">
-                                <label className="text-xs text-gray-600 mb-1">G</label>
+                                <label className="text-xs text-gray-600 mb-1">GAUGE/GAUSS</label>
                                 <input
                                   type="text"
                                   value={gVal}

@@ -1719,7 +1719,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           remarks: '',
           design: '',
           imageRef: null,
-          qualityVerification: 'No',
+          qualityVerification: '',
           machineType: '',
           reed: '',
           pick: '',
@@ -1829,7 +1829,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
         netConsumption: '',
         unit: '',
         materialType: materialType,
-        qualityVerification: 'No',
+        qualityVerification: '',
         workOrders: [{
           workOrder: '',
           wastage: '',
@@ -1838,7 +1838,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           remarks: '',
           design: '',
           imageRef: null,
-          qualityVerification: 'No',
+          qualityVerification: '',
           machineType: '',
           reed: '',
           pick: '',
@@ -2645,7 +2645,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           materialDescription: '',
           netConsumption: '',
           unit: '',
-          qualityVerification: 'No',
+          qualityVerification: '',
           placement: '',
           size: {
             width: '',
@@ -3308,7 +3308,7 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
             unit: '',
             placement: '',
             workOrder: '',
-            qualityVerification: 'No',
+            qualityVerification: '',
             wastage: '',
             forField: '',
             packagingWorkOrder: '',
@@ -5390,8 +5390,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       
       {showConsumptionSheet && (
         <>
-          {/* Consumption Sheet View - Just the sheet, no extra header */}
-          <div className="mb-8 mx-auto min-w-0 w-[92vw]" style={{ maxWidth: '2000px' }}>
+          {/* Consumption Sheet View - Centered in main content area, full width with overflow */}
+          <div className="mb-8 mx-auto min-w-0 w-full max-w-[2400px] px-4 overflow-x-auto">
             {/* Close + Share Buttons */}
             <div className="flex justify-end gap-3 mb-4 px-2 sm:px-0">
               <Button
@@ -5441,8 +5441,8 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
               </button>
             </div>
 
-            <div className="flex flex-col gap-6 px-6 py-6 flex-1 overflow-y-auto overflow-x-auto min-h-0 min-w-0">
-              <div className="rounded-xl border border-border overflow-x-auto min-w-0">
+            <div className="flex flex-col gap-6 px-6 py-6 flex-1 overflow-y-auto overflow-x-auto min-h-0 min-w-0 items-center">
+              <div className="rounded-xl border border-border overflow-x-auto min-w-0 w-full max-w-[2400px]">
                 <ConsumptionSheet ref={consumptionSheetRef} formData={formData} />
               </div>
             </div>
