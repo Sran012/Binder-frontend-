@@ -363,8 +363,8 @@ const InternalPurchaseOrder = ({ onBack, onNavigateToCodeCreation, onNavigateToI
                   value={initialData.buyerCode}
                   onChange={handleBuyerCodeChange}
                   options={buyerCodeOptions}
-                  placeholder="Select or type buyer code"
-                  strictMode={false}
+                  placeholder="Select buyer code"
+                  strictMode={true}
                   className={errors.buyerCode ? 'border-destructive' : ''}
                 />
               </Field>
