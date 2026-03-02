@@ -1,4 +1,5 @@
 import SearchableDropdown from './SearchableDropdown';
+import { UNIT_OPTIONS_WITH_PCS } from '../constants/unitOptions';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -228,8 +229,9 @@ const TrimAccessoryFields = ({ material, materialIndex, handleChange, errors = {
                           <SearchableDropdown
                             value={material.unitAdditional || ''}
                             onChange={(selectedValue) => handleChange(materialIndex, 'unitAdditional', selectedValue)}
-                            options={['CM', 'KGS']}
-                            placeholder="Select or type"
+                            options={UNIT_OPTIONS_WITH_PCS}
+                            placeholder="Select unit"
+                            placeholderDim
                             className={dropdownClass(hasError('unitAdditional'))}
                           />
                         </Field>

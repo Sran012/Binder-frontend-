@@ -34,6 +34,7 @@ import {
 } from '../../data/textileFabricHelpers';
 import { MATERIAL_APPROVAL_OPTIONS } from '../../data/approvalOptions';
 import SearchableDropdown from '../SearchableDropdown';
+import { UNIT_OPTIONS } from '../../constants/unitOptions';
 import TrimAccessoryFields from '../TrimAccessoryFields';
 import { 
   FIBER_CATEGORIES, 
@@ -618,8 +619,9 @@ const Step2 = ({
                     onChange={(selectedValue) => {
                       handleRawMaterialChange(actualIndex, 'unit', selectedValue);
                     }}
-                    options={['KGS', 'CM']}
+                    options={UNIT_OPTIONS}
                     placeholder="Select unit"
+                    placeholderDim
                     className={errors[`rawMaterial_${actualIndex}_unit`] ? 'border-destructive' : ''}
                     required
                   />
