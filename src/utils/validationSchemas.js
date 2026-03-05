@@ -561,6 +561,14 @@ export const ARTWORK_SCHEMAS = {
       'insertCardsMaterialText': { when: 'insertCardsMaterial', equals: 'OTHERS (TEXT)' }
     }
   },
+  'HEADER CARD': {
+    required: ['headerCardType', 'headerCardMaterial', 'headerCardArtworkSpecFile', 'headerCardSizeLength', 'headerCardSizeWidth', 'headerCardSizeGusset', 'headerCardSizeUnit', 'headerCardPlacement', 'headerCardTestingRequirements', 'headerCardQty', 'headerCardSurplus', 'headerCardApproval'],
+    advanced: ['headerCardFunction', 'headerCardContent', 'headerCardPrinting', 'headerCardFinish', 'headerCardStiffness', 'headerCardAcidFree', 'headerCardBranding'],
+    conditional: {
+      'headerCardTypeText': { when: 'headerCardType', equals: 'OTHERS (TEXT)' },
+      'headerCardMaterialText': { when: 'headerCardMaterial', equals: 'OTHERS (TEXT)' }
+    }
+  },
   'RIBBONS': {
     required: ['ribbonsType', 'ribbonsMaterial', 'ribbonsWidth', 'ribbonsRollLength', 'ribbonsTestingRequirements', 'ribbonsQty', 'ribbonsSurplus'],
     advanced: [],

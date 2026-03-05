@@ -278,6 +278,7 @@ const ConsumptionSheet = forwardRef(({ formData = {} }, ref) => {
       'QC / INSPECTION LABELS': 'qcInspectionQty',
       'BELLY BAND / WRAPPER': 'bellyBandQty',
       'INSERT CARDS': 'insertCardsQty',
+      'HEADER CARD': 'headerCardQty',
       'RIBBONS': 'ribbonsQty'
     };
     const field = qtyFieldMap[cat] || 'lengthQuantity';
