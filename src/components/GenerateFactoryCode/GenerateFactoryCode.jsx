@@ -4213,6 +4213,15 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           const woPrefix = `${errorPrefix}_workOrder_${woIdx}`;
           const woResult = validateMaterialAgainstSchema(wo, woSchema, woPrefix);
           Object.assign(newErrors, woResult.errors);
+          // DYEING: only require shrinkage fields when dyeing type has them applicable (e.g. not for HANK DYEING)
+          if (woType === 'DYEING' && wo.dyeingType) {
+            if (!isShrinkageWidthApplicable(wo.dyeingType)) {
+              delete newErrors[`${woPrefix}_shrinkageWidthPercent`];
+            }
+            if (!isShrinkageLengthApplicable(wo.dyeingType)) {
+              delete newErrors[`${woPrefix}_shrinkageLengthPercent`];
+            }
+          }
         }
       });
     });
