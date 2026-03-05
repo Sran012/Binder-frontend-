@@ -286,6 +286,42 @@ const ConsumptionSheet = forwardRef(({ formData = {} }, ref) => {
     return val != null && val !== '' ? String(val).trim() : '';
   };
 
+  // Helper: Get qty unit (cm, kgs, pcs) from artwork material based on category
+  const getArtworkQtyUnit = (artwork) => {
+    if (!artwork) return '';
+    const cat = (artwork.artworkCategory || '').trim();
+    const unitFieldMap = {
+      'LABELS (BRAND/MAIN)': 'labelsBrandQtyUnit',
+      'CARE & COMPOSITION': 'careCompositionQtyUnit',
+      'TAGS & SPECIAL LABELS': 'tagsSpecialLabelsQtyUnit',
+      'FLAMMABILITY / SAFETY LABELS': 'flammabilitySafetyQtyUnit',
+      'RFID / SECURITY TAGS': 'rfidQtyUnit',
+      'LAW LABEL / CONTENTS TAG': 'lawLabelQtyUnit',
+      'HANG TAG SEALS / STRINGS': 'hangTagSealsQtyUnit',
+      'PRICE TICKET / BARCODE TAG': 'priceTicketQtyUnit',
+      'HEAT TRANSFER LABELS': 'heatTransferQtyUnit',
+      'UPC LABEL / BARCODE STICKER': 'upcBarcodeQtyUnit',
+      'SIZE LABELS (INDIVIDUAL)': 'sizeLabelsQtyUnit',
+      'ANTI-COUNTERFEIT & HOLOGRAMS': 'antiCounterfeitQtyUnit',
+      'QC / INSPECTION LABELS': 'qcInspectionQtyUnit',
+      'BELLY BAND / WRAPPER': 'bellyBandQtyUnit',
+      'INSERT CARDS': 'insertCardsQtyUnit',
+      'HEADER CARD': 'headerCardQtyUnit',
+      'RIBBONS': 'ribbonsQtyUnit'
+    };
+    const field = unitFieldMap[cat];
+    const val = field ? artwork[field] : '';
+    return val != null && val !== '' ? String(val).trim() : '';
+  };
+
+  // Helper: Get quantity + unit display string for artwork (e.g. "100 pcs")
+  const getArtworkQtyWithUnit = (artwork) => {
+    const qty = getArtworkQuantity(artwork);
+    const unit = getArtworkQtyUnit(artwork);
+    if (!qty) return '';
+    return unit ? `${qty} ${unit}` : qty;
+  };
+
   // Helper: Get PO qty for an IPC from skus (for packaging req material calc)
   const getPoQtyForIpc = (skus, ipc) => {
     if (!ipc || !Array.isArray(skus)) return 0;
@@ -1516,7 +1552,7 @@ Gross Wastage % = ((1+w1/100) × (1+w2/100) × ... − 1) × 100`)}
                   return (
                     <div key={idx} className="grid grid-cols-2 sm:grid-cols-6 min-w-0 border-b border-border last:border-b-0">
                       <div className={artCellClass} style={desktopTableCell}><span className="text-sm text-foreground break-words">{artwork.materialDescription || '-'}</span></div>
-                      <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-foreground">{artworkQty || '-'}</span></div>
+                      <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-foreground">{getArtworkQtyWithUnit(artwork) || '-'}</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-foreground">{artworkCompoundWastage}%</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-primary">{artworkGrossCns}</span></div>
                       <div className={artCellClass} style={desktopTableCell}><span className="text-base font-bold text-primary">{artworkGrossCnsSet.toFixed(3)}</span></div>

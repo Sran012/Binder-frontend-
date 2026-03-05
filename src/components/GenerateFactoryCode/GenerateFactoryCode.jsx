@@ -3282,7 +3282,11 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
           applicationSpec: '', finishHandFeel: '', quality: '', sizeCode: '',
           securityFeature: '', verification: '', removal: '', traceability: '',
           closure: '', durability: '', inkType: '', printQuality: '',
-          sizeFold: '', referenceImage: null
+          sizeFold: '', referenceImage: null,
+          labelsBrandQtyUnit: '', careCompositionQtyUnit: '', rfidQtyUnit: '', lawLabelQtyUnit: '',
+          hangTagSealsQtyUnit: '', heatTransferQtyUnit: '', upcBarcodeQtyUnit: '', priceTicketQtyUnit: '',
+          antiCounterfeitQtyUnit: '', qcInspectionQtyUnit: '', bellyBandQtyUnit: '', sizeLabelsQtyUnit: '',
+          tagsSpecialLabelsQtyUnit: '', flammabilitySafetyQtyUnit: '', insertCardsQtyUnit: '', headerCardQtyUnit: '', ribbonsQtyUnit: ''
         };
         updatedMaterials[materialIndex] = {
           ...updatedMaterials[materialIndex],
@@ -3395,15 +3399,32 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
             verification: '',
             removal: '',
             traceability: '',
-            closure: '',
-            durability: '',
-            inkType: '',
-            printQuality: '',
-            sizeFold: '',
-            referenceImage: null,
-            usage: '',
-            ribbonWidth: ''
-          }
+          closure: '',
+          durability: '',
+          inkType: '',
+          printQuality: '',
+          sizeFold: '',
+          referenceImage: null,
+          usage: '',
+          ribbonWidth: '',
+          labelsBrandQtyUnit: '',
+          careCompositionQtyUnit: '',
+          rfidQtyUnit: '',
+          lawLabelQtyUnit: '',
+          hangTagSealsQtyUnit: '',
+          heatTransferQtyUnit: '',
+          upcBarcodeQtyUnit: '',
+          priceTicketQtyUnit: '',
+          antiCounterfeitQtyUnit: '',
+          qcInspectionQtyUnit: '',
+          bellyBandQtyUnit: '',
+          sizeLabelsQtyUnit: '',
+          tagsSpecialLabelsQtyUnit: '',
+          flammabilitySafetyQtyUnit: '',
+          insertCardsQtyUnit: '',
+          headerCardQtyUnit: '',
+          ribbonsQtyUnit: ''
+        }
         ]
       };
     });
