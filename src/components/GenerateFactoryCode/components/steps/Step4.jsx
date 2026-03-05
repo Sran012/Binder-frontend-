@@ -291,7 +291,7 @@ const Step4 = ({
             {/* Material Header with Remove Button */}
             <div className="flex items-center justify-between" style={{ marginBottom: '16px' }}>
               <h4 className="text-sm font-bold text-gray-700">MATERIAL {materialNumber}</h4>
-              {materialsForComponent.length > 1 && (
+              {materialsForComponent.length >= 1 && (
                 <button
                   type="button"
                   onClick={() => removeArtworkMaterial(actualIndex)}

@@ -2353,18 +2353,24 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       return;
     }
     const componentName = step3SelectedComponentRef.current || '';
-    if (!componentName?.trim()) {
-      setStep3SaveStatus('error');
-      setTimeout(() => setStep3SaveStatus('idle'), 3000);
-      showValidationErrorsPopup({ artwork_select_component: 'Select a component to save' });
-      return;
-    }
-    const result = validateArtworkComponentMaterials(componentName);
-    if (!result.isValid) {
-      setStep3SaveStatus('error');
-      setTimeout(() => setStep3SaveStatus('idle'), 3000);
-      showValidationErrorsPopup(result.errors);
-      return;
+    if (componentName?.trim()) {
+      // Per-component save: validate selected component's materials (0 materials allowed)
+      const result = validateArtworkComponentMaterials(componentName);
+      if (!result.isValid) {
+        setStep3SaveStatus('error');
+        setTimeout(() => setStep3SaveStatus('idle'), 3000);
+        showValidationErrorsPopup(result.errors);
+        return;
+      }
+    } else {
+      // No component selected: step-level save using validateStep4 (artwork optional)
+      const result = validateStep4();
+      if (!result.isValid) {
+        setStep3SaveStatus('error');
+        setTimeout(() => setStep3SaveStatus('idle'), 3000);
+        showValidationErrorsPopup(result.errors);
+        return;
+      }
     }
     setStep3Saved(true);
     setStep3SaveStatus('success');
@@ -3159,6 +3165,11 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     return { isValid, errors: newErrors, shouldAddExtraPack };
   };
 
+  // Single source of truth: artwork material "has data" (aligns completion with validation)
+  const artworkMaterialHasData = (m) =>
+    !!(m?.components?.trim() || m?.artworkCategory?.trim() || m?.materialDescription?.trim() ||
+       m?.unit?.trim() || m?.placement?.trim() || m?.workOrder?.trim());
+
   // Validate only artwork materials for a given component (for per-component Save)
   const validateArtworkComponentMaterials = (componentName) => {
     const newErrors = {};
@@ -3166,10 +3177,10 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     const materials = stepData?.artworkMaterials || [];
     const materialsForComponent = materials.filter((m) => (m.components || '') === componentName);
 
+    // Artwork/labeling optional per component: 0 materials = no artwork needed for this component
     if (materialsForComponent.length === 0) {
-      newErrors['artwork_component_no_materials'] = `Add at least one artwork material for "${componentName}"`;
       setErrors(newErrors);
-      return { isValid: false, errors: newErrors };
+      return { isValid: true, errors: newErrors };
     }
 
     materials.forEach((material, materialIndex) => {
@@ -3205,27 +3216,13 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
     const stepData = getSelectedSkuStepData();
     const materials = stepData?.artworkMaterials || [];
 
-    // Only validate materials that have a component and have data entered (don't require material 0 or others to be filled)
-    const materialsWithData = materials.filter((material) => {
-      const hasAnyData = material.components?.trim() ||
-        material.artworkCategory?.trim();
-      return hasAnyData;
-    });
+    // Artwork optional at IPC level: use shared helper for "has data"
+    const materialsWithData = materials.filter((m) => artworkMaterialHasData(m));
 
-    if (materialsWithData.length === 0) {
-      newErrors['artwork_no_materials'] = 'At least one artwork/labelling material is required';
-    }
-
+    // No "at least one material required" - artwork/labeling is optional
     materials.forEach((material, materialIndex) => {
       const errorPrefix = `artworkMaterial_${materialIndex}`;
-      const hasAnyData = material.components?.trim() ||
-        material.materialDescription?.trim() ||
-        material.unit?.trim() ||
-        material.placement?.trim() ||
-        material.workOrder?.trim() ||
-        material.artworkCategory?.trim();
-
-      if (!hasAnyData) return;
+      if (!artworkMaterialHasData(material)) return;
 
       if (isEmpty(material.components)) {
         newErrors[`${errorPrefix}_components`] = 'Component is required';
@@ -3411,16 +3408,15 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
   const removeArtworkMaterial = (materialIndex) => {
     setStep3Saved(false);
     setStep3SaveStatus('idle');
-    const stepData = getSelectedSkuStepData();
-    if (stepData && stepData.artworkMaterials && stepData.artworkMaterials.length > 1) {
-      updateSelectedSkuStepData((stepData) => ({
-        ...stepData,
-        artworkMaterials: stepData.artworkMaterials.filter((_, i) => i !== materialIndex).map((material, i) => ({
-          ...material,
-          srNo: i + 1
-        }))
-      }));
-    }
+    updateSelectedSkuStepData((prev) => {
+      const materials = prev?.artworkMaterials || [];
+      if (materials.length < 1) return prev;
+      const filtered = materials.filter((_, i) => i !== materialIndex);
+      return {
+        ...prev,
+        artworkMaterials: filtered.map((material, i) => ({ ...material, srNo: i + 1 }))
+      };
+    });
   };
 
   // Packaging Configuration Change Handler
@@ -4596,7 +4592,10 @@ const GenerateFactoryCode = ({ onBack, initialFormData = {}, onNavigateToCodeCre
       // Cut: only true if at least one component has productComforter filled (not just default empty component)
       const hasCut = (stepData?.products?.[0]?.components || []).some(c => c?.productComforter?.trim());
       const hasRaw = (stepData?.rawMaterials?.length || 0) > 0;
-      const hasArt = (stepData?.artworkMaterials?.filter(m => m?.materialDescription?.trim()).length || 0) > 0;
+      const materials = stepData?.artworkMaterials || [];
+      const withData = materials.filter((m) => artworkMaterialHasData(m));
+      // Artwork ✓ if any material has data, or all empty (no component / no add material = complete)
+      const hasArt = withData.length > 0 || materials.every((m) => !artworkMaterialHasData(m));
       return { cut: hasCut, raw: hasRaw, artwork: hasArt };
     };
 
