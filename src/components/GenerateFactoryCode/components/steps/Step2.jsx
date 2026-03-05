@@ -1223,7 +1223,7 @@ const Step2 = ({
                         
                         <Field label="WINDING OPTIONS" required width="sm" error={errors[`rawMaterial_${actualIndex}_windingOptions`]}>
                           <SearchableDropdown
-                            value={material.windingOptions || details.windingOptions || ''}
+                            value={material.windingOptions || ''}
                             onChange={(value) => handleRawMaterialChange(actualIndex, 'windingOptions', value)}
                             options={material.fiberType && material.yarnType 
                               ? getYarnWindingOptions(material.fiberType, material.yarnType)
